@@ -4149,681 +4149,569 @@
   }
 })();
 
-/* =====================================================================
-   HERMES STUDIO WEBUI v7 - SETTINGS SUITE FRAGMENT
-   Self-contained IIFE. Exposes window.HermesSettings.
-   ===================================================================== */
-(function () {
-  'use strict';
+    /* =====================================================================
+       HERMES STUDIO WEBUI v7 - SCHEMA-DRIVEN SETTINGS
+       Builds the settings panes from the LIVE /api/config/schema contract
+       (925 real fields across 49 categories) instead of a hardcoded list.
 
-  /* ------------------------------------------------------------------
-     Single source of truth for all field data. The orchestrator can
-     swap this object for live /api/config data.
-     ------------------------------------------------------------------ */
-  var CATEGORY_DEFS = [
-    {
-      key: 'general',
-      title: 'General',
-      desc: 'Core agent behaviour, model selection and interface preferences.',
-      groups: [
+       The dashboard owns the schema and the wire format:
+         GET /api/config/schema -> { fields: {<dotted path>: {type, description,
+                                        category, options?, default?}},
+                                     category_order: [...] }
+         GET /api/config        -> the effective config, NESTED by section
+         PUT /api/config        -> { config: {<section>: {...}}, profile }
+
+       The GET body is nested ("agent": {"max_turns": 80}) while the schema
+       keys are dotted ("agent.max_turns"), so values are flattened on the
+       way in and re-nested on the way out. The PUT body must be the
+       NESTED web shape, because the server denormalizes and deep-merges it.
+       ===================================================================== */
+    (function () {
+      'use strict';
+
+      var $ = function (sel, root) { return (root || document).querySelector(sel); };
+      var $$ = function (sel, root) {
+        return Array.prototype.slice.call((root || document).querySelectorAll(sel));
+      };
+
+      var state = {
+        schema: null,
+        values: {},
+        baseline: {},
+        category: 'general',
+        filter: ''
+      };
+
+      /* The 9 sections the cockpit exposes. Each maps onto one or more real
+         schema categories; the union of those fields becomes the pane. */
+      var SECTIONS = [
         {
-          title: 'Model & Reasoning',
-          fields: [
-            { path: 'agent.default_model', label: 'Default model', type: 'text', value: 'minimax-m2.5', desc: 'Model used when a session does not override it.' },
-            { path: 'agent.effort', label: 'Effort', type: 'select', value: 'medium', options: ['low', 'medium', 'high', 'ultra'], desc: 'Reasoning budget spent per turn.' },
-            { path: 'agent.reasoning_effort', label: 'Reasoning effort', type: 'select', value: 'medium', options: ['none', 'low', 'medium', 'high'], desc: 'Extra thinking depth before the first token.' },
-            { path: 'agent.language', label: 'Language', type: 'text', value: 'en', desc: 'Preferred language for replies and code comments.' }
-          ]
+          key: 'general',
+          label: 'General',
+          desc: 'Model, context budget and session behaviour.',
+          cats: ['general']
         },
         {
-          title: 'Interface',
-          fields: [
-            { path: 'ui.theme', label: 'Theme', type: 'select', value: 'dark', options: ['dark', 'apple', 'system'], desc: 'Visual theme for the cockpit.' },
-            { path: 'ui.compact_mode', label: 'Compact mode', type: 'toggle', value: false, desc: 'Tighter spacing across panels and lists.' }
-          ]
+          key: 'agent',
+          label: 'Agent & Model',
+          desc: 'Runtime limits, reasoning and the agent loop.',
+          cats: ['agent']
+        },
+        {
+          key: 'delegation',
+          label: 'Delegation & Subagents',
+          desc: 'How work is fanned out to child agents.',
+          cats: ['delegation']
+        },
+        {
+          key: 'terminal',
+          label: 'Terminal & Shell',
+          desc: 'Shell backend, working directory and timeouts.',
+          cats: ['terminal']
+        },
+        {
+          key: 'display',
+          label: 'Display & Theme',
+          desc: 'Interface density, personality and input behaviour.',
+          cats: ['display']
+        },
+        {
+          key: 'memory',
+          label: 'Memory & Context',
+          desc: 'Persistent memory, user profile and nudges.',
+          cats: ['memory', 'compression']
+        },
+        {
+          key: 'security',
+          label: 'Security & Privacy',
+          desc: 'Approvals, redaction and unattended operation.',
+          cats: ['security', 'secrets']
+        },
+        {
+          key: 'tools',
+          label: 'Tools & MCP',
+          desc: 'Tool discovery, deferred loading and connectors.',
+          cats: ['tools', 'browser']
+        },
+        {
+          key: 'shortcuts',
+          label: 'Keyboard Shortcuts',
+          desc: 'Real keybinds imported from the Hermes desktop source.',
+          cats: []
         }
-      ]
-    },
-    {
-      key: 'agent',
-      title: 'Agent & Model',
-      desc: 'Runtime limits, sampling and capability flags for the agent loop.',
-      groups: [
-        {
-          title: 'Runtime',
-          fields: [
-            { path: 'agent.max_iterations', label: 'Max iterations', type: 'number', value: 50, min: 1, max: 500, desc: 'Maximum tool-calling turns per request.' },
-            { path: 'agent.timeout_seconds', label: 'Timeout', type: 'number', value: 900, min: 30, max: 7200, unit: 's', desc: 'Wall-clock budget for a single request.' },
-            { path: 'agent.max_tokens', label: 'Max tokens', type: 'number', value: 32000, min: 1024, step: 1024, desc: 'Upper bound on tokens generated per response.' }
-          ]
-        },
-        {
-          title: 'Sampling',
-          fields: [
-            { path: 'agent.temperature', label: 'Temperature', type: 'number', value: 0.7, min: 0, max: 2, step: 0.05, desc: 'Higher values produce more varied output.' }
-          ]
-        },
-        {
-          title: 'Capabilities',
-          fields: [
-            { path: 'agent.stream', label: 'Streaming', type: 'toggle', value: true, desc: 'Stream tokens as they arrive.' },
-            { path: 'agent.vision', label: 'Vision', type: 'toggle', value: true, desc: 'Allow image attachments to be read by the model.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'delegation',
-      title: 'Delegation & Subagents',
-      desc: 'Control how the agent fans work out to child agents.',
-      groups: [
-        {
-          title: 'Control',
-          fields: [
-            { path: 'delegation.enabled', label: 'Enable delegation', type: 'toggle', value: true, desc: 'Allow the agent to spawn child agents.' },
-            { path: 'delegation.max_concurrent_children', label: 'Max concurrent children', type: 'number', value: 10, min: 1, max: 32, desc: 'Parallel child agents per parent.' },
-            { path: 'delegation.child_timeout_seconds', label: 'Child timeout', type: 'number', value: 300, min: 30, max: 3600, unit: 's', desc: 'Timeout applied to each child run.' },
-            { path: 'delegation.parent_idle_timeout_seconds', label: 'Parent idle timeout', type: 'number', value: 1800, min: 60, max: 86400, unit: 's', desc: 'Idle time before the parent run is stopped.' },
-            { path: 'delegation.max_retries', label: 'Max retries', type: 'number', value: 2, min: 0, max: 10, desc: 'Retries for a failed child run.' },
-            { path: 'delegation.model', label: 'Child model', type: 'text', value: 'inherit', desc: 'Model for children. Use inherit to follow the parent.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'terminal',
-      title: 'Terminal & Shell',
-      desc: 'Shell, working directory and background job behaviour.',
-      groups: [
-        {
-          title: 'Shell',
-          fields: [
-            { path: 'terminal.shell', label: 'Shell', type: 'text', value: 'bash', desc: 'Shell binary used for terminal tool calls.' },
-            { path: 'terminal.cwd', label: 'Working directory', type: 'text', value: 'C:/Users/Ejer/Documents/Hermes', desc: 'Start directory for new terminal sessions.' },
-            { path: 'terminal.timeout_seconds', label: 'Command timeout', type: 'number', value: 300, min: 10, max: 3600, unit: 's', desc: 'Timeout for a foreground command.' }
-          ]
-        },
-        {
-          title: 'Background jobs',
-          fields: [
-            { path: 'terminal.background_notify', label: 'Notify on completion', type: 'toggle', value: true, desc: 'Raise a toast when a background command finishes.' },
-            { path: 'terminal.persist_on_release', label: 'Persist on release', type: 'toggle', value: true, desc: 'Keep background shells alive after the session ends.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'display',
-      title: 'Display & Theme',
-      desc: 'Canvas theme, density, motion and layout preferences.',
-      groups: [
-        {
-          title: 'Appearance',
-          fields: [
-            { path: 'display.theme', label: 'Canvas theme', type: 'select', value: 'dark', options: ['dark', 'apple', 'system'], desc: 'Theme applied to the workspace canvas.' },
-            { path: 'display.font_scale', label: 'Font scale', type: 'number', value: 1, min: 0.85, max: 1.4, step: 0.05, desc: 'Global text scale factor.' }
-          ]
-        },
-        {
-          title: 'Layout & motion',
-          fields: [
-            { path: 'display.compact_sidebar', label: 'Compact sidebar', type: 'toggle', value: false, desc: 'Reduce sidebar row height.' },
-            { path: 'display.show_status_bar', label: 'Status bar', type: 'toggle', value: true, desc: 'Show the status bar along the bottom edge.' },
-            { path: 'display.animations', label: 'Animations', type: 'toggle', value: true, desc: 'Flight arc and transition effects.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'memory',
-      title: 'Memory & Context',
-      desc: 'Budgets and lifetimes for recalled memory and user profile.',
-      groups: [
-        {
-          title: 'Budgets',
-          fields: [
-            { path: 'memory.enabled', label: 'Enable memory', type: 'toggle', value: true, desc: 'Load recalled memories into session context.' },
-            { path: 'memory.char_budget', label: 'Memory budget', type: 'number', value: 4000, min: 0, max: 40000, step: 100, unit: 'chars', desc: 'Character budget for recalled memories.' },
-            { path: 'memory.user_char_budget', label: 'Profile budget', type: 'number', value: 1800, min: 0, max: 20000, step: 100, unit: 'chars', desc: 'Character budget for the user profile.' }
-          ]
-        },
-        {
-          title: 'Lifecycle',
-          fields: [
-            { path: 'memory.auto_load_skills', label: 'Auto load skills', type: 'toggle', value: true, desc: 'Load relevant skills at session start.' },
-            { path: 'memory.persist', label: 'Persist to disk', type: 'toggle', value: true, desc: 'Write new memories to the profile store.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'security',
-      title: 'Security & Privacy',
-      desc: 'Redaction, network reach and destructive action guards.',
-      groups: [
-        {
-          title: 'Safety',
-          fields: [
-            { path: 'security.redact_secrets', label: 'Redact secrets', type: 'toggle', value: true, desc: 'Mask tokens and keys before they reach the model.' },
-            { path: 'security.confirm_destructive', label: 'Confirm destructive actions', type: 'toggle', value: true, desc: 'Ask before destructive shell commands.' },
-            { path: 'security.audit_log', label: 'Audit log', type: 'toggle', value: false, desc: 'Record tool calls to the audit log.' }
-          ]
-        },
-        {
-          title: 'Network',
-          fields: [
-            { path: 'security.allow_network', label: 'Allow network access', type: 'toggle', value: true, desc: 'Permit outbound network requests from tools.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'tools',
-      title: 'Tools & MCP',
-      desc: 'Tool loading strategy, MCP servers and built-in toolkits.',
-      groups: [
-        {
-          title: 'Loading',
-          fields: [
-            { path: 'tools.eager_tool_limit', label: 'Eager tool limit', type: 'number', value: 21, min: 1, max: 200, desc: 'Tools loaded eagerly into context.' },
-            { path: 'tools.deferred_tools', label: 'Deferred tools', type: 'toggle', value: true, desc: 'Load extra tools on demand instead of eagerly.' }
-          ]
-        },
-        {
-          title: 'Integrations',
-          fields: [
-            { path: 'tools.mcp_servers', label: 'MCP servers', type: 'text', value: 'filesystem,github', desc: 'Comma separated MCP servers to attach.' }
-          ]
-        },
-        {
-          title: 'Toolkits',
-          fields: [
-            { path: 'tools.artifacts', label: 'Artifacts', type: 'toggle', value: true, desc: 'Enable the artifacts toolkit.' },
-            { path: 'tools.whiteboard', label: 'Whiteboard', type: 'toggle', value: true, desc: 'Enable the whiteboard toolkit.' }
-          ]
-        }
-      ]
-    },
-    {
-      key: 'shortcuts',
-      title: 'Keyboard Shortcuts',
-      desc: 'Windows key bindings for the cockpit.',
-      groups: []
-    }
-  ];
+      ];
 
-  /* Fallback bindings used when window.__HERMES_KEYBINDS__ is absent. */
-  var DEFAULT_KEYBINDS = [
-    { id: 'chat.new', label: 'New chat', keys: 'Ctrl+N', category: 'Navigation' },
-    { id: 'view.sidebar', label: 'Toggle sidebar', keys: 'Ctrl+B', category: 'Navigation' },
-    { id: 'view.palette', label: 'Quick palette', keys: 'Ctrl+K', category: 'Navigation' },
-    { id: 'view.settings', label: 'Open settings', keys: 'Ctrl+,', category: 'Navigation' },
-    { id: 'view.workspace.next', label: 'Next workspace', keys: 'Ctrl+Alt+Right', category: 'Navigation' },
-    { id: 'chat.send', label: 'Send message', keys: 'Ctrl+Enter', category: 'Chat' },
-    { id: 'chat.newline', label: 'New line', keys: 'Shift+Enter', category: 'Chat' },
-    { id: 'chat.stop', label: 'Stop generation', keys: 'Ctrl+.', category: 'Chat' },
-    { id: 'chat.search', label: 'Search conversation', keys: 'Ctrl+F', category: 'Chat' },
-    { id: 'view.inspector', label: 'Toggle inspector', keys: 'Ctrl+I', category: 'View' },
-    { id: 'view.theme', label: 'Toggle theme', keys: 'Ctrl+Shift+D', category: 'View' },
-    { id: 'action.cancel', label: 'Cancel action', keys: 'Escape', category: 'View' }
-  ];
+      var dom = {};
 
-  var CATEGORY_BY_KEY = {};
-  CATEGORY_DEFS.forEach(function (c) { CATEGORY_BY_KEY[c.key] = c; });
-
-  var state = {
-    values: {},
-    baseline: {},
-    category: 'general',
-    filter: '',
-    editing: null
-  };
-
-  var dom = {};
-
-  /* ------------------------------------------------------------------ */
-  /* helpers                                                             */
-  /* ------------------------------------------------------------------ */
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) { n.className = cls; }
-    if (text !== undefined && text !== null) { n.textContent = String(text); }
-    return n;
-  }
-
-  function allFields() {
-    var out = [];
-    CATEGORY_DEFS.forEach(function (c) {
-      (c.groups || []).forEach(function (g) {
-        (g.fields || []).forEach(function (f) { out.push(f); });
-      });
-    });
-    return out;
-  }
-
-  function defaultValues() {
-    var v = {};
-    allFields().forEach(function (f) { v[f.path] = f.value; });
-    return v;
-  }
-
-  function flatten(obj, prefix, out) {
-    out = out || {};
-    prefix = prefix || '';
-    Object.keys(obj).forEach(function (k) {
-      var v = obj[k];
-      var p = prefix ? prefix + '.' + k : k;
-      if (v && typeof v === 'object' && !Array.isArray(v)) { flatten(v, p, out); }
-      else { out[p] = v; }
-    });
-    return out;
-  }
-
-  function chordParts(chord) {
-    if (Array.isArray(chord)) { return chord.slice(); }
-    return String(chord == null ? '' : chord).split('+').map(function (p) { return p.trim(); }).filter(Boolean);
-  }
-
-  function liveEndpoint(detail) {
-    if (typeof detail === 'string' && detail) { return detail; }
-    if (detail && typeof detail === 'object' && detail.endpoint) { return detail.endpoint; }
-    return '127.0.0.1:9119';
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* field controls                                                      */
-  /* ------------------------------------------------------------------ */
-  function createControl(field) {
-    var ctl = el('div', 'fld-ctl');
-    var value = state.values[field.path];
-
-    if (field.type === 'toggle') {
-      var btn = el('button', 'fld-toggle set-fld-toggle');
-      btn.type = 'button';
-      btn.setAttribute('role', 'switch');
-      btn.setAttribute('aria-checked', value ? 'true' : 'false');
-      btn.setAttribute('aria-label', field.label);
-      if (value) { btn.classList.add('on'); }
-      var readout = el('span', 'set-toggle-state', value ? 'On' : 'Off');
-      btn.addEventListener('click', function () {
-        var next = !(state.values[field.path] === true || state.values[field.path] === 'true');
-        state.values[field.path] = next;
-        btn.classList.toggle('on', next);
-        btn.setAttribute('aria-checked', next ? 'true' : 'false');
-        readout.textContent = next ? 'On' : 'Off';
-      });
-      ctl.appendChild(btn);
-      ctl.appendChild(readout);
-
-    } else if (field.type === 'select') {
-      var sel = el('select');
-      sel.setAttribute('aria-label', field.label);
-      (field.options || []).forEach(function (opt) {
-        var o = el('option', null, opt);
-        o.value = opt;
-        if (String(value) === String(opt)) { o.selected = true; }
-        sel.appendChild(o);
-      });
-      sel.addEventListener('change', function () { state.values[field.path] = sel.value; });
-      ctl.appendChild(sel);
-
-    } else if (field.type === 'number') {
-      var num = el('input', 'set-fld-num');
-      num.type = 'number';
-      num.setAttribute('aria-label', field.label);
-      if (field.min !== undefined) { num.min = field.min; }
-      if (field.max !== undefined) { num.max = field.max; }
-      if (field.step !== undefined) { num.step = field.step; }
-      num.value = (value === null || value === undefined) ? '' : value;
-      num.addEventListener('input', function () {
-        state.values[field.path] = num.value === '' ? null : Number(num.value);
-      });
-      ctl.appendChild(num);
-      if (field.unit) { ctl.appendChild(el('span', 'set-unit', field.unit)); }
-
-    } else {
-      var txt = el('input');
-      txt.type = 'text';
-      txt.setAttribute('aria-label', field.label);
-      txt.value = (value === null || value === undefined) ? '' : String(value);
-      txt.addEventListener('input', function () { state.values[field.path] = txt.value; });
-      ctl.appendChild(txt);
-    }
-
-    return ctl;
-  }
-
-  function createFieldRow(field) {
-    var row = el('div', 'fld-row');
-    row.setAttribute('data-path', field.path);
-    var meta = el('div', 'fld-meta');
-    meta.appendChild(el('div', 'fld-label', field.label));
-    meta.appendChild(el('div', 'fld-path', field.path));
-    if (field.desc) { meta.appendChild(el('div', 'fld-desc', field.desc)); }
-    row.appendChild(meta);
-    row.appendChild(createControl(field));
-    return row;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* keybind table                                                       */
-  /* ------------------------------------------------------------------ */
-  function keybindSource() {
-    var list = window.__HERMES_KEYBINDS__;
-    if (Object.prototype.toString.call(list) === '[object Array]' && list.length) { return list; }
-    return DEFAULT_KEYBINDS;
-  }
-
-  function keybindOverrides() {
-    if (!window.__HERMES_KEYBIND_OVERRIDES__ || typeof window.__HERMES_KEYBIND_OVERRIDES__ !== 'object') {
-      window.__HERMES_KEYBIND_OVERRIDES__ = {};
-    }
-    return window.__HERMES_KEYBIND_OVERRIDES__;
-  }
-
-  function renderKeys(container, chord) {
-    container.innerHTML = '';
-    chordParts(chord).forEach(function (part) {
-      container.appendChild(el('span', 'kbd', part));
-    });
-  }
-
-  function createKeybindRow(item) {
-    var overrides = keybindOverrides();
-    var id = item.id;
-    var raw = (overrides[id] !== undefined && overrides[id] !== null && overrides[id] !== '')
-      ? overrides[id]
-      : (Array.isArray(item.keys) ? item.keys.join('+') : item.keys);
-    var chord = raw == null ? '' : String(raw);
-
-    var row = el('div', 'kb-row set-kb-row');
-    row.setAttribute('data-kb', id);
-    row.appendChild(el('span', 'set-kb-label', item.label || id));
-
-    var side = el('div', 'set-kb-side');
-    var keys = el('div', 'kb-keys');
-    renderKeys(keys, chord);
-    side.appendChild(keys);
-
-    var rebind = el('button', 'set-kb-rebind', 'Rebind');
-    rebind.type = 'button';
-    rebind.setAttribute('aria-label', 'Rebind ' + (item.label || id));
-
-    var input = el('input', 'set-kb-input');
-    input.type = 'text';
-    input.value = chord;
-    input.setAttribute('aria-label', 'New shortcut for ' + (item.label || id));
-
-    function commit() {
-      var next = input.value.trim();
-      if (next) { keybindOverrides()[id] = next; } else { delete keybindOverrides()[id]; }
-      row.classList.remove('editing');
-      renderKeys(keys, next || chord);
-      state.editing = null;
-    }
-
-    function cancel() {
-      row.classList.remove('editing');
-      renderKeys(keys, chord);
-      state.editing = null;
-    }
-
-    rebind.addEventListener('click', function () {
-      state.editing = id;
-      row.classList.add('editing');
-      input.focus();
-      if (input.select) { input.select(); }
-    });
-
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
-    });
-    input.addEventListener('blur', function () {
-      if (row.classList.contains('editing')) { commit(); }
-    });
-
-    side.appendChild(rebind);
-    side.appendChild(input);
-    row.appendChild(side);
-    return row;
-  }
-
-  function renderKeybinds(body) {
-    var items = keybindSource();
-    var groups = [];
-    var index = {};
-
-    items.forEach(function (item) {
-      var name = item.category || item.group || 'General';
-      if (!Object.prototype.hasOwnProperty.call(index, name)) {
-        index[name] = { name: name, items: [] };
-        groups.push(index[name]);
+      /* ------------------------------------------------------------------ */
+      /* helpers                                                            */
+      /* ------------------------------------------------------------------ */
+      function el(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) { n.className = cls; }
+        if (text !== undefined && text !== null) { n.textContent = text; }
+        return n;
       }
-      index[name].items.push(item);
-    });
 
-    body.appendChild(el('div', 'set-group-note', 'Pick Rebind next to any action, then press Enter to store the new Windows shortcut.'));
-
-    groups.forEach(function (g) {
-      var group = el('div', 'settings-group');
-      group.appendChild(el('div', 'settings-group-title', g.name));
-      var grid = el('div', 'kb-grid');
-      g.items.forEach(function (item) { grid.appendChild(createKeybindRow(item)); });
-      group.appendChild(grid);
-      body.appendChild(group);
-    });
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* rendering                                                           */
-  /* ------------------------------------------------------------------ */
-  function renderCategory(key) {
-    var cat = CATEGORY_BY_KEY[key] || CATEGORY_BY_KEY.general;
-    state.category = cat.key;
-
-    if (dom.rail) {
-      var items = dom.rail.querySelectorAll('.settings-rail-item');
-      for (var i = 0; i < items.length; i++) {
-        items[i].classList.toggle('active', items[i].getAttribute('data-cat') === cat.key);
+      function flatten(obj, prefix, out) {
+        out = out || {};
+        prefix = prefix || '';
+        Object.keys(obj).forEach(function (k) {
+          var v = obj[k];
+          var p = prefix ? prefix + '.' + k : k;
+          if (v && typeof v === 'object' && !Array.isArray(v)) { flatten(v, p, out); }
+          else { out[p] = v; }
+        });
+        return out;
       }
-    }
-    if (dom.title) { dom.title.textContent = cat.title; }
-    if (dom.desc) { dom.desc.textContent = cat.desc; }
 
-    if (!dom.body) { return; }
-    dom.body.innerHTML = '';
+      /* Build the nested body PUT /api/config expects from dotted paths. */
+      function unflatten(flat) {
+        var out = {};
+        Object.keys(flat).forEach(function (p) {
+          var parts = p.split('.');
+          var node = out;
+          for (var i = 0; i < parts.length - 1; i++) {
+            if (!node[parts[i]] || typeof node[parts[i]] !== 'object') { node[parts[i]] = {}; }
+            node = node[parts[i]];
+          }
+          node[parts[parts.length - 1]] = flat[p];
+        });
+        return out;
+      }
 
-    if (cat.key === 'shortcuts') {
-      renderKeybinds(dom.body);
-    } else {
-      (cat.groups || []).forEach(function (g) {
-        var group = el('div', 'settings-group');
-        group.appendChild(el('div', 'settings-group-title', g.title));
-        var list = el('div', 'fld-list');
-        (g.fields || []).forEach(function (f) { list.appendChild(createFieldRow(f)); });
-        group.appendChild(list);
-        dom.body.appendChild(group);
-      });
-    }
+      function labelFor(path, meta) {
+        if (meta && meta.label) { return meta.label; }
+        var tail = path.split('.').pop();
+        return tail.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+      }
 
-    var empty = el('div', 'set-empty', 'No settings match this filter.');
-    empty.style.display = 'none';
-    dom.empty = empty;
-    dom.body.appendChild(empty);
+      function typeFor(meta) {
+        if (!meta) { return 'text'; }
+        if (meta.options && meta.options.length) { return 'select'; }
+        if (meta.type === 'boolean') { return 'toggle'; }
+        if (meta.type === 'number') { return 'number'; }
+        if (meta.type === 'list') { return 'text'; }
+        return 'text';
+      }
 
-    applyFilter();
-  }
+      function coerce(path, raw, meta) {
+        var t = typeFor(meta);
+        if (t === 'toggle') {
+          if (typeof raw === 'boolean') { return raw; }
+          return raw === 'true' || raw === '1' || raw === 1;
+        }
+        if (t === 'number') {
+          var n = parseFloat(raw);
+          return isNaN(n) ? raw : n;
+        }
+        if (raw === null || raw === undefined) { return raw; }
+        return raw;
+      }
 
-  function applyFilter() {
-    if (!dom.body) { return; }
-    var q = (state.filter || '').trim().toLowerCase();
-    var rows = dom.body.querySelectorAll('.fld-row, .kb-row');
-    var shown = 0;
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
-      var hay = ((row.textContent || '') + ' ' + (row.getAttribute('data-path') || '')).toLowerCase();
-      var hit = !q || hay.indexOf(q) !== -1;
-      row.style.display = hit ? '' : 'none';
-      if (hit) { shown++; }
-    }
-    if (dom.empty) { dom.empty.style.display = (q && shown === 0) ? '' : 'none'; }
-  }
+      /* ------------------------------------------------------------------ */
+      /* schema access                                                      */
+      /* ------------------------------------------------------------------ */
+      function schemaFields() {
+        return (state.schema && state.schema.fields) || {};
+      }
 
-  /* ------------------------------------------------------------------ */
-  /* save / reset                                                        */
-  /* ------------------------------------------------------------------ */
-  function collectChanged() {
-    var out = {};
-    Object.keys(state.values).forEach(function (p) {
-      var a = state.values[p];
-      var b = state.baseline[p];
-      if (String(a) !== String(b)) { out[p] = a; }
-    });
-    return out;
-  }
+      function fieldsFor(section) {
+        var fields = schemaFields();
+        var wanted = section.cats;
+        var out = [];
+        Object.keys(fields).forEach(function (path) {
+          var meta = fields[path];
+          if (wanted.indexOf(meta.category) !== -1) { out.push({ path: path, meta: meta }); }
+        });
+        // Credentials and secrets are never echoed back into the UI.
+        out = out.filter(function (f) {
+          return !/api_key|secret|password|token$/i.test(f.path);
+        });
+        return out;
+      }
 
-  function save() {
-    var changed = collectChanged();
-    document.dispatchEvent(new CustomEvent('hermes:settings-change', { detail: { values: changed } }));
-    Object.keys(state.values).forEach(function (p) { state.baseline[p] = state.values[p]; });
-    close();
-  }
+      function sectionByKey(key) {
+        for (var i = 0; i < SECTIONS.length; i++) {
+          if (SECTIONS[i].key === key) { return SECTIONS[i]; }
+        }
+        return SECTIONS[0];
+      }
 
-  function reset() {
-    var d = defaultValues();
-    Object.keys(state.values).forEach(function (p) {
-      if (!Object.prototype.hasOwnProperty.call(d, p)) { delete state.values[p]; }
-    });
-    Object.keys(d).forEach(function (p) { state.values[p] = d[p]; });
-    renderCategory(state.category);
-  }
+      /* ------------------------------------------------------------------ */
+      /* rendering                                                          */
+      /* ------------------------------------------------------------------ */
+      function currentValue(path) {
+        if (Object.prototype.hasOwnProperty.call(state.values, path)) { return state.values[path]; }
+        var meta = schemaFields()[path];
+        if (meta && meta.default !== undefined) { return meta.default; }
+        return '';
+      }
 
-  /* ------------------------------------------------------------------ */
-  /* modal open / close                                                 */
-  /* ------------------------------------------------------------------ */
-  function open() {
-    if (!dom.modal) { return; }
-    dom.modal.classList.add('open');
-    renderCategory(state.category);
-    if (dom.filter) { dom.filter.focus(); }
-  }
+      function createFieldRow(f) {
+        var path = f.path;
+        var meta = f.meta;
+        var type = typeFor(meta);
+        var row = el('div', 'fld-row');
+        row.setAttribute('data-path', path);
 
-  function close() {
-    if (!dom.modal) { return; }
-    dom.modal.classList.remove('open');
-  }
+        var metaBox = el('div', 'fld-meta');
+        metaBox.appendChild(el('div', 'fld-label', labelFor(path, meta)));
+        metaBox.appendChild(el('div', 'fld-path', path));
+        if (meta && meta.description) {
+          metaBox.appendChild(el('div', 'fld-desc', meta.description));
+        }
+        row.appendChild(metaBox);
 
-  function isOpen() {
-    return !!(dom.modal && dom.modal.classList.contains('open'));
-  }
+        var ctl = el('div', 'fld-ctl');
+        var value = currentValue(path);
 
-  /* ------------------------------------------------------------------ */
-  /* public API                                                          */
-  /* ------------------------------------------------------------------ */
-  function setLive(isLive, detail) {
-    var node = dom.live;
-    if (!node) { return; }
-    var on = !!isLive;
-    node.classList.toggle('live', on);
-    node.classList.toggle('offline', !on);
-    var label = dom.liveLabel || node;
-    label.textContent = on ? ('Live - connected to ' + liveEndpoint(detail)) : 'Offline - mock values';
-  }
+        if (type === 'toggle') {
+          var btn = el('button', 'fld-toggle' + (value ? ' on' : ''));
+          btn.type = 'button';
+          btn.setAttribute('aria-pressed', value ? 'true' : 'false');
+          btn.setAttribute('aria-label', labelFor(path, meta));
+          btn.addEventListener('click', function () {
+            var next = !btn.classList.contains('on');
+            btn.classList.toggle('on', next);
+            btn.setAttribute('aria-pressed', next ? 'true' : 'false');
+            state.values[path] = next;
+          });
+          ctl.appendChild(btn);
+        } else if (type === 'select') {
+          var sel = document.createElement('select');
+          sel.setAttribute('aria-label', labelFor(path, meta));
+          (meta.options || []).forEach(function (opt) {
+            var o = document.createElement('option');
+            o.value = opt === null || opt === undefined ? '' : String(opt);
+            o.textContent = o.value === '' ? '(unset)' : o.value;
+            sel.appendChild(o);
+          });
+          sel.value = value === null || value === undefined ? '' : String(value);
+          sel.addEventListener('change', function () {
+            state.values[path] = sel.value === '' ? null : sel.value;
+          });
+          ctl.appendChild(sel);
+        } else {
+          var input = document.createElement('input');
+          input.type = type === 'number' ? 'number' : 'text';
+          input.setAttribute('aria-label', labelFor(path, meta));
+          input.value = value === null || value === undefined ? '' : String(value);
+          if (type === 'number') { input.className = ''; }
+          input.addEventListener('input', function () {
+            state.values[path] = coerce(path, input.value, meta);
+          });
+          ctl.appendChild(input);
+        }
 
-  function applyValues(obj) {
-    if (!obj || typeof obj !== 'object') { return; }
-    var flat = flatten(obj);
-    Object.keys(flat).forEach(function (p) {
-      state.values[p] = flat[p];
-      state.baseline[p] = flat[p];
-    });
-    renderCategory(state.category);
-  }
+        row.appendChild(ctl);
+        return row;
+      }
 
-  function getValues() {
-    var out = {};
-    Object.keys(state.values).forEach(function (p) { out[p] = state.values[p]; });
-    return out;
-  }
+      function renderKeys(box, chord) {
+        box.innerHTML = '';
+        String(chord || '').split('+').forEach(function (part) {
+          box.appendChild(el('kbd', 'kbd', part));
+        });
+      }
 
-  function init() {
-    dom.modal = document.getElementById('hermesSettingsModal');
-    dom.rail = document.getElementById('settingsRail');
-    dom.pane = document.getElementById('settingsPane');
-    dom.title = document.getElementById('settingsPaneTitle');
-    dom.desc = document.getElementById('settingsPaneDesc');
-    dom.filter = document.getElementById('settingsFilter');
-    dom.live = document.getElementById('settingsLiveStatus');
-    dom.liveLabel = document.getElementById('settingsLiveLabel');
-    dom.resetBtn = document.getElementById('settingsResetBtn');
-    dom.saveBtn = document.getElementById('settingsSaveBtn');
-    dom.closeBtn = document.getElementById('closeHermesSettingsBtn');
+      function keybindSource() {
+        return window.__HERMES_KEYBINDS__ || [];
+      }
 
-    state.values = defaultValues();
-    state.baseline = defaultValues();
+      function keybindOverrides() {
+        if (!window.__HERMES_KEYBIND_OVERRIDES__ || typeof window.__HERMES_KEYBIND_OVERRIDES__ !== 'object') {
+          window.__HERMES_KEYBIND_OVERRIDES__ = {};
+        }
+        return window.__HERMES_KEYBIND_OVERRIDES__;
+      }
 
-    if (dom.pane) {
-      dom.body = el('div', 'set-pane-body');
-      dom.pane.appendChild(dom.body);
-    }
+      function createKeybindRow(item) {
+        var overrides = keybindOverrides();
+        var id = item.id;
+        var raw = (overrides[id] !== undefined && overrides[id] !== null && overrides[id] !== '')
+          ? overrides[id]
+          : (Array.isArray(item.keys) ? item.keys.join(' / ') : item.keys);
+        var chord = raw == null ? '' : String(raw);
 
-    if (dom.rail) {
-      dom.rail.addEventListener('click', function (e) {
-        var btn = e.target.closest ? e.target.closest('.settings-rail-item') : null;
-        if (!btn) { return; }
-        var key = btn.getAttribute('data-cat');
-        if (key) { renderCategory(key); }
-      });
-    }
+        var row = el('div', 'kb-row set-kb-row');
+        row.setAttribute('data-kb', id);
+        row.appendChild(el('span', 'set-kb-label', item.label || id));
 
-    if (dom.filter) {
-      dom.filter.addEventListener('input', function () {
-        state.filter = dom.filter.value || '';
+        var side = el('div', 'set-kb-side');
+        var keys = el('div', 'kb-keys');
+        renderKeys(keys, chord);
+        side.appendChild(keys);
+
+        var rebind = el('button', 'set-kb-rebind', 'Rebind');
+        rebind.type = 'button';
+        rebind.setAttribute('aria-label', 'Rebind ' + (item.label || id));
+
+        var input = el('input', 'set-kb-input');
+        input.type = 'text';
+        input.value = chord;
+        input.setAttribute('aria-label', 'New shortcut for ' + (item.label || id));
+
+        function commit() {
+          var next = input.value.trim();
+          if (next) { keybindOverrides()[id] = next; } else { delete keybindOverrides()[id]; }
+          row.classList.remove('editing');
+          renderKeys(keys, next || chord);
+        }
+        function cancel() {
+          row.classList.remove('editing');
+          renderKeys(keys, chord);
+        }
+
+        rebind.addEventListener('click', function () {
+          row.classList.add('editing');
+          input.focus();
+          if (input.select) { input.select(); }
+        });
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
+        });
+        input.addEventListener('blur', function () {
+          if (row.classList.contains('editing')) { commit(); }
+        });
+
+        side.appendChild(rebind);
+        side.appendChild(input);
+        row.appendChild(side);
+        return row;
+      }
+
+      function renderKeybinds(body) {
+        var items = keybindSource();
+        var groups = [];
+        var index = {};
+        items.forEach(function (item) {
+          var name = item.category || item.group || 'General';
+          if (!Object.prototype.hasOwnProperty.call(index, name)) {
+            index[name] = { name: name, items: [] };
+            groups.push(index[name]);
+          }
+          index[name].items.push(item);
+        });
+        groups.forEach(function (g) {
+          var group = el('div', 'settings-group');
+          group.appendChild(el('div', 'settings-group-title', g.name));
+          var list = el('div', 'fld-list');
+          g.items.forEach(function (item) { list.appendChild(createKeybindRow(item)); });
+          group.appendChild(list);
+          body.appendChild(group);
+        });
+      }
+
+      function renderCategory(key) {
+        var section = sectionByKey(key);
+        state.category = section.key;
+
+        if (dom.rail) {
+          $$('.settings-rail-item', dom.rail).forEach(function (item) {
+            item.classList.toggle('active', item.getAttribute('data-cat') === section.key);
+          });
+        }
+        if (dom.title) { dom.title.textContent = section.label; }
+        if (dom.desc) { dom.desc.textContent = section.desc; }
+        if (!dom.body) { return; }
+
+        dom.body.innerHTML = '';
+
+        if (section.key === 'shortcuts') {
+          renderKeybinds(dom.body);
+        } else {
+          var fields = fieldsFor(section);
+          if (!fields.length) {
+            var note = el('div', 'set-empty', 'No live schema fields for this section yet.');
+            dom.body.appendChild(note);
+          } else {
+            var group = el('div', 'settings-group');
+            group.appendChild(el('div', 'settings-group-title',
+              fields.length + ' field' + (fields.length === 1 ? '' : 's') + ' from /api/config/schema'));
+            var list = el('div', 'fld-list');
+            fields.forEach(function (f) { list.appendChild(createFieldRow(f)); });
+            group.appendChild(list);
+            dom.body.appendChild(group);
+          }
+        }
+
+        var empty = el('div', 'set-empty', 'No settings match this filter.');
+        empty.style.display = 'none';
+        dom.empty = empty;
+        dom.body.appendChild(empty);
+
         applyFilter();
-      });
-    }
+      }
 
-    if (dom.resetBtn) { dom.resetBtn.addEventListener('click', reset); }
-    if (dom.saveBtn) { dom.saveBtn.addEventListener('click', save); }
-    if (dom.closeBtn) { dom.closeBtn.addEventListener('click', close); }
+      function applyFilter() {
+        if (!dom.body) { return; }
+        var q = (state.filter || '').trim().toLowerCase();
+        var rows = dom.body.querySelectorAll('.fld-row, .kb-row');
+        var shown = 0;
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var hay = ((row.textContent || '') + ' ' + (row.getAttribute('data-path') || '')).toLowerCase();
+          var hit = !q || hay.indexOf(q) !== -1;
+          row.style.display = hit ? '' : 'none';
+          if (hit) { shown++; }
+        }
+        if (dom.empty) { dom.empty.style.display = (q && shown === 0) ? '' : 'none'; }
+      }
 
-    if (dom.modal) {
-      dom.modal.addEventListener('click', function (e) {
-        if (e.target === dom.modal) { close(); }
-      });
-    }
+      /* ------------------------------------------------------------------ */
+      /* save / reset                                                       */
+      /* ------------------------------------------------------------------ */
+      function collectChanged() {
+        var out = {};
+        Object.keys(state.values).forEach(function (p) {
+          var a = state.values[p];
+          var b = state.baseline[p];
+          if (String(a) !== String(b)) { out[p] = a; }
+        });
+        return out;
+      }
 
-    document.addEventListener('keydown', function (e) {
-      if ((e.key === 'Escape' || e.key === 'Esc') && isOpen()) {
-        if (state.editing) { return; }
+      function save() {
+        var changed = collectChanged();
+        document.dispatchEvent(new CustomEvent('hermes:settings-change', { detail: { values: changed } }));
+        Object.keys(state.values).forEach(function (p) { state.baseline[p] = state.values[p]; });
         close();
       }
-    });
 
-    setLive(false);
-    renderCategory('general');
+      function reset() {
+        var fields = schemaFields();
+        Object.keys(state.values).forEach(function (p) {
+          if (!Object.prototype.hasOwnProperty.call(fields, p)) { delete state.values[p]; }
+        });
+        Object.keys(fields).forEach(function (p) {
+          var meta = fields[p];
+          if (meta && meta.default !== undefined) { state.values[p] = meta.default; }
+        });
+        renderCategory(state.category);
+      }
 
-    window.HermesSettings = {
-      setLive: setLive,
-      applyValues: applyValues,
-      open: open,
-      close: close,
-      render: renderCategory,
-      reset: reset,
-      getValues: getValues,
-      getKeybindOverrides: keybindOverrides,
-      config: CATEGORY_DEFS,
-      isOpen: isOpen
-    };
-  }
+      /* ------------------------------------------------------------------ */
+      /* modal open / close                                                 */
+      /* ------------------------------------------------------------------ */
+      function open() {
+        if (!dom.modal) { return; }
+        dom.modal.classList.add('open');
+        renderCategory(state.category);
+        if (dom.filter) { dom.filter.focus(); }
+      }
+      function close() {
+        if (!dom.modal) { return; }
+        dom.modal.classList.remove('open');
+      }
+      function isOpen() {
+        return !!(dom.modal && dom.modal.classList.contains('open'));
+      }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+      /* ------------------------------------------------------------------ */
+      /* public API                                                         */
+      /* ------------------------------------------------------------------ */
+      function setLive(isLive, detail) {
+        var node = dom.live;
+        if (!node) { return; }
+        var on = !!isLive;
+        node.classList.toggle('live', on);
+        node.classList.toggle('offline', !on);
+        var label = dom.liveLabel || node;
+        label.textContent = on
+          ? ('Live - connected to ' + (detail || 'the Hermes runtime'))
+          : 'Offline - schema unavailable, showing the live field list only';
+      }
+
+      function applySchema(schema) {
+        if (!schema || !schema.fields) { return; }
+        state.schema = schema;
+        renderCategory(state.category);
+      }
+
+      function applyValues(obj) {
+        if (!obj || typeof obj !== 'object') { return; }
+        var flat = flatten(obj);
+        Object.keys(flat).forEach(function (p) {
+          state.values[p] = flat[p];
+          state.baseline[p] = flat[p];
+        });
+        renderCategory(state.category);
+      }
+
+      function getValues() {
+        var out = {};
+        Object.keys(state.values).forEach(function (p) { out[p] = state.values[p]; });
+        return out;
+      }
+
+      function init() {
+        dom.modal = document.getElementById('hermesSettingsModal');
+        dom.rail = document.getElementById('settingsRail');
+        dom.pane = document.getElementById('settingsPane');
+        dom.title = document.getElementById('settingsPaneTitle');
+        dom.desc = document.getElementById('settingsPaneDesc');
+        dom.filter = document.getElementById('settingsFilter');
+        dom.body = document.getElementById('settingsPaneBody');
+        dom.live = document.getElementById('settingsLiveStatus');
+        dom.liveLabel = document.getElementById('settingsLiveLabel');
+        dom.saveBtn = document.getElementById('settingsSaveBtn');
+        dom.resetBtn = document.getElementById('settingsResetBtn');
+        dom.closeBtn = document.getElementById('closeHermesSettingsBtn');
+
+        // Rebuild the rail from the 9 sections so markup and code agree.
+        if (dom.rail) {
+          dom.rail.innerHTML = '';
+          SECTIONS.forEach(function (section) {
+            var b = el('button', 'settings-rail-item');
+            b.type = 'button';
+            b.setAttribute('data-cat', section.key);
+            b.appendChild(el('span', 'ic', ''));
+            b.appendChild(el('span', null, section.label));
+            b.addEventListener('click', function () { renderCategory(section.key); });
+            dom.rail.appendChild(b);
+          });
+        }
+
+        if (dom.filter) {
+          dom.filter.addEventListener('input', function () {
+            state.filter = dom.filter.value;
+            applyFilter();
+          });
+        }
+        if (dom.saveBtn) { dom.saveBtn.addEventListener('click', save); }
+        if (dom.resetBtn) { dom.resetBtn.addEventListener('click', reset); }
+        if (dom.closeBtn) { dom.closeBtn.addEventListener('click', close); }
+        if (dom.modal) {
+          dom.modal.addEventListener('click', function (e) {
+            if (e.target === dom.modal) { close(); }
+          });
+        }
+
+        renderCategory(state.category);
+
+        window.HermesSettings = {
+          setLive: setLive,
+          applyValues: applyValues,
+          applySchema: applySchema,
+          open: open,
+          close: close,
+          render: renderCategory,
+          reset: reset,
+          getValues: getValues,
+          unflatten: unflatten,
+          sections: SECTIONS,
+          isOpen: isOpen
+        };
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
 
     /* =====================================================================
        HERMES STUDIO WEBUI v7 - RUNTIME LAYER
@@ -5082,7 +4970,8 @@
           enabled: true,
           last: '2h ago',
           next: 'in 11h',
-          noAgent: false
+          noAgent: false,
+          cronMeta: '0 7 * * *  |  gemini-4-hydrogen-medium  |  state idle  |  next in 11h'
         },
         {
           id: 'cron-backup-watch',
@@ -5092,7 +4981,8 @@
           enabled: true,
           last: '14m ago',
           next: 'in 16m',
-          noAgent: true
+          noAgent: true,
+          cronMeta: '*/30 * * * *  |  none (script only)  |  state idle  |  next in 16m'
         },
         {
           id: 'cron-vps-ping',
@@ -5102,7 +4992,8 @@
           enabled: false,
           last: '2d ago',
           next: 'paused',
-          noAgent: true
+          noAgent: true,
+          cronMeta: '*/5 * * * *  |  none (script only)  |  state paused  |  next paused'
         }
       ];
       let cronJobs = CRON_SEED.slice();
@@ -5117,16 +5008,12 @@
         cronJobs.forEach(job => {
           const row = document.createElement('div');
           row.className = 'cron-row';
-          const badge = job.enabled
-            ? '<span class="cron-badge on">on</span>'
-            : '<span class="cron-badge paused">paused</span>';
           row.innerHTML =
             '<span class="cron-badge ' + (job.enabled ? 'on' : 'paused') + '">' + (job.enabled ? 'on' : 'paused') + '</span>' +
             '<div><div class="cron-name"></div><div class="cron-meta"></div></div>' +
             '<div class="cron-actions"></div>';
           row.querySelector('.cron-name').textContent = job.name;
-          row.querySelector('.cron-meta').textContent =
-            job.schedule + '  |  ' + job.model + '  |  last ' + job.last + '  |  next ' + job.next;
+          row.querySelector('.cron-meta').textContent = job.cronMeta;
 
           const actions = row.querySelector('.cron-actions');
           const toggle = document.createElement('button');
@@ -5147,8 +5034,34 @@
           actions.appendChild(toggle);
           actions.appendChild(run);
           list.appendChild(row);
-          void badge;
         });
+      }
+
+      // The real cron listing is GET /api/cron/jobs (there is no /api/cron).
+      // It returns a JSON array of job records.
+      async function loadCron() {
+        try {
+          const jobs = await apiGet('/api/cron/jobs');
+          if (!Array.isArray(jobs) || !jobs.length) return false;
+          cronJobs = jobs.map(j => ({
+            id: j.id,
+            name: j.name || j.id,
+            enabled: !!j.enabled,
+            noAgent: !!j.no_agent,
+            model: j.model || (j.no_agent ? 'none (script only)' : 'default'),
+            cronMeta: (j.schedule_display || (j.schedule && j.schedule.expr) || 'unscheduled') +
+              '  |  ' + (j.model || (j.no_agent ? 'none (script only)' : 'default')) +
+              '  |  state ' + (j.state || 'unknown') +
+              (j.next_run_at ? '  |  next ' + j.next_run_at : ''),
+            last: j.last_run_at || 'never',
+            next: j.next_run_at || 'paused'
+          }));
+          renderCron();
+          return true;
+        } catch (err) {
+          api.lastError = err.message;
+          return false;
+        }
       }
 
       /* ------------------------------------------------------------------
@@ -5254,34 +5167,50 @@
         }
       }
 
+      // The live /api/status shape: version, gateway_running, gateway_state,
+      // active_agents, active_sessions, overall, memory, disk. The model and
+      // provider live in /api/config, not here.
       function hydrateFromStatus(status) {
         if (!status) return;
-        const model = status.model || (status.agent && status.agent.model);
-        const provider = status.provider || (status.agent && status.agent.provider);
-        const tokens = status.tokens || status.usage || {};
-        const tps = status.tps || status.tokens_per_second;
-
-        const chips = $$('.sb-right .sb-chip');
-        chips.forEach(c => {
-          const txt = c.textContent;
-          if (provider && /MiniMax|Claude|Gemini|GPT/i.test(txt) && !model) {
-            c.textContent = provider + (tps ? ' · ' + tps + ' t/s' : '');
-          }
-          if (tokens && tokens.used && tokens.limit && /\/.*K|K \//.test(txt)) {
-            c.textContent = tokens.used + ' / ' + tokens.limit +
-              (tokens.cache_pct != null ? ' · ' + tokens.cache_pct + '% cache' : '');
-          }
-        });
 
         const badge = $('#turnMetaBadge');
-        if (badge && status.gateway) badge.textContent = status.gateway;
+        if (badge) {
+          const bits = [];
+          if (status.version) bits.push('v' + status.version);
+          if (status.active_sessions != null) bits.push(status.active_sessions + ' session' + (status.active_sessions === 1 ? '' : 's'));
+          if (status.active_agents != null) bits.push(status.active_agents + ' agent' + (status.active_agents === 1 ? '' : 's'));
+          badge.textContent = bits.join(' · ');
+        }
 
         const gwDot = $('#gwDot');
         const gwName = $('#gwName');
         const gwPing = $('#gwPing');
-        if (gwName && status.gateway) gwName.textContent = status.gateway;
-        if (gwPing && status.ping_ms != null) gwPing.textContent = status.ping_ms + 'ms';
-        if (gwDot && status.online === false) gwDot.classList.add('vps');
+        if (gwName && status.gateway_state) gwName.textContent = status.gateway_state;
+        if (gwPing && status.gateway_running != null) {
+          gwPing.textContent = status.gateway_running ? 'live' : 'down';
+        }
+        if (gwDot) {
+          gwDot.classList.toggle('vps', status.gateway_running === false);
+        }
+
+        // The overall health of the runtime is the honest signal for the
+        // status bar's health chip.
+        const health = status.overall;
+        const healthChip = $('#sbAgyChip');
+        if (healthChip && health) {
+          healthChip.lastChild.textContent = health === 'ok' ? 'runtime ok' : 'runtime ' + health;
+        }
+
+        const mem = status.memory;
+        const ctxChip = $('#sbContextChip');
+        if (ctxChip && mem) {
+          const used = mem.gateway_rss_mb != null ? Math.round(mem.gateway_rss_mb) + ' MB' : null;
+          const avail = mem.system_available_mb != null ? Math.round(mem.system_available_mb / 1024) + ' GB free' : null;
+          const parts = [];
+          if (used) parts.push(used);
+          if (avail) parts.push(avail);
+          if (parts.length) ctxChip.textContent = parts.join(' · ');
+        }
       }
 
       function hydrateFromConfig(cfg) {
@@ -5290,11 +5219,38 @@
         if (window.HermesSettings && window.HermesSettings.applyValues) {
           window.HermesSettings.applyValues(values);
         }
-        const theme = values.ui && values.ui.theme;
+
+        // The live model comes from /api/config ("model" is a string in the
+        // web shape), not from /api/status.
+        const model = values.model;
+        const modelChip = $('#sbModelChip');
+        if (modelChip && typeof model === 'string' && model) {
+          modelChip.textContent = model;
+        }
+
+        // The real theme lives under display.theme.
+        const theme = values.display && values.display.theme;
         if (theme === 'dark' || theme === 'apple') {
           document.documentElement.setAttribute('data-theme', theme);
           const lbl = $('#themeLabel');
           if (lbl) lbl.textContent = theme === 'dark' ? 'Apple Daylight' : 'Obsidian Dark';
+        }
+      }
+
+      // The schema endpoint is the source of truth for which config fields
+      // exist and what they are called. Without it the settings pane would
+      // show invented paths that the PUT would silently drop.
+      async function loadSchema() {
+        try {
+          const schema = await apiGet('/api/config/schema');
+          api.schema = schema;
+          if (window.HermesSettings && window.HermesSettings.applySchema) {
+            window.HermesSettings.applySchema(schema);
+          }
+          return schema;
+        } catch (err) {
+          api.lastError = err.message;
+          return null;
         }
       }
 
@@ -5317,6 +5273,7 @@
           try { cfg = await apiGet('/api/config'); } catch (err) { cfg = null; }
           api.config = cfg;
           hydrateFromConfig(cfg);
+          await loadSchema();
           setLiveStatus(true, 'Live - connected to ' + api.base);
           return true;
         } catch (err) {
@@ -5326,6 +5283,36 @@
         }
       }
       window.HermesApi = { probe: probeRuntime, get: apiGet, put: apiPut, state: api };
+
+      // Saving settings really writes to the runtime. The server contract is
+      // PUT /api/config with a NESTED body {config: {...}, profile: null},
+      // deep-merged over the on-disk config.
+      document.addEventListener('hermes:settings-change', async e => {
+        const changed = (e.detail && e.detail.values) || {};
+        const paths = Object.keys(changed);
+        if (!paths.length) {
+          toast('No changes to apply');
+          return;
+        }
+        if (!api.base) {
+          toast('Offline - changes kept locally only', 'no runtime to write to');
+          return;
+        }
+        try {
+          const nested = window.HermesSettings && window.HermesSettings.unflatten
+            ? window.HermesSettings.unflatten(changed)
+            : changed;
+          const body = { config: nested, profile: null };
+          await apiPut('/api/config', body);
+          toast('Settings applied', paths.length + ' field' + (paths.length === 1 ? '' : 's') + ' written');
+          // Re-read so the baseline reflects what the runtime actually stored.
+          const cfg = await apiGet('/api/config');
+          api.config = cfg;
+          hydrateFromConfig(cfg);
+        } catch (err) {
+          toast('Save failed', err.message);
+        }
+      });
 
       /* ------------------------------------------------------------------
          GLOBAL SHORTCUTS (Windows chords)
@@ -5398,9 +5385,16 @@
         }
 
         const cronBtn = $('#openCronBtn');
-        if (cronBtn) cronBtn.addEventListener('click', () => { renderCron(); openModal('cronModal'); });
+        if (cronBtn) cronBtn.addEventListener('click', () => {
+          renderCron();
+          openModal('cronModal');
+          loadCron();
+        });
         const cronRefresh = $('#cronRefreshBtn');
-        if (cronRefresh) cronRefresh.addEventListener('click', () => { renderCron(); toast('Cron list refreshed'); });
+        if (cronRefresh) cronRefresh.addEventListener('click', async () => {
+          const ok = await loadCron();
+          toast(ok ? 'Cron list refreshed' : 'Showing local mock schedule', ok ? 'from the runtime' : 'runtime unreachable');
+        });
         const cronAdd = $('#cronAddBtn');
         if (cronAdd) cronAdd.addEventListener('click', () => toast('New job', 'opens the hermes cron CLI'));
 
