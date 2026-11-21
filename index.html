@@ -5176,7 +5176,9 @@
         const badge = $('#turnMetaBadge');
         if (badge) {
           const bits = [];
-          if (status.version) bits.push('v' + status.version);
+          // The runtime reports version "unknown" in an isolated instance;
+          // printing that is noise, so it is only shown when it is real.
+          if (status.version && status.version !== 'unknown') bits.push('v' + status.version);
           if (status.active_sessions != null) bits.push(status.active_sessions + ' session' + (status.active_sessions === 1 ? '' : 's'));
           if (status.active_agents != null) bits.push(status.active_agents + ' agent' + (status.active_agents === 1 ? '' : 's'));
           badge.textContent = bits.join(' · ');
@@ -5209,7 +5211,17 @@
           const parts = [];
           if (used) parts.push(used);
           if (avail) parts.push(avail);
+          // Only replace the chip when the runtime actually reported memory;
+          // otherwise its placeholder text stays honest.
           if (parts.length) ctxChip.textContent = parts.join(' · ');
+        }
+
+        // The config path the runtime is actually using.
+        const cfgPath = status.config_path;
+        const pathChip = $('#sbPath');
+        if (pathChip && cfgPath) {
+          pathChip.textContent = cfgPath;
+          pathChip.title = 'Config path (click to copy): ' + cfgPath;
         }
       }
 
