@@ -1,103 +1,118 @@
 <!doctype html>
-<html lang="en" data-theme="obsidian">
+<html lang="en" data-theme="void">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hermes Studio — WebUI Redesign Concept</title>
+  <title>Hermes Studio v2 — Ultra-Dark Multi-Gateway & Worktree WebUI</title>
   <style>
     :root {
       --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+      --font-serif: "Newsreader", Georgia, serif;
       --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       --radius-sm: 6px;
       --radius-md: 10px;
-      --radius-lg: 14px;
+      --radius-lg: 13px;
       --transition: 160ms cubic-bezier(.2,.8,.2,1);
     }
 
-    /* Theme 1: Obsidian Precision (Dark) */
-    [data-theme="obsidian"] {
-      --bg: #0b0d11;
-      --bg-sidebar: #0e1117;
-      --bg-elevated: #12161f;
-      --bg-hover: #191f2b;
-      --bg-active: #1d2535;
-      --border: #1e2533;
-      --border-strong: #2d374b;
-      --fg: #eef2f8;
-      --fg-muted: #8b95a7;
-      --fg-faint: #5b6577;
-      --accent: #3b82f6;
-      --accent-soft: rgba(59, 130, 246, 0.14);
+    /* Default Theme: Void Carbon (Ultra-Dark) */
+    [data-theme="void"] {
+      --bg: #050608;
+      --bg-sidebar: #080a0e;
+      --bg-elevated: #0d1016;
+      --bg-surface: #11151d;
+      --bg-hover: #151a24;
+      --bg-active: #1a2130;
+      --border: #171c26;
+      --border-strong: #252e3f;
+      --fg: #f1f4f9;
+      --fg-muted: #8490a3;
+      --fg-faint: #505a6b;
+      --accent: #4f8bff;
+      --accent-soft: rgba(79, 139, 255, 0.14);
       --accent-fg: #ffffff;
-      --ok: #22c55e;
-      --ok-soft: rgba(34, 197, 94, 0.14);
+      --ok: #10b981;
+      --ok-soft: rgba(16, 185, 129, 0.14);
       --warn: #f59e0b;
       --warn-soft: rgba(245, 158, 11, 0.14);
-      --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-      --heading-font: var(--font-sans);
+      --purple: #a78bfa;
+      --purple-soft: rgba(167, 139, 250, 0.14);
+      --rose: #fb7185;
+      --rose-soft: rgba(251, 113, 133, 0.14);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
     }
 
-    /* Theme 2: Warm Atelier (Light Editorial) */
-    [data-theme="atelier"] {
-      --bg: #f8f7f4;
-      --bg-sidebar: #f1efea;
-      --bg-elevated: #ffffff;
-      --bg-hover: #eae6de;
-      --bg-active: #e4dfd5;
-      --border: #e3dfd6;
-      --border-strong: #cec8bc;
-      --fg: #18181b;
-      --fg-muted: #5c5850;
-      --fg-faint: #8c867a;
-      --accent: #c2631a;
-      --accent-soft: rgba(194, 99, 26, 0.12);
-      --accent-fg: #ffffff;
-      --ok: #15803d;
-      --ok-soft: rgba(21, 128, 61, 0.12);
-      --warn: #b45309;
-      --warn-soft: rgba(180, 83, 9, 0.12);
-      --shadow: 0 10px 28px rgba(24, 24, 27, 0.08);
-      --heading-font: var(--font-serif);
-    }
-
-    /* Theme 3: Midnight Emerald (Terminal Studio) */
-    [data-theme="emerald"] {
-      --bg: #070b0a;
-      --bg-sidebar: #0a100e;
-      --bg-elevated: #0f1714;
-      --bg-hover: #15211d;
-      --bg-active: #182923;
-      --border: #1c2e28;
-      --border-strong: #29443b;
-      --fg: #e8f5ef;
-      --fg-muted: #82a397;
-      --fg-faint: #506e64;
+    /* Alternate Dark 2: Pitch Onyx (Pure Black + Emerald) */
+    [data-theme="onyx"] {
+      --bg: #020303;
+      --bg-sidebar: #060807;
+      --bg-elevated: #0b0f0d;
+      --bg-surface: #101613;
+      --bg-hover: #141d18;
+      --bg-active: #18251e;
+      --border: #17231d;
+      --border-strong: #253a30;
+      --fg: #edf7f2;
+      --fg-muted: #7e9b8f;
+      --fg-faint: #4c645a;
       --accent: #10b981;
-      --accent-soft: rgba(16, 185, 129, 0.16);
+      --accent-soft: rgba(16, 185, 129, 0.15);
       --accent-fg: #03150e;
       --ok: #34d399;
       --ok-soft: rgba(52, 211, 153, 0.15);
       --warn: #fbbf24;
       --warn-soft: rgba(251, 191, 36, 0.15);
-      --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-      --heading-font: var(--font-sans);
+      --purple: #c084fc;
+      --purple-soft: rgba(192, 132, 252, 0.14);
+      --rose: #fb7185;
+      --rose-soft: rgba(251, 113, 133, 0.14);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+    }
+
+    /* Alternate Dark 3: Deep Graphite (Warm Dark) */
+    [data-theme="graphite"] {
+      --bg: #09090b;
+      --bg-sidebar: #0e0e11;
+      --bg-elevated: #141418;
+      --bg-surface: #1a1a20;
+      --bg-hover: #212128;
+      --bg-active: #272730;
+      --border: #22222a;
+      --border-strong: #343440;
+      --fg: #f4f4f5;
+      --fg-muted: #9898a6;
+      --fg-faint: #60606e;
+      --accent: #f59e0b;
+      --accent-soft: rgba(245, 158, 11, 0.14);
+      --accent-fg: #120b00;
+      --ok: #22c55e;
+      --ok-soft: rgba(34, 197, 94, 0.14);
+      --warn: #fbbf24;
+      --warn-soft: rgba(251, 191, 36, 0.14);
+      --purple: #a78bfa;
+      --purple-soft: rgba(167, 139, 250, 0.14);
+      --rose: #fb7185;
+      --rose-soft: rgba(251, 113, 133, 0.14);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 13.5px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    .mono { font-family: var(--font-mono); }
 
-    /* App Shell */
+    /* Collapsible 3-Pane Shell */
     .shell {
       display: grid;
-      grid-template-columns: 236px minmax(0, 1fr) 340px;
+      grid-template-columns: 244px minmax(0, 1fr) 330px;
       height: 100vh;
       overflow: hidden;
-      transition: grid-template-columns var(--transition);
+      transition: grid-template-columns 190ms cubic-bezier(.2,.8,.2,1);
     }
-    .shell.inspector-closed { grid-template-columns: 236px minmax(0, 1fr) 0px; }
+    .shell.sidebar-hidden { grid-template-columns: 0px minmax(0, 1fr) 330px; }
+    .shell.inspector-closed { grid-template-columns: 244px minmax(0, 1fr) 0px; }
+    .shell.sidebar-hidden.inspector-closed { grid-template-columns: 0px minmax(0, 1fr) 0px; }
 
-    /* Left Sidebar */
+    /* LEFT SIDEBAR (completely hidable) */
     .sidebar {
       background: var(--bg-sidebar);
       border-right: 1px solid var(--border);
@@ -105,274 +120,298 @@
       flex-direction: column;
       min-width: 0;
       overflow: hidden;
+      white-space: nowrap;
     }
+    .shell.sidebar-hidden .sidebar { border-right: none; }
+
     .brand {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 14px 10px;
+      height: 50px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px 0 14px; border-bottom: 1px solid var(--border);
     }
-    .brand-left { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 14px; letter-spacing: -0.01em; }
+    .brand-left { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 13.5px; letter-spacing: -0.01em; }
     .brand-mark {
-      width: 24px; height: 24px; border-radius: 7px;
-      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--ok)));
-      display: grid; place-items: center; color: var(--accent-fg); font-weight: 800; font-size: 12px;
+      width: 22px; height: 22px; border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 45%, var(--ok)));
+      display: grid; place-items: center; color: var(--accent-fg); font-weight: 800; font-size: 11.5px;
     }
-    .badge-ver {
-      font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted);
-      background: var(--bg-elevated); border: 1px solid var(--border);
-      padding: 2px 6px; border-radius: 99px;
+    .icon-btn {
+      width: 28px; height: 28px; border-radius: 7px; border: 1px solid transparent;
+      background: transparent; color: var(--fg-muted); cursor: pointer;
+      display: grid; place-items: center; font-size: 13px; transition: all var(--transition);
     }
+    .icon-btn:hover { background: var(--bg-hover); color: var(--fg); border-color: var(--border); }
 
     /* Profile Switcher */
-    .profile-box { padding: 0 12px 12px; }
+    .profile-box { padding: 10px 10px 6px; }
     .profile-switch {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
       background: var(--bg-elevated); border: 1px solid var(--border);
-      border-radius: var(--radius-md); padding: 8px 10px; color: var(--fg);
-      cursor: pointer; transition: border-color var(--transition), background var(--transition);
+      border-radius: var(--radius-md); padding: 7px 10px; color: var(--fg);
+      cursor: pointer; transition: all var(--transition);
     }
     .profile-switch:hover { border-color: var(--border-strong); background: var(--bg-hover); }
     .profile-meta { display: flex; align-items: center; gap: 8px; text-align: left; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); flex-shrink: 0; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); flex-shrink: 0; }
+    .dot.vps { background: var(--purple); box-shadow: 0 0 0 3px var(--purple-soft); }
     .profile-name { font-weight: 600; font-size: 12.5px; line-height: 1.2; }
-    .profile-sub { font-size: 11px; color: var(--fg-muted); }
+    .profile-sub { font-size: 10.5px; color: var(--fg-muted); }
 
     /* Nav */
-    .nav-scroll { flex: 1; overflow-y: auto; padding: 0 10px 12px; }
+    .nav-scroll { flex: 1; overflow-y: auto; padding: 2px 10px 12px; }
     .nav-label {
-      font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-      color: var(--fg-faint); padding: 12px 8px 5px;
+      font-size: 10px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--fg-faint); padding: 12px 8px 5px; display: flex; justify-content: space-between; align-items: center;
     }
     .nav-btn {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
-      gap: 9px; padding: 7px 9px; border-radius: var(--radius-sm);
+      gap: 8px; padding: 7px 9px; border-radius: var(--radius-sm);
       background: transparent; border: none; color: var(--fg-muted);
-      font-size: 13px; font-weight: 500; cursor: pointer; text-align: left;
-      transition: background var(--transition), color var(--transition);
+      font-size: 12.8px; font-weight: 500; cursor: pointer; text-align: left;
+      transition: all var(--transition);
     }
     .nav-btn:hover { background: var(--bg-hover); color: var(--fg); }
     .nav-btn.active { background: var(--bg-active); color: var(--fg); font-weight: 600; }
     .nav-btn-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .nav-pill {
-      font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted);
+      font-family: var(--font-mono); font-size: 10px; color: var(--fg-muted);
       background: var(--bg-elevated); border: 1px solid var(--border);
       padding: 1px 6px; border-radius: 99px;
     }
     .nav-btn.active .nav-pill { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 
+    /* Session items with Worktree tags */
     .thread-item {
-      display: block; width: 100%; text-align: left; background: none; border: none;
-      padding: 6px 9px; border-radius: var(--radius-sm); color: var(--fg-muted);
-      font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      background: none; border: 1px solid transparent; padding: 6px 8px; border-radius: var(--radius-sm);
+      color: var(--fg-muted); font-size: 12px; cursor: pointer; text-align: left;
     }
     .thread-item:hover { background: var(--bg-hover); color: var(--fg); }
-    .thread-item.current { color: var(--fg); background: var(--bg-elevated); }
+    .thread-item.current { background: var(--bg-elevated); border-color: var(--border); color: var(--fg); }
+    .thread-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wt-tag {
+      font-family: var(--font-mono); font-size: 9.5px; padding: 1px 5px; border-radius: 4px;
+      flex-shrink: 0; border: 1px solid transparent;
+    }
+    .wt-main { color: var(--ok); background: var(--ok-soft); }
+    .wt-feat { color: var(--accent); background: var(--accent-soft); }
+    .wt-fix { color: var(--warn); background: var(--warn-soft); }
 
     .sidebar-foot {
-      border-top: 1px solid var(--border); padding: 10px 12px;
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      border-top: 1px solid var(--border); padding: 9px 10px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .theme-pills { display: flex; gap: 4px; background: var(--bg-elevated); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+    .theme-pills { display: flex; gap: 3px; width: 100%; background: var(--bg-elevated); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
     .theme-pill {
-      border: none; background: transparent; color: var(--fg-muted); font-size: 11px;
-      padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 550;
+      flex: 1; border: none; background: transparent; color: var(--fg-muted); font-size: 11px;
+      padding: 4px 6px; border-radius: 5px; cursor: pointer; font-weight: 550;
     }
     .theme-pill.active { background: var(--accent); color: var(--accent-fg); }
 
-    /* Main Column */
+    /* MAIN AREA */
     .main { display: flex; flex-direction: column; min-width: 0; height: 100vh; background: var(--bg); }
     .topbar {
-      height: 52px; flex-shrink: 0; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; padding: 0 20px; gap: 12px;
+      height: 50px; flex-shrink: 0; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 14px; gap: 10px;
     }
-    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .page-title { font-family: var(--heading-font); font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
-    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: nowrap; }
+    .topbar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    /* Compact Gateway Switcher Pill */
+    .pop-wrap { position: relative; }
+    .gw-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--fg);
+      border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all var(--transition);
+    }
+    .gw-pill:hover { background: var(--bg-hover); border-color: var(--accent); }
+    .gw-lat { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); font-weight: 500; }
+
+    /* Worktree Switcher Pill */
+    .wt-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--bg-elevated); border: 1px solid var(--border); color: var(--fg);
+      border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 550; cursor: pointer;
+      transition: all var(--transition);
+    }
+    .wt-pill:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+    .diff-stat { font-family: var(--font-mono); font-size: 10.5px; }
+    .diff-add { color: var(--ok); }
+    .diff-del { color: var(--rose); }
+    .pr-chip {
+      font-family: var(--font-mono); font-size: 10px; padding: 1px 6px; border-radius: 99px;
+      background: var(--purple-soft); color: var(--purple); font-weight: 600;
+    }
+
+    /* Popover menus */
+    .popover {
+      position: absolute; top: calc(100% + 6px); left: 0; width: 290px;
+      background: var(--bg-elevated); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 6px;
+      display: none; flex-direction: column; gap: 3px; z-index: 40;
+    }
+    .popover.open { display: flex; }
+    .pop-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-faint); padding: 5px 8px 3px; font-weight: 650; }
+    .pop-item {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 9px; border-radius: 7px; border: 1px solid transparent;
+      background: transparent; color: var(--fg); cursor: pointer; text-align: left;
+    }
+    .pop-item:hover { background: var(--bg-hover); }
+    .pop-item.selected { background: var(--bg-active); border-color: var(--border-strong); }
+    .pop-sub { font-size: 11px; color: var(--fg-muted); font-family: var(--font-mono); }
+
     .chip-btn {
       display: inline-flex; align-items: center; gap: 6px;
       background: var(--bg-elevated); border: 1px solid var(--border); color: var(--fg);
-      border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 550; cursor: pointer;
-      transition: all var(--transition);
+      border-radius: 8px; padding: 5px 9px; font-size: 12px; font-weight: 550; cursor: pointer;
     }
     .chip-btn:hover { border-color: var(--border-strong); background: var(--bg-hover); }
     .chip-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
-    .kbd { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+    .kbd { font-family: var(--font-mono); font-size: 10px; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+
+    /* Worktree Context Ribbon (subtle bar showing active repo/worktree path) */
+    .wt-ribbon {
+      height: 30px; flex-shrink: 0; border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg-sidebar) 70%, var(--bg));
+      display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+      font-size: 11.5px; color: var(--fg-muted);
+    }
+    .wt-ribbon-left { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
+    .wt-path { font-family: var(--font-mono); font-size: 11px; color: var(--fg-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* Views */
     .view { display: none; flex: 1; min-height: 0; overflow-y: auto; }
     .view.active { display: flex; flex-direction: column; }
 
-    /* Chat View */
-    .chat-scroll { flex: 1; overflow-y: auto; padding: 24px 28px 18px; }
-    .chat-inner { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    /* Chat */
+    .chat-scroll { flex: 1; overflow-y: auto; padding: 22px 26px 16px; }
+    .chat-inner { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
     .msg-user {
       align-self: flex-end; max-width: 78%;
-      background: var(--bg-elevated); border: 1px solid var(--border);
-      padding: 11px 15px; border-radius: 14px 14px 4px 14px; font-size: 13.5px;
+      background: var(--bg-surface); border: 1px solid var(--border-strong);
+      padding: 10px 14px; border-radius: 13px 13px 4px 13px;
     }
-    .msg-ai { display: flex; flex-direction: column; gap: 12px; }
-    .msg-ai-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-muted); }
-    .msg-ai-head strong { color: var(--fg); font-weight: 600; }
-    .tool-trace {
-      display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px;
-      color: var(--fg-muted); background: var(--bg-elevated); border: 1px solid var(--border);
-      padding: 3px 8px; border-radius: 99px; width: fit-content;
-    }
+    .msg-ai { display: flex; flex-direction: column; gap: 11px; }
+    .msg-ai-head { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--fg-muted); }
+    .msg-ai-head strong { color: var(--fg); }
 
-    /* Inline Tabbed Widget (matching Omar's signature style) */
+    /* Inline Tabbed Widget */
     .inline-widget {
-      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
       background: var(--bg-elevated); padding: 14px 16px;
     }
     .iw-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      padding-bottom: 11px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
     }
-    .iw-title { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 13.5px; }
+    .iw-title { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 13px; }
     .iw-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
     .iw-tab {
       border: 1px solid var(--border); background: transparent; color: var(--fg-muted);
-      font-size: 12px; font-weight: 550; padding: 4px 10px; border-radius: 7px; cursor: pointer;
+      font-size: 11.5px; font-weight: 550; padding: 4px 9px; border-radius: 6px; cursor: pointer;
     }
     .iw-tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
     .iw-panel { display: none; }
     .iw-panel.active { display: block; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-    .kpi {
-      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px;
-    }
-    .kpi-label { font-size: 11px; color: var(--fg-muted); }
-    .kpi-val { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
-    .kpi-sub { font-size: 11px; color: var(--ok); font-family: var(--font-mono); margin-top: 2px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 10px 11px; }
+    .kpi-label { font-size: 10.5px; color: var(--fg-muted); }
+    .kpi-val { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
+    .kpi-sub { font-size: 10.5px; color: var(--ok); font-family: var(--font-mono); margin-top: 2px; }
 
-    .bar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .bar-row { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
-    .bar-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
-    .bar-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
-    .bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
-
-    /* Docked Live Plan Checklist + Composer */
-    .composer-dock {
-      flex-shrink: 0; padding: 0 24px 18px;
-      background: linear-gradient(to top, var(--bg) 82%, transparent);
-    }
-    .composer-wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
-    .plan-bar {
-      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md);
-      padding: 8px 12px; font-size: 12.5px;
-    }
+    /* Composer + Live Plan */
+    .composer-dock { flex-shrink: 0; padding: 0 22px 16px; background: linear-gradient(to top, var(--bg) 84%, transparent); }
+    .composer-wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 7px; }
+    .plan-bar { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 7px 12px; font-size: 12px; }
     .plan-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-    .plan-head-left { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-    .plan-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-    .plan-step { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--fg-muted); }
+    .plan-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 14px; margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--border); }
+    .plan-step { font-size: 11.5px; color: var(--fg-muted); }
     .plan-step.done { color: var(--fg); }
     .plan-step.now { color: var(--accent); font-weight: 600; }
 
-    .composer {
-      background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
-      padding: 10px 12px; box-shadow: var(--shadow);
-    }
-    .composer textarea {
-      width: 100%; resize: none; border: none; outline: none; background: transparent;
-      color: var(--fg); font-family: inherit; font-size: 13.5px; min-height: 40px;
-    }
+    .composer { background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: 10px 12px; box-shadow: var(--shadow); }
+    .composer textarea { width: 100%; resize: none; border: none; outline: none; background: transparent; color: var(--fg); font-family: inherit; font-size: 13.5px; min-height: 38px; }
     .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
     .composer-pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .mini-pill {
-      font-size: 11.5px; color: var(--fg-muted); background: var(--bg); border: 1px solid var(--border);
-      padding: 3px 8px; border-radius: 7px; display: inline-flex; align-items: center; gap: 5px;
-    }
-    .mini-pill.steer { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); background: var(--ok-soft); font-weight: 600; }
-    .send-btn {
-      background: var(--accent); color: var(--accent-fg); border: none; border-radius: 8px;
-      padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
-    }
+    .mini-pill { font-size: 11px; color: var(--fg-muted); background: var(--bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; }
+    .mini-pill.steer { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, var(--border)); background: var(--ok-soft); font-weight: 600; }
+    .send-btn { background: var(--accent); color: var(--accent-fg); border: none; border-radius: 7px; padding: 6px 14px; font-size: 12px; font-weight: 650; cursor: pointer; }
 
-    /* Right Inspector Drawer */
-    .inspector {
-      border-left: 1px solid var(--border); background: var(--bg-sidebar);
-      display: flex; flex-direction: column; overflow: hidden; min-width: 0;
-    }
-    .ins-tabs {
-      height: 52px; display: flex; align-items: center; gap: 4px; padding: 0 12px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .ins-tab {
-      flex: 1; border: none; background: transparent; color: var(--fg-muted);
-      font-size: 12px; font-weight: 600; padding: 7px 8px; border-radius: 7px; cursor: pointer;
-    }
+    /* RIGHT INSPECTOR */
+    .inspector { border-left: 1px solid var(--border); background: var(--bg-sidebar); display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+    .shell.inspector-closed .inspector { border-left: none; }
+    .ins-tabs { height: 50px; display: flex; align-items: center; gap: 4px; padding: 0 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .ins-tab { flex: 1; border: none; background: transparent; color: var(--fg-muted); font-size: 11.5px; font-weight: 600; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
     .ins-tab.active { background: var(--bg-active); color: var(--fg); }
-    .ins-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-    .ins-pane { display: none; flex-direction: column; gap: 12px; }
+    .ins-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .ins-pane { display: none; flex-direction: column; gap: 10px; }
     .ins-pane.active { display: flex; }
-    .card {
-      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px;
-    }
-    .card h4 { font-size: 12.5px; font-weight: 650; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
-    .kv { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
+
+    /* Cards & Secondary Pages */
+    .page-pad { padding: 22px 26px; max-width: 1080px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 13px; }
+    .card h4 { font-size: 12.5px; font-weight: 650; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .kv { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px dashed var(--border); gap: 8px; }
     .kv:last-child { border-bottom: none; }
     .kv span:first-child { color: var(--fg-muted); }
-    .mono { font-family: var(--font-mono); }
+    .badge { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 99px; border: 1px solid var(--border); color: var(--fg-muted); background: var(--bg); }
 
-    /* Secondary Views (Skills, Automation, Concepts, Operations) */
-    .page-pad { padding: 22px 28px; max-width: 1080px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
-    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    .concept-card {
-      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;
-      display: flex; flex-direction: column;
+    /* Plugin Toggle Switch */
+    .toggle {
+      width: 34px; height: 19px; border-radius: 99px; background: var(--bg-active); border: 1px solid var(--border-strong);
+      position: relative; cursor: pointer; transition: all var(--transition); flex-shrink: 0;
     }
+    .toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px;
+      border-radius: 50%; background: var(--fg-muted); transition: all var(--transition);
+    }
+    .toggle.on { background: var(--ok-soft); border-color: var(--ok); }
+    .toggle.on::after { left: 17px; background: var(--ok); }
+
+    /* Concept Cards */
+    .concept-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
     .concept-card img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; background: var(--bg); }
-    .concept-meta { padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .concept-meta { padding: 13px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
-    /* Command Palette Modal */
-    .modal-bg {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
-      display: none; place-items: start center; padding-top: 12vh; z-index: 50;
-    }
+    /* Command Palette */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; place-items: start center; padding-top: 12vh; z-index: 60; }
     .modal-bg.open { display: grid; }
-    .cmd-box {
-      width: min(560px, 92vw); background: var(--bg-elevated); border: 1px solid var(--border-strong);
-      border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
-    }
-    .cmd-input {
-      width: 100%; border: none; border-bottom: 1px solid var(--border); background: transparent;
-      color: var(--fg); padding: 14px 16px; font-size: 14px; outline: none;
-    }
-    .cmd-list { padding: 8px; display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; }
-    .cmd-item {
-      display: flex; justify-content: space-between; align-items: center; padding: 9px 10px;
-      border-radius: 7px; border: none; background: transparent; color: var(--fg); cursor: pointer; font-size: 13px; text-align: left;
-    }
+    .cmd-box { width: min(560px, 92vw); background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+    .cmd-input { width: 100%; border: none; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); padding: 13px 16px; font-size: 13.5px; outline: none; }
+    .cmd-list { padding: 8px; display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
+    .cmd-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 7px; border: none; background: transparent; color: var(--fg); cursor: pointer; font-size: 12.5px; text-align: left; }
     .cmd-item:hover { background: var(--bg-hover); }
 
     @media (max-width: 1024px) {
-      .shell { grid-template-columns: 210px minmax(0, 1fr) 0px; }
+      .shell { grid-template-columns: 0px minmax(0, 1fr) 0px; }
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .grid-2, .grid-3, .bar-grid { grid-template-columns: 1fr; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="shell" id="shell">
-    <!-- LEFT RAIL -->
+    <!-- COMPLETELY HIDABLE LEFT SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-left">
           <div class="brand-mark">H</div>
           <span>Hermes Studio</span>
         </div>
-        <span class="badge-ver">concept v1</span>
+        <button class="icon-btn" id="hideSidebarBtn" title="Hide sidebar (Ctrl+B)">◧</button>
       </div>
 
       <div class="profile-box">
-        <button class="profile-switch" id="profileBtn" title="Click to toggle profile">
+        <button class="profile-switch" id="profileBtn" title="Toggle profile">
           <div class="profile-meta">
-            <span class="dot"></span>
+            <span class="dot" id="profileDot"></span>
             <div>
               <div class="profile-name" id="profileName">default</div>
-              <div class="profile-sub" id="profileSub">Ledger ON · Medium · Steer</div>
+              <div class="profile-sub" id="profileSub">Ledger ON · Steer</div>
             </div>
           </div>
           <span class="mono" style="font-size:11px;color:var(--fg-muted)">⇄</span>
@@ -382,22 +421,23 @@
       <div class="nav-scroll">
         <div class="nav-label">Workspace</div>
         <button class="nav-btn active" data-view="chat"><span class="nav-btn-left">💬 Chat</span><span class="nav-pill">live</span></button>
-        <button class="nav-btn" data-view="concepts"><span class="nav-btn-left">🎨 Nano Banana Concepts</span><span class="nav-pill">2</span></button>
-        <button class="nav-btn" data-view="skills"><span class="nav-btn-left">⚡ Skills &amp; Plugins</span><span class="nav-pill">121</span></button>
-        <button class="nav-btn" data-view="ops"><span class="nav-btn-left">📊 Operations &amp; Cron</span><span class="nav-pill">ok</span></button>
+        <button class="nav-btn" data-view="worktrees"><span class="nav-btn-left">⎇ Worktrees</span><span class="nav-pill">3</span></button>
+        <button class="nav-btn" data-view="plugins"><span class="nav-btn-left">🧩 Plugins</span><span class="nav-pill" id="pluginCountPill">5 on</span></button>
+        <button class="nav-btn" data-view="skills"><span class="nav-btn-left">⚡ Skills</span><span class="nav-pill">121</span></button>
+        <button class="nav-btn" data-view="concepts"><span class="nav-btn-left">🎨 Nano Banana</span><span class="nav-pill">v2</span></button>
+        <button class="nav-btn" data-view="ops"><span class="nav-btn-left">📊 Operations</span><span class="nav-pill">ok</span></button>
 
-        <div class="nav-label">Recent Sessions</div>
-        <button class="thread-item current">Hermes WebUI Redesign Studio</button>
-        <button class="thread-item">COMSOL Mesh Convergence Audit</button>
-        <button class="thread-item">Antigravity CLI Headless Bridge</button>
-        <button class="thread-item">DTU Physics Lecture Handout</button>
+        <div class="nav-label"><span>Sessions by Worktree</span></div>
+        <button class="thread-item current" data-select-wt="feat"><span class="thread-title">WebUI v2 Multi-Gateway</span><span class="wt-tag wt-feat">feat-webui</span></button>
+        <button class="thread-item" data-select-wt="fix"><span class="thread-title">state_meta 7d Compaction</span><span class="wt-tag wt-fix">fix-cache</span></button>
+        <button class="thread-item" data-select-wt="main"><span class="thread-title">Daily Ops &amp; Audit</span><span class="wt-tag wt-main">main</span></button>
       </div>
 
       <div class="sidebar-foot">
-        <div class="theme-pills" role="group" aria-label="Theme switcher">
-          <button class="theme-pill active" data-set-theme="obsidian">Obsidian</button>
-          <button class="theme-pill" data-set-theme="atelier">Atelier</button>
-          <button class="theme-pill" data-set-theme="emerald">Emerald</button>
+        <div class="theme-pills" role="group" aria-label="Dark theme presets">
+          <button class="theme-pill active" data-set-theme="void">Void</button>
+          <button class="theme-pill" data-set-theme="onyx">Onyx</button>
+          <button class="theme-pill" data-set-theme="graphite">Graphite</button>
         </div>
       </div>
     </aside>
@@ -406,57 +446,117 @@
     <main class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <span class="page-title" id="topTitle">Hermes WebUI Redesign Studio</span>
-          <span class="badge-ver">MiniMax M3.1 Flash</span>
-          <span class="badge-ver" style="color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--border))">agy ready</span>
+          <button class="icon-btn" id="showSidebarBtn" title="Toggle sidebar (Ctrl+B)" style="border-color:var(--border)">◧</button>
+
+          <!-- COMPACT GATEWAY SWITCHER (LAPTOP ⇄ VPS) -->
+          <div class="pop-wrap">
+            <button class="gw-pill" id="gwBtn" title="Switch Hermes Gateway">
+              <span class="dot" id="gwDot"></span>
+              <span id="gwLabel">Laptop Hermes</span>
+              <span class="gw-lat" id="gwLat">2ms</span>
+              <span style="color:var(--fg-muted);font-size:10px">▾</span>
+            </button>
+            <div class="popover" id="gwPop">
+              <div class="pop-title">Switch Hermes Gateway</div>
+              <button class="pop-item selected" data-gw="laptop">
+                <div>
+                  <div style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="dot"></span>Laptop Hermes</div>
+                  <div class="pop-sub">127.0.0.1:9119 · Windows · local</div>
+                </div>
+                <span class="badge" style="color:var(--ok)">2ms</span>
+              </button>
+              <button class="pop-item" data-gw="vps">
+                <div>
+                  <div style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="dot vps"></span>VPS Hermes</div>
+                  <div class="pop-sub">wss://vps.hermes · Linux · 24/7</div>
+                </div>
+                <span class="badge" style="color:var(--purple)">28ms</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- GIT WORKTREE SWITCHER -->
+          <div class="pop-wrap">
+            <button class="wt-pill" id="wtBtn" title="Switch Git Worktree">
+              <span style="color:var(--accent)">⎇</span>
+              <span class="mono" id="wtBranch">wt/feat-webui-v2</span>
+              <span class="diff-stat"><span class="diff-add" id="wtAdd">+142</span> <span class="diff-del" id="wtDel">-18</span></span>
+              <span class="pr-chip" id="wtPr">PR #48</span>
+              <span style="color:var(--fg-muted);font-size:10px">▾</span>
+            </button>
+            <div class="popover" id="wtPop" style="width:330px">
+              <div class="pop-title">Active Git Worktrees</div>
+              <button class="pop-item selected" data-wt="feat">
+                <div>
+                  <div style="font-weight:600" class="mono">wt/feat-webui-v2</div>
+                  <div class="pop-sub">~/worktrees/hermes-webui-v2</div>
+                </div>
+                <span class="pr-chip">PR #48</span>
+              </button>
+              <button class="pop-item" data-wt="fix">
+                <div>
+                  <div style="font-weight:600" class="mono">wt/fix-cache-meta</div>
+                  <div class="pop-sub">~/worktrees/hermes-fix-cache</div>
+                </div>
+                <span class="badge" style="color:var(--warn)">3 mod</span>
+              </button>
+              <button class="pop-item" data-wt="main">
+                <div>
+                  <div style="font-weight:600" class="mono">main (clean base)</div>
+                  <div class="pop-sub">~/repos/hermes-upgrade</div>
+                </div>
+                <span class="badge" style="color:var(--ok)">clean</span>
+              </button>
+            </div>
+          </div>
         </div>
+
         <div class="topbar-actions">
           <button class="chip-btn" id="cmdBtn">Command <span class="kbd">⌘K</span></button>
           <button class="chip-btn" id="toggleInspector">Inspector ◫</button>
         </div>
       </header>
 
+      <!-- SUBTLE WORKTREE CONTEXT RIBBON -->
+      <div class="wt-ribbon">
+        <div class="wt-ribbon-left">
+          <span class="wt-tag wt-feat" id="ribbonTag">worktree: feat-webui-v2</span>
+          <span class="wt-path" id="ribbonPath">~/worktrees/hermes-webui-v2</span>
+        </div>
+        <span class="mono" style="font-size:11px" id="ribbonGw">gateway: laptop (local)</span>
+      </div>
+
       <!-- CHAT VIEW -->
       <section class="view active" id="view-chat">
         <div class="chat-scroll">
           <div class="chat-inner" id="chatLog">
-            <div class="msg-user">Show me a cleaner Hermes WebUI where chat, live plans, inline widgets, artifacts, and system telemetry actually feel cohesive.</div>
+            <div class="msg-user">Draft v2 darker, add a compact Laptop ⇄ VPS gateway switcher, a dedicated Plugins button with a completely hidable sidebar, and clear Git worktree differentiation.</div>
             <div class="msg-ai">
-              <div class="msg-ai-head"><strong>Hermes</strong> · <span class="mono">94% cache hit · 21 eager tools · interactive-options</span></div>
-              <div class="tool-trace">✓ todo_list (3/4) · ✓ ::preview widget · ✓ ha_publish artifact</div>
-              <p>Here is the unified 3-pane concept: the 20+ legacy admin pages collapse into 4 focused hubs, the live plan stays docked above the composer, and structured answers render inline without leaving chat.</p>
+              <div class="msg-ai-head"><strong>Hermes</strong> · <span class="mono" id="aiMeta">Laptop Hermes · wt/feat-webui-v2 · 94% cache hit</span></div>
+              <p>Updated to the **Void Carbon** ultra-dark palette. Try clicking the **Gateway Switcher** (`Laptop Hermes ▾`), the **Worktree Switcher** (`wt/feat-webui-v2 ▾`), the **Plugins** sidebar hub, or pressing **`Ctrl+B`** to collapse the sidebar completely.</p>
 
               <div class="inline-widget">
                 <div class="iw-head">
-                  <div class="iw-title"><span class="dot"></span>Hermes Studio Architecture</div>
+                  <div class="iw-title"><span class="dot"></span>WebUI v2 — What Changed</div>
                   <div class="iw-tabs">
-                    <button class="iw-tab active" data-iw="overview">Overview</button>
-                    <button class="iw-tab" data-iw="gains">Context Gains</button>
-                    <button class="iw-tab" data-iw="design">What Changed</button>
+                    <button class="iw-tab active" data-iw="summary">v2 Upgrades</button>
+                    <button class="iw-tab" data-iw="worktree">Worktree Safety</button>
+                    <button class="iw-tab" data-iw="palette">Dark Palette</button>
                   </div>
                 </div>
-                <div class="iw-panel active" id="iw-overview">
+                <div class="iw-panel active" id="iw-summary">
                   <div class="kpi-grid">
-                    <div class="kpi"><div class="kpi-label">Nav Surfaces</div><div class="kpi-val">4 Hubs</div><div class="kpi-sub">was 21 flat pages</div></div>
-                    <div class="kpi"><div class="kpi-label">Skills Indexed</div><div class="kpi-val">121</div><div class="kpi-sub">0 errors / warnings</div></div>
-                    <div class="kpi"><div class="kpi-label">Eager Tools</div><div class="kpi-val">21 / 61</div><div class="kpi-sub">todo + clarify eager</div></div>
-                    <div class="kpi"><div class="kpi-label">Escalation</div><div class="kpi-val">agy CLI</div><div class="kpi-sub">Gemini 4 / Claude 5.5</div></div>
+                    <div class="kpi"><div class="kpi-label">Gateways</div><div class="kpi-val">Laptop ⇄ VPS</div><div class="kpi-sub">1-click topbar pill</div></div>
+                    <div class="kpi"><div class="kpi-label">Sidebar</div><div class="kpi-val">0px Hide</div><div class="kpi-sub">Ctrl+B + Plugins hub</div></div>
+                    <div class="kpi"><div class="kpi-label">Git Worktrees</div><div class="kpi-val">3 Isolated</div><div class="kpi-sub">branch + diff + PR</div></div>
+                    <div class="kpi"><div class="kpi-label">Base Canvas</div><div class="kpi-val">#050608</div><div class="kpi-sub">Void · Onyx · Graphite</div></div>
                   </div>
                 </div>
-                <div class="iw-panel" id="iw-gains">
-                  <div class="bar-grid">
-                    <div class="bar-row">
-                      <div class="bar-top"><span>Top 24 Heavy Skills (L1)</span><span class="mono" style="color:var(--ok)">-89.5%</span></div>
-                      <div class="bar-track"><div class="bar-fill" style="width:11%"></div></div>
-                    </div>
-                    <div class="bar-row">
-                      <div class="bar-top"><span>Turn-1 Static Skills Prompt</span><span class="mono" style="color:var(--ok)">-73.4%</span></div>
-                      <div class="bar-track"><div class="bar-fill" style="width:27%"></div></div>
-                    </div>
-                  </div>
+                <div class="iw-panel" id="iw-worktree">
+                  <p style="font-size:12.5px;color:var(--fg-muted)">Every session binds to a color-coded **Git Worktree** (`main`, `wt/feat-webui-v2`, `wt/fix-cache-meta`). The topbar pill, context ribbon, composer badge, and right-hand Git Inspector all stay locked to that worktree so parallel PR branches never collide.</p>
                 </div>
-                <div class="iw-panel" id="iw-design">
-                  <p style="font-size:13px;color:var(--fg-muted)">1) <strong>Command Palette (⌘K)</strong> replaces deep sidebar hunting. 2) <strong>Docked Live Plan</strong> keeps <code>todo_list</code> visible while steering mid-run. 3) <strong>Split Inspector</strong> pairs Artifacts with live cache/token telemetry. 4) <strong>3 Switchable Themes</strong> (Obsidian, Warm Atelier, Midnight Emerald) right in the bottom-left footer.</p>
+                <div class="iw-panel" id="iw-palette">
+                  <p style="font-size:12.5px;color:var(--fg-muted)">Switched the default from slate-grey to pitch-deep **Void Carbon** (`#050608`), with two even sharper dark presets in the sidebar footer: **Onyx** (`#020303` + emerald) and **Graphite** (`#09090b` + warm amber).</p>
                 </div>
               </div>
             </div>
@@ -467,24 +567,25 @@
           <div class="composer-wrap">
             <div class="plan-bar">
               <div class="plan-head" id="planToggle">
-                <div class="plan-head-left"><span class="dot"></span>Live Plan · 3 of 4 complete</div>
-                <span class="mono" style="font-size:11px;color:var(--fg-muted)">click to collapse</span>
+                <div style="display:flex;align-items:center;gap:8px;font-weight:600"><span class="dot"></span>Live Plan · 4 of 4 v2 requirements ready</div>
+                <span class="mono" style="font-size:10.5px;color:var(--fg-muted)">collapse</span>
               </div>
               <div class="plan-steps" id="planSteps">
-                <div class="plan-step done">✓ Audit 21 legacy WebUI routes</div>
-                <div class="plan-step done">✓ Generate Nano Banana visual concepts</div>
-                <div class="plan-step done">✓ Ship interactive GitHub Pages prototype</div>
-                <div class="plan-step now">● Iterate layout &amp; palette with Omar</div>
+                <div class="plan-step done">✓ Compact Laptop ⇄ VPS Gateway switcher</div>
+                <div class="plan-step done">✓ Dedicated Plugins hub + 0px hidable sidebar</div>
+                <div class="plan-step done">✓ Color-coded Git Worktree isolation &amp; PR chips</div>
+                <div class="plan-step done">✓ Deeper Void Carbon / Onyx / Graphite palettes</div>
               </div>
             </div>
 
             <div class="composer">
-              <textarea id="msgInput" placeholder="Steer Hermes mid-run, ask for a tabbed widget, or type a message to test the prototype..."></textarea>
+              <textarea id="msgInput" placeholder="Steer Hermes on the active gateway & worktree..."></textarea>
               <div class="composer-foot">
                 <div class="composer-pills">
-                  <span class="mini-pill steer">● steer mode</span>
-                  <span class="mini-pill">auto_load: interactive-options</span>
-                  <span class="mini-pill">⚡ agy escalate</span>
+                  <span class="mini-pill steer">● steer</span>
+                  <span class="mini-pill mono" id="compWt">⎇ wt/feat-webui-v2</span>
+                  <span class="mini-pill">MiniMax M3.1 · Low</span>
+                  <span class="mini-pill">⚡ agy</span>
                 </div>
                 <button class="send-btn" id="sendBtn">Send ↵</button>
               </div>
@@ -493,49 +594,101 @@
         </div>
       </section>
 
-      <!-- NANO BANANA VISUAL CONCEPTS VIEW -->
-      <section class="view" id="view-concepts">
+      <!-- PLUGINS VIEW -->
+      <section class="view" id="view-plugins">
         <div class="page-pad">
-          <div>
-            <h2 style="font-family:var(--heading-font);font-size:20px;margin-bottom:4px">Nano Banana Visual Direction Concepts</h2>
-            <p style="color:var(--fg-muted);font-size:13px">Generated as starting art directions — click "Apply Theme" on either card to preview its live palette across this interactive prototype.</p>
-          </div>
-          <div class="grid-2">
-            <div class="concept-card">
-              <img src="assets/concept-a-obsidian.jpg" alt="Concept A: Obsidian Precision" />
-              <div class="concept-meta">
-                <div>
-                  <div style="font-weight:650">Concept A — Obsidian Precision</div>
-                  <div style="font-size:12px;color:var(--fg-muted)">Linear/Raycast dark charcoal, 1px hairlines, electric cobalt &amp; emerald signals.</div>
-                </div>
-                <button class="chip-btn primary" data-set-theme="obsidian">Apply</button>
-              </div>
+          <div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:10px">
+            <div>
+              <h2 style="font-size:18px;font-weight:650">Plugins Hub</h2>
+              <p style="font-size:12.5px;color:var(--fg-muted)">Manage plugins on the active gateway (<span class="mono" id="plugGwName">Laptop Hermes</span>). Click toggles to test live state.</p>
             </div>
-            <div class="concept-card">
-              <img src="assets/concept-b-atelier.jpg" alt="Concept B: Warm Atelier" />
-              <div class="concept-meta">
-                <div>
-                  <div style="font-weight:650">Concept B — Warm Atelier</div>
-                  <div style="font-size:12px;color:var(--fg-muted)">Warm alabaster paper, editorial serif headings, terracotta &amp; forest accents.</div>
-                </div>
-                <button class="chip-btn primary" data-set-theme="atelier">Apply</button>
-              </div>
+            <span class="badge">gateway hot-reload</span>
+          </div>
+          <div class="grid-3" id="pluginsGrid">
+            <div class="card"><h4>hermes-artifacts <button class="toggle on" data-plug></button></h4><p style="font-size:12px;color:var(--fg-muted)">Live editable docs, sheets, slides, boards, dashboards (`ha_guide` → `ha_publish`).</p></div>
+            <div class="card"><h4>whiteboard <button class="toggle on" data-plug></button></h4><p style="font-size:12px;color:var(--fg-muted)">Spatial canvas &amp; flowcharts synced with Hermes sessions.</p></div>
+            <div class="card"><h4>memory-wiki <button class="toggle on" data-plug></button></h4><p style="font-size:12px;color:var(--fg-muted)">Structured memory browser &amp; cross-linked notes pane.</p></div>
+            <div class="card"><h4>hermes-security <button class="toggle on" data-plug></button></h4><p style="font-size:12px;color:var(--fg-muted)">Diff review, threat modeling, and finding verification skills.</p></div>
+            <div class="card"><h4>hermes-memory-ui <button class="toggle on" data-plug></button></h4><p style="font-size:12px;color:var(--fg-muted)">Visual memory inspector and budget monitor.</p></div>
+            <div class="card"><h4>claude-code-theme <button class="toggle" data-plug></button></h4><p style="font-size:12px;color:var(--fg-muted)">Optional external theme override (off while Void Carbon is active).</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WORKTREES VIEW -->
+      <section class="view" id="view-worktrees">
+        <div class="page-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div>
+              <h2 style="font-size:18px;font-weight:650">Git Worktrees &amp; GitHub Workflow</h2>
+              <p style="font-size:12.5px;color:var(--fg-muted)">Each worktree isolates branch state, diffs, PR checks, and Hermes chat sessions so parallel tasks never collide.</p>
+            </div>
+            <button class="chip-btn primary" id="addWtBtn">+ New Worktree</button>
+          </div>
+          <div class="grid-3">
+            <div class="card" style="border-color:var(--accent)">
+              <h4><span class="mono">wt/feat-webui-v2</span> <span class="pr-chip">PR #48</span></h4>
+              <div class="kv"><span>Path</span><span class="mono">~/worktrees/hermes-webui-v2</span></div>
+              <div class="kv"><span>Diff</span><span class="mono"><span class="diff-add">+142</span> <span class="diff-del">-18</span></span></div>
+              <div class="kv"><span>CI Status</span><span class="mono" style="color:var(--ok)">all checks pass</span></div>
+              <button class="chip-btn" style="margin-top:10px;width:100%;justify-content:center" data-wt="feat">Switch to Worktree</button>
+            </div>
+            <div class="card">
+              <h4><span class="mono">wt/fix-cache-meta</span> <span class="badge" style="color:var(--warn)">3 mod</span></h4>
+              <div class="kv"><span>Path</span><span class="mono">~/worktrees/hermes-fix-cache</span></div>
+              <div class="kv"><span>Diff</span><span class="mono"><span class="diff-add">+47</span> <span class="diff-del">-12</span></span></div>
+              <div class="kv"><span>CI Status</span><span class="mono" style="color:var(--warn)">draft · no PR</span></div>
+              <button class="chip-btn" style="margin-top:10px;width:100%;justify-content:center" data-wt="fix">Switch to Worktree</button>
+            </div>
+            <div class="card">
+              <h4><span class="mono">main</span> <span class="badge" style="color:var(--ok)">clean</span></h4>
+              <div class="kv"><span>Path</span><span class="mono">~/repos/hermes-upgrade</span></div>
+              <div class="kv"><span>Diff</span><span class="mono">0 uncommitted</span></div>
+              <div class="kv"><span>Head</span><span class="mono">d3ee8f7</span></div>
+              <button class="chip-btn" style="margin-top:10px;width:100%;justify-content:center" data-wt="main">Switch to Worktree</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- SKILLS & PLUGINS VIEW -->
+      <!-- SKILLS VIEW -->
       <section class="view" id="view-skills">
         <div class="page-pad">
-          <h2 style="font-family:var(--heading-font);font-size:20px">Skills &amp; Plugins Hub</h2>
+          <h2 style="font-size:18px;font-weight:650">Skills Index (121 Active · 0 Errors)</h2>
           <div class="grid-3">
-            <div class="card"><h4>interactive-options <span class="badge-ver">auto_load</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Always-on tabbed ::preview widget &amp; clarify playbook (3.9 KB).</p></div>
-            <div class="card"><h4>antigravity-cli <span class="badge-ver">shared</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Headless JSON bridge to agy (Gemini 4 / Claude 5.5) &amp; MCPs.</p></div>
-            <div class="card"><h4>hermes-artifacts <span class="badge-ver">plugin</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Live editable docs, sheets, slides, boards, and dashboards.</p></div>
-            <div class="card"><h4>tool-sweep <span class="badge-ver">shared</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Single-process fan-out &amp; contact-sheet vision audits.</p></div>
-            <div class="card"><h4>comsol-java-api <span class="badge-ver">L1 6.7 KB</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Split losslessly from 93.3 KB into 5 on-demand chapter refs.</p></div>
-            <div class="card"><h4>research-paper-writing <span class="badge-ver">L1 7.3 KB</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Split losslessly from 103.7 KB into 6 on-demand chapter refs.</p></div>
+            <div class="card"><h4>interactive-options <span class="badge">auto_load</span></h4><p style="font-size:12px;color:var(--fg-muted)">Always-on flush tabbed ::preview widget &amp; clarify playbook.</p></div>
+            <div class="card"><h4>antigravity-cli <span class="badge">shared</span></h4><p style="font-size:12px;color:var(--fg-muted)">Headless JSON bridge to agy (Gemini 4 / Claude 5.5) &amp; MCPs.</p></div>
+            <div class="card"><h4>tool-sweep <span class="badge">shared</span></h4><p style="font-size:12px;color:var(--fg-muted)">Single-process fan-out &amp; contact-sheet vision audits.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NANO BANANA VISUAL CONCEPTS -->
+      <section class="view" id="view-concepts">
+        <div class="page-pad">
+          <div>
+            <h2 style="font-size:18px;font-weight:650">Nano Banana Visual Concepts</h2>
+            <p style="font-size:12.5px;color:var(--fg-muted)">New v2 Void Carbon render alongside v1 concepts for comparison.</p>
+          </div>
+          <div class="concept-card">
+            <img src="assets/concept-v2-void.jpg" alt="v2 Void Carbon — Multi-Gateway + Worktrees + Hidable Sidebar" />
+            <div class="concept-meta">
+              <div>
+                <div style="font-weight:650">v2 — Void Carbon (Ultra-Dark + Multi-Gateway + Worktrees + Plugins)</div>
+                <div style="font-size:12px;color:var(--fg-muted)">Pitch-deep #050608 canvas, Laptop ⇄ VPS gateway pill, Git worktree branch/diff/PR bar, and hidable sidebar.</div>
+              </div>
+              <button class="chip-btn primary" data-set-theme="void">Active</button>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="concept-card">
+              <img src="assets/concept-a-obsidian.jpg" alt="v1 Concept A" />
+              <div class="concept-meta"><span>v1 — Obsidian Precision (earlier draft)</span></div>
+            </div>
+            <div class="concept-card">
+              <img src="assets/concept-b-atelier.jpg" alt="v1 Concept B" />
+              <div class="concept-meta"><span>v1 — Warm Atelier (light draft)</span></div>
+            </div>
           </div>
         </div>
       </section>
@@ -543,17 +696,17 @@
       <!-- OPERATIONS VIEW -->
       <section class="view" id="view-ops">
         <div class="page-pad">
-          <h2 style="font-family:var(--heading-font);font-size:20px">Operations, Cron &amp; Telemetry</h2>
+          <h2 style="font-size:18px;font-weight:650">Operations, Cron &amp; Gateway Health</h2>
           <div class="grid-2">
             <div class="card">
-              <h4>Active Scheduled Jobs</h4>
-              <div class="kv"><span>hermes-upgrade-doctor</span><span class="mono" style="color:var(--ok)">every 6h · ok</span></div>
-              <div class="kv"><span>skills-index-health</span><span class="mono" style="color:var(--ok)">121 indexed</span></div>
-              <div class="kv"><span>github-backup-snapshot</span><span class="mono">0 secrets</span></div>
+              <h4>Connected Gateways</h4>
+              <div class="kv"><span>Laptop Hermes (127.0.0.1:9119)</span><span class="mono" style="color:var(--ok)">online · 2ms</span></div>
+              <div class="kv"><span>VPS Hermes (wss://vps.hermes)</span><span class="mono" style="color:var(--purple)">online · 28ms</span></div>
             </div>
             <div class="card">
-              <h4>Unified Legacy Routes Folded Here</h4>
-              <p style="font-size:12.5px;color:var(--fg-muted)">Analytics, Logs, System, Config, Env, MCP, Channels, and Webhooks live as clean sub-tabs here instead of cluttering the primary chat sidebar.</p>
+              <h4>Scheduled Jobs</h4>
+              <div class="kv"><span>hermes-upgrade-doctor</span><span class="mono" style="color:var(--ok)">every 6h · ok</span></div>
+              <div class="kv"><span>skills-index-health</span><span class="mono" style="color:var(--ok)">121 indexed</span></div>
             </div>
           </div>
         </div>
@@ -563,36 +716,39 @@
     <!-- RIGHT INSPECTOR -->
     <aside class="inspector">
       <div class="ins-tabs">
-        <button class="ins-tab active" data-ins="artifact">Artifact</button>
+        <button class="ins-tab active" data-ins="git">Git &amp; PR</button>
+        <button class="ins-tab" data-ins="artifact">Artifact</button>
         <button class="ins-tab" data-ins="telemetry">Telemetry</button>
       </div>
       <div class="ins-body">
-        <div class="ins-pane active" id="ins-artifact">
+        <div class="ins-pane active" id="ins-git">
           <div class="card">
-            <h4>WebUI Redesign Spec <span class="badge-ver">v1.0</span></h4>
-            <p style="font-size:12.5px;color:var(--fg-muted);margin-bottom:10px">Live artifact preview panel — docs, charts, decks, or HTML prototypes open side-by-side with chat.</p>
-            <div class="kv"><span>Layout</span><span class="mono">3-pane collapsible</span></div>
-            <div class="kv"><span>Command Palette</span><span class="mono">⌘K / Ctrl+K</span></div>
-            <div class="kv"><span>Themes</span><span class="mono">3 live presets</span></div>
-            <div class="kv"><span>Widgets</span><span class="mono">flush ::preview</span></div>
+            <h4>Active Worktree <span class="pr-chip" id="insPr">PR #48</span></h4>
+            <div class="kv"><span>Branch</span><span class="mono" id="insBranch">wt/feat-webui-v2</span></div>
+            <div class="kv"><span>Directory</span><span class="mono" id="insDir">~/worktrees/hermes-webui-v2</span></div>
+            <div class="kv"><span>Changes</span><span class="mono" id="insDiff">+142 / -18</span></div>
+            <div class="kv"><span>GitHub Checks</span><span class="mono" style="color:var(--ok)">3/3 passed</span></div>
           </div>
           <div class="card">
-            <h4>Design Feedback Checklist</h4>
-            <p style="font-size:12px;color:var(--fg-muted)">Tell me what you want to change next: density, fonts, colors, sidebar structure, mobile layout, or custom dashboard cards.</p>
+            <h4>Modified Files</h4>
+            <div class="kv"><span class="mono">web/src/App.tsx</span><span class="diff-add mono">+64</span></div>
+            <div class="kv"><span class="mono">web/src/GatewayBar.tsx</span><span class="diff-add mono">+52</span></div>
+            <div class="kv"><span class="mono">web/src/WorktreePill.tsx</span><span class="diff-add mono">+26</span></div>
+          </div>
+        </div>
+        <div class="ins-pane" id="ins-artifact">
+          <div class="card">
+            <h4>Live Artifact Drawer <span class="badge">v2</span></h4>
+            <p style="font-size:12px;color:var(--fg-muted)">Docs, sheets, dashboards, and HTML previews dock here side-by-side without leaving the active worktree.</p>
           </div>
         </div>
         <div class="ins-pane" id="ins-telemetry">
           <div class="card">
-            <h4>Turn-1 Budget</h4>
-            <div class="kv"><span>Level-0 Skills Index</span><span class="mono">2,867 tok</span></div>
-            <div class="kv"><span>Auto-loaded Skills</span><span class="mono">986 tok</span></div>
-            <div class="kv"><span>Eager Tools</span><span class="mono">21 (9.5K tok)</span></div>
-            <div class="kv"><span>Prompt Cache Hit</span><span class="mono" style="color:var(--ok)">94.2%</span></div>
-          </div>
-          <div class="card">
-            <h4>Runtime Status</h4>
+            <h4>Gateway &amp; Context</h4>
+            <div class="kv"><span>Gateway</span><span class="mono" id="insGw">Laptop Hermes</span></div>
             <div class="kv"><span>Profile</span><span class="mono" id="insProfile">default</span></div>
-            <div class="kv"><span>Input Mode</span><span class="mono" style="color:var(--ok)">steer</span></div>
+            <div class="kv"><span>Eager Tools</span><span class="mono">21 (todo + clarify)</span></div>
+            <div class="kv"><span>Prompt Cache</span><span class="mono" style="color:var(--ok)">94.2% hit</span></div>
             <div class="kv"><span>Antigravity CLI</span><span class="mono" style="color:var(--ok)">agy v1.5.14</span></div>
           </div>
         </div>
@@ -603,16 +759,16 @@
   <!-- COMMAND PALETTE -->
   <div class="modal-bg" id="cmdModal">
     <div class="cmd-box">
-      <input class="cmd-input" id="cmdInput" placeholder="Jump to view, switch theme, or toggle profile..." />
+      <input class="cmd-input" id="cmdInput" placeholder="Switch gateway, worktree, toggle sidebar, or jump to Plugins..." />
       <div class="cmd-list">
-        <button class="cmd-item" data-cmd="view:chat"><span>Open Chat Workspace</span><span class="kbd">Chat</span></button>
-        <button class="cmd-item" data-cmd="view:concepts"><span>View Nano Banana Visual Concepts</span><span class="kbd">Art</span></button>
-        <button class="cmd-item" data-cmd="view:skills"><span>Open Skills &amp; Plugins Hub</span><span class="kbd">121</span></button>
-        <button class="cmd-item" data-cmd="view:ops"><span>Open Operations &amp; Cron</span><span class="kbd">Ops</span></button>
-        <button class="cmd-item" data-cmd="theme:obsidian"><span>Theme: Obsidian Precision (Dark)</span><span class="kbd">Dark</span></button>
-        <button class="cmd-item" data-cmd="theme:atelier"><span>Theme: Warm Atelier (Light)</span><span class="kbd">Light</span></button>
-        <button class="cmd-item" data-cmd="theme:emerald"><span>Theme: Midnight Emerald</span><span class="kbd">Green</span></button>
-        <button class="cmd-item" data-cmd="profile:toggle"><span>Switch Profile (default ⇄ chill-guy)</span><span class="kbd">Profile</span></button>
+        <button class="cmd-item" data-cmd="gw:laptop"><span>Gateway: Laptop Hermes (local · 2ms)</span><span class="kbd">GW</span></button>
+        <button class="cmd-item" data-cmd="gw:vps"><span>Gateway: VPS Hermes (24/7 · 28ms)</span><span class="kbd">GW</span></button>
+        <button class="cmd-item" data-cmd="sidebar:toggle"><span>Toggle Sidebar Visibility</span><span class="kbd">Ctrl+B</span></button>
+        <button class="cmd-item" data-cmd="view:plugins"><span>Open Plugins Hub</span><span class="kbd">Plugins</span></button>
+        <button class="cmd-item" data-cmd="view:worktrees"><span>Open Git Worktrees</span><span class="kbd">Git</span></button>
+        <button class="cmd-item" data-cmd="view:concepts"><span>View Nano Banana v2 Concept</span><span class="kbd">Art</span></button>
+        <button class="cmd-item" data-cmd="theme:void"><span>Theme: Void Carbon (#050608)</span><span class="kbd">Dark</span></button>
+        <button class="cmd-item" data-cmd="theme:onyx"><span>Theme: Pitch Onyx (#020303)</span><span class="kbd">Black</span></button>
       </div>
     </div>
   </div>
@@ -620,75 +776,136 @@
   <script>
     const root = document.documentElement;
     const shell = document.getElementById('shell');
-    const topTitle = document.getElementById('topTitle');
-    const titles = {
-      chat: 'Hermes WebUI Redesign Studio',
-      concepts: 'Nano Banana Visual Concepts',
-      skills: 'Skills & Plugins Hub',
-      ops: 'Operations, Cron & Telemetry'
-    };
 
+    // Theme switching
     function setTheme(t) {
       root.setAttribute('data-theme', t);
       document.querySelectorAll('.theme-pill').forEach(b => b.classList.toggle('active', b.dataset.setTheme === t));
     }
+    document.querySelectorAll('[data-set-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.setTheme)));
+
+    // Sidebar completely hidable (0px)
+    function toggleSidebar() { shell.classList.toggle('sidebar-hidden'); }
+    document.getElementById('hideSidebarBtn').addEventListener('click', toggleSidebar);
+    document.getElementById('showSidebarBtn').addEventListener('click', toggleSidebar);
+    document.getElementById('toggleInspector').addEventListener('click', () => shell.classList.toggle('inspector-closed'));
+
+    // Views
     function setView(v) {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
       document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
-      topTitle.textContent = titles[v] || 'Hermes Studio';
     }
-
-    document.querySelectorAll('[data-set-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.setTheme)));
     document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 
+    // Gateway Switcher (Laptop ⇄ VPS)
+    const gateways = {
+      laptop: { label: 'Laptop Hermes', lat: '2ms', ribbon: 'gateway: laptop (127.0.0.1:9119)', isVps: false },
+      vps:    { label: 'VPS Hermes',    lat: '28ms', ribbon: 'gateway: vps (wss://vps.hermes)', isVps: true }
+    };
+    let activeGw = 'laptop';
+    const gwPop = document.getElementById('gwPop');
+    const wtPop = document.getElementById('wtPop');
+
+    function selectGateway(k) {
+      activeGw = k;
+      const g = gateways[k];
+      document.getElementById('gwLabel').textContent = g.label;
+      document.getElementById('gwLat').textContent = g.lat;
+      document.getElementById('gwDot').classList.toggle('vps', g.isVps);
+      document.getElementById('ribbonGw').textContent = g.ribbon;
+      document.getElementById('insGw').textContent = g.label;
+      document.getElementById('plugGwName').textContent = g.label;
+      gwPop.querySelectorAll('.pop-item').forEach(x => x.classList.toggle('selected', x.dataset.gw === k));
+      gwPop.classList.remove('open');
+      updateAiMeta();
+    }
+    document.getElementById('gwBtn').addEventListener('click', e => { e.stopPropagation(); wtPop.classList.remove('open'); gwPop.classList.toggle('open'); });
+    gwPop.querySelectorAll('[data-gw]').forEach(b => b.addEventListener('click', () => selectGateway(b.dataset.gw)));
+
+    // Worktree Switcher
+    const worktrees = {
+      feat: { branch: 'wt/feat-webui-v2', path: '~/worktrees/hermes-webui-v2', add: '+142', del: '-18', pr: 'PR #48', tagClass: 'wt-feat', tagText: 'worktree: feat-webui-v2' },
+      fix:  { branch: 'wt/fix-cache-meta', path: '~/worktrees/hermes-fix-cache', add: '+47', del: '-12', pr: 'draft', tagClass: 'wt-fix', tagText: 'worktree: fix-cache-meta' },
+      main: { branch: 'main', path: '~/repos/hermes-upgrade', add: '+0', del: '-0', pr: 'clean', tagClass: 'wt-main', tagText: 'worktree: main' }
+    };
+    let activeWt = 'feat';
+
+    function selectWorktree(k) {
+      activeWt = k;
+      const w = worktrees[k];
+      document.getElementById('wtBranch').textContent = w.branch;
+      document.getElementById('wtAdd').textContent = w.add;
+      document.getElementById('wtDel').textContent = w.del;
+      document.getElementById('wtPr').textContent = w.pr;
+      const rTag = document.getElementById('ribbonTag');
+      rTag.className = 'wt-tag ' + w.tagClass;
+      rTag.textContent = w.tagText;
+      document.getElementById('ribbonPath').textContent = w.path;
+      document.getElementById('compWt').textContent = '⎇ ' + w.branch;
+      document.getElementById('insBranch').textContent = w.branch;
+      document.getElementById('insDir').textContent = w.path;
+      document.getElementById('insDiff').textContent = `${w.add} / ${w.del}`;
+      document.getElementById('insPr').textContent = w.pr;
+      wtPop.querySelectorAll('.pop-item').forEach(x => x.classList.toggle('selected', x.dataset.wt === k));
+      document.querySelectorAll('.thread-item').forEach(t => t.classList.toggle('current', t.dataset.selectWt === k));
+      wtPop.classList.remove('open');
+      updateAiMeta();
+    }
+    function updateAiMeta() {
+      document.getElementById('aiMeta').textContent = `${gateways[activeGw].label} · ${worktrees[activeWt].branch} · 94% cache hit`;
+    }
+    document.getElementById('wtBtn').addEventListener('click', e => { e.stopPropagation(); gwPop.classList.remove('open'); wtPop.classList.toggle('open'); });
+    document.querySelectorAll('[data-wt]').forEach(b => b.addEventListener('click', () => { selectWorktree(b.dataset.wt); setView('chat'); }));
+    document.querySelectorAll('[data-select-wt]').forEach(b => b.addEventListener('click', () => { selectWorktree(b.dataset.selectWt); setView('chat'); }));
+    window.addEventListener('click', () => { gwPop.classList.remove('open'); wtPop.classList.remove('open'); });
+
+    // Plugins toggles
+    document.querySelectorAll('[data-plug]').forEach(t => t.addEventListener('click', () => {
+      t.classList.toggle('on');
+      const count = document.querySelectorAll('[data-plug].on').length;
+      document.getElementById('pluginCountPill').textContent = count + ' on';
+    }));
+
+    // Inline widget & Inspector tabs
     document.querySelectorAll('.iw-tab').forEach(b => b.addEventListener('click', () => {
       document.querySelectorAll('.iw-tab').forEach(x => x.classList.toggle('active', x === b));
       document.querySelectorAll('.iw-panel').forEach(p => p.classList.toggle('active', p.id === 'iw-' + b.dataset.iw));
     }));
-
     document.querySelectorAll('.ins-tab').forEach(b => b.addEventListener('click', () => {
       document.querySelectorAll('.ins-tab').forEach(x => x.classList.toggle('active', x === b));
       document.querySelectorAll('.ins-pane').forEach(p => p.classList.toggle('active', p.id === 'ins-' + b.dataset.ins));
     }));
-
-    document.getElementById('toggleInspector').addEventListener('click', () => shell.classList.toggle('inspector-closed'));
     document.getElementById('planToggle').addEventListener('click', () => {
       const s = document.getElementById('planSteps');
       s.style.display = s.style.display === 'none' ? 'grid' : 'none';
     });
 
+    // Profile toggle
     let isChill = false;
-    function toggleProfile() {
+    document.getElementById('profileBtn').addEventListener('click', () => {
       isChill = !isChill;
       document.getElementById('profileName').textContent = isChill ? 'chill-guy' : 'default';
-      document.getElementById('profileSub').textContent = isChill ? 'No Ledger · Low · Steer' : 'Ledger ON · Medium · Steer';
+      document.getElementById('profileSub').textContent = isChill ? 'No Ledger · Steer' : 'Ledger ON · Steer';
       document.getElementById('insProfile').textContent = isChill ? 'chill-guy' : 'default';
-    }
-    document.getElementById('profileBtn').addEventListener('click', toggleProfile);
+    });
 
-    // Interactive demo send
+    // Demo chat send
     function sendDemo() {
       const inp = document.getElementById('msgInput');
       const txt = inp.value.trim();
       if (!txt) return;
       const log = document.getElementById('chatLog');
-      const u = document.createElement('div');
-      u.className = 'msg-user';
-      u.textContent = txt;
-      log.appendChild(u);
-      const a = document.createElement('div');
-      a.className = 'msg-ai';
-      a.innerHTML = `<div class="msg-ai-head"><strong>Hermes (${isChill ? 'chill-guy' : 'default'})</strong> · <span class="mono">prototype preview</span></div><p>Got it — this is a static UI concept on GitHub Pages. Tell Antigravity in chat what you want tweaked (layout, density, colors, tabs, or widgets) and I'll update this live link in seconds.</p>`;
+      const u = document.createElement('div'); u.className = 'msg-user'; u.textContent = txt; log.appendChild(u);
+      const a = document.createElement('div'); a.className = 'msg-ai';
+      a.innerHTML = `<div class="msg-ai-head"><strong>Hermes</strong> · <span class="mono">${gateways[activeGw].label} · ${worktrees[activeWt].branch}</span></div><p>Routed to <code>${gateways[activeGw].label}</code> inside worktree <code>${worktrees[activeWt].path}</code>. Tell Antigravity what you want tweaked next!</p>`;
       log.appendChild(a);
       inp.value = '';
       log.parentElement.scrollTop = log.parentElement.scrollHeight;
     }
     document.getElementById('sendBtn').addEventListener('click', sendDemo);
-    document.getElementById('msgInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDemo(); }
-    });
+    document.getElementById('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDemo(); } });
 
-    // Command Palette
+    // Command Palette + Ctrl+B shortcut
     const cmdModal = document.getElementById('cmdModal');
     const cmdInput = document.getElementById('cmdInput');
     function openCmd() { cmdModal.classList.add('open'); cmdInput.value = ''; cmdInput.focus(); }
@@ -697,13 +914,15 @@
     cmdModal.addEventListener('click', e => { if (e.target === cmdModal) closeCmd(); });
     window.addEventListener('keydown', e => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openCmd(); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleSidebar(); }
       if (e.key === 'Escape') closeCmd();
     });
     document.querySelectorAll('.cmd-item').forEach(btn => btn.addEventListener('click', () => {
       const [kind, val] = btn.dataset.cmd.split(':');
+      if (kind === 'gw') selectGateway(val);
+      if (kind === 'sidebar') toggleSidebar();
       if (kind === 'view') setView(val);
       if (kind === 'theme') setTheme(val);
-      if (kind === 'profile') toggleProfile();
       closeCmd();
     }));
   </script>
