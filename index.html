@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hermes Agent - Full-Canvas Studio v6</title>
+  <title>Hermes Agent - Full-Canvas Studio v7</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -524,6 +524,575 @@
       .workspace { grid-template-columns: 0px minmax(0, 1fr) 0px; }
       .cockpit-grid { grid-template-columns: 1fr; }
     }
+    /* =====================================================================
+       HERMES STUDIO WEBUI v7 - ADDITIONS
+       Flight arc physics, confidence scoring, interactive bars, modals.
+       ===================================================================== */
+
+    /* --- v7 Design tokens (appended to both themes) --- */
+    :root {
+      --ring-track: rgba(127, 127, 137, 0.22);
+      --conf-emerald: #30d158;
+      --conf-amber: #ff9f0a;
+      --conf-blue: #47a1ff;
+      --conf-emerald-tint: rgba(48, 209, 88, 0.14);
+      --conf-amber-tint: rgba(255, 159, 10, 0.15);
+      --conf-blue-tint: rgba(71, 161, 255, 0.15);
+      --surface-raised: var(--card-elevated);
+      --hairline: var(--border);
+    }
+    [data-theme="apple"] {
+      --conf-emerald: #1d9a3c;
+      --conf-amber: #c96e00;
+      --conf-blue: #0066cc;
+      --conf-emerald-tint: rgba(29, 154, 60, 0.13);
+      --conf-amber-tint: rgba(201, 110, 0, 0.13);
+      --conf-blue-tint: rgba(0, 102, 204, 0.12);
+    }
+
+    /* --- Toast system (used by copy-to-clipboard, saved config, etc) --- */
+    .toast-host {
+      position: fixed; right: 16px; bottom: 50px; z-index: 200;
+      display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 13px; border-radius: 10px;
+      background: var(--card-elevated); border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-float); color: var(--fg);
+      font-size: 12px; font-weight: 500; max-width: 380px;
+      animation: toast-in 220ms var(--ease-spring);
+    }
+    .toast.leaving { animation: toast-out 180ms ease forwards; }
+    .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .toast .mono { font-size: 11px; color: var(--fg-muted); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+    @keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }
+
+    /* --- Popover anchoring (bottom bar opens upward) --- */
+    .pop-wrap.up .popover { top: auto; bottom: calc(100% + 7px); }
+    .pop-wrap.right .popover { left: auto; right: 0; }
+    .popover.wide { width: 340px; }
+    .popover.xwide { width: 420px; }
+    .pop-title {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--fg-muted); padding: 8px 9px 4px;
+    }
+    .pop-sep { height: 1px; background: var(--border); margin: 4px 2px; }
+    .pop-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 7px 9px; border-radius: 7px; border: none; background: transparent;
+      color: var(--fg); font-family: inherit; font-size: 12px; cursor: pointer; text-align: left; width: 100%;
+    }
+    .pop-row:hover { background: var(--hover); }
+    .pop-row.selected { background: var(--apple-blue-tint); color: var(--apple-blue-text); font-weight: 600; }
+    .pop-row .pop-sub { font-size: 10.5px; color: var(--fg-muted); font-family: var(--font-mono); }
+    .pop-note { padding: 4px 9px 8px; font-size: 11px; color: var(--fg-muted); line-height: 1.45; }
+    .pop-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      height: 27px; padding: 0 11px; border-radius: 7px; margin: 4px 6px 6px;
+      border: 1px solid var(--border-strong); background: var(--card);
+      color: var(--fg); font-family: inherit; font-size: 11.5px; font-weight: 550; cursor: pointer;
+      box-shadow: var(--specular);
+    }
+    .pop-btn:hover { background: var(--card-elevated); }
+    .pop-btn.primary { background: var(--apple-blue); border-color: transparent; color: #fff; }
+    .pop-btn.primary:hover { background: var(--apple-blue-hover); }
+    .pop-btn.danger { color: var(--red); border-color: rgba(255, 69, 58, 0.4); }
+
+    /* --- COMMAND PALETTE --- */
+    .cmd-palette {
+      width: min(640px, 92vw); max-height: min(560px, 78vh);
+      background: var(--card-elevated); border: 1px solid var(--border-strong);
+      border-radius: 14px; box-shadow: var(--shadow-float); overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .cmd-search {
+      display: flex; align-items: center; gap: 10px; padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cmd-search input {
+      flex: 1; border: none; outline: none; background: transparent;
+      color: var(--fg); font-family: inherit; font-size: 15px; font-weight: 500;
+    }
+    .cmd-results { overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 1px; }
+    .cmd-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 9px 11px; border-radius: 8px; border: none; background: transparent;
+      color: var(--fg); font-family: inherit; font-size: 13px; cursor: pointer; text-align: left; width: 100%;
+    }
+    .cmd-item:hover, .cmd-item.hit { background: var(--apple-blue-tint); }
+    .cmd-item .cmd-group { font-size: 10.5px; color: var(--fg-muted); }
+    .cmd-empty { padding: 26px 12px; text-align: center; color: var(--fg-muted); font-size: 12.5px; }
+
+    /* --- SHORTCUTS CHEAT SHEET --- */
+    .kb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 22px; padding: 4px 2px; }
+    .kb-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 6px 2px; border-bottom: 1px solid var(--border); }
+    .kb-row span { font-size: 12.5px; color: var(--fg-secondary); }
+    .kb-keys { display: flex; gap: 4px; }
+    .kb-keys .kbd { font-size: 10px; }
+
+    /* --- Generic form controls (shared by settings suite) --- */
+    .fld-list { display: flex; flex-direction: column; gap: 3px; }
+    .fld-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .fld-row:hover { border-color: var(--border-strong); }
+    .fld-meta { min-width: 0; }
+    .fld-label { font-size: 12.5px; font-weight: 550; color: var(--fg); }
+    .fld-path { font-family: var(--font-mono); font-size: 10px; color: var(--fg-muted); margin-top: 2px; word-break: break-all; }
+    .fld-desc { font-size: 11px; color: var(--fg-muted); margin-top: 3px; line-height: 1.4; }
+    .fld-ctl { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+    .fld-ctl input[type="text"], .fld-ctl input[type="number"], .fld-ctl select {
+      height: 28px; min-width: 130px; padding: 0 9px; border-radius: 7px;
+      border: 1px solid var(--border-strong); background: var(--input-bg);
+      color: var(--fg); font-family: var(--font-mono); font-size: 11.5px; outline: none;
+    }
+    .fld-ctl select { font-family: var(--font-sans); min-width: 150px; }
+    .fld-ctl input:focus, .fld-ctl select:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 3px var(--apple-blue-tint); }
+    .fld-toggle {
+      width: 38px; height: 22px; border-radius: 980px; border: 1px solid var(--border-strong);
+      background: var(--panel); position: relative; cursor: pointer; padding: 0; flex-shrink: 0;
+      transition: background 160ms var(--ease-out);
+    }
+    .fld-toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--fg-muted); transition: transform 180ms var(--ease-spring), background 160ms;
+    }
+    .fld-toggle.on { background: var(--apple-blue); border-color: transparent; }
+    .fld-toggle.on::after { transform: translateX(16px); background: #fff; }
+    .fld-range { width: 130px; accent-color: var(--apple-blue); }
+
+    /* --- Confidence scoring UI (Steer Buddy tips) --- */
+    .conf-row { display: flex; align-items: center; gap: 8px; }
+    .conf-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 22px; padding: 0 9px 0 6px; border-radius: 980px;
+      border: 1px solid var(--border-strong); background: var(--panel);
+      color: var(--fg-secondary); font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+      cursor: pointer; transition: all 150ms var(--ease-out);
+    }
+    .conf-badge:hover { border-color: var(--border-strong); background: var(--card-elevated); color: var(--fg); }
+    .conf-badge.emerald { border-color: rgba(48, 209, 88, 0.45); background: var(--conf-emerald-tint); color: var(--conf-emerald); }
+    .conf-badge.amber { border-color: rgba(255, 159, 10, 0.45); background: var(--conf-amber-tint); color: var(--conf-amber); }
+    .conf-badge.blue { border-color: rgba(71, 161, 255, 0.45); background: var(--conf-blue-tint); color: var(--conf-blue); }
+    .conf-ring { width: 15px; height: 15px; flex-shrink: 0; transform: rotate(-90deg); }
+    .conf-ring .track { stroke: var(--ring-track); }
+    .conf-ring .val { stroke: currentColor; stroke-linecap: round; transition: stroke-dashoffset 520ms var(--ease-out); }
+    .conf-why {
+      display: none; align-items: flex-start; gap: 7px;
+      font-size: 11px; line-height: 1.45; color: var(--fg-secondary);
+      padding: 7px 9px; border-radius: 8px; background: var(--panel);
+      border: 1px solid var(--border);
+    }
+    .conf-why.open { display: flex; }
+    .conf-why .why-tag {
+      font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.03em;
+      color: var(--fg-muted); text-transform: uppercase; padding-top: 1px; flex-shrink: 0;
+    }
+
+    /* --- Flight arc physics (quadratic Bezier, banking, cushion landing) --- */
+    .floating-buddy.flying { transition: none !important; z-index: 95; }
+    .floating-buddy.flying .mascot-handle {
+      animation: none;
+      transform: rotate(var(--bank, 0deg)) scale(1.06);
+    }
+    .floating-buddy.landing .mascot-handle { animation: cushion-land 300ms var(--ease-spring); }
+    .floating-buddy.flying .wing-left { animation: wing-flap-l 150ms ease-in-out infinite alternate; transform-origin: 30px 55px; }
+    .floating-buddy.flying .wing-right { animation: wing-flap-r 150ms ease-in-out infinite alternate; transform-origin: 72px 55px; }
+    @keyframes wing-flap-l {
+      from { transform: rotate(-16deg) translateY(0px); }
+      to { transform: rotate(26deg) translateY(-3px); }
+    }
+    @keyframes wing-flap-r {
+      from { transform: rotate(16deg) translateY(0px); }
+      to { transform: rotate(-26deg) translateY(-3px); }
+    }
+    @keyframes cushion-land {
+      0% { transform: scale(1.06, 1.06) translateY(0px); }
+      38% { transform: scale(1.12, 0.84) translateY(7px); }
+      68% { transform: scale(0.96, 1.07) translateY(-3px); }
+      100% { transform: scale(1, 1) translateY(0px); }
+    }
+    .perch-ring.hit {
+      animation: perch-pulse 620ms var(--ease-out);
+      border-color: rgba(56, 189, 248, 0.9);
+    }
+    @keyframes perch-pulse {
+      0% { transform: scale(1); box-shadow: 0 0 14px rgba(56, 189, 248, 0.35); }
+      40% { transform: scale(1.22); box-shadow: 0 0 30px rgba(56, 189, 248, 0.75); }
+      100% { transform: scale(1); box-shadow: 0 0 14px rgba(56, 189, 248, 0.35); }
+    }
+    .pet-place-card.arriving { border-color: var(--apple-blue); box-shadow: 0 0 30px rgba(0, 113, 227, 0.35); }
+
+    /* --- Status bar chips (all real buttons) --- */
+    .sb-chip {
+      border: 1px solid var(--border); background: var(--card); color: var(--fg-secondary);
+      font-family: inherit; font-size: 11px; cursor: pointer;
+    }
+    .sb-chip:hover { background: var(--card-elevated); color: var(--fg); }
+    .sb-chip .sb-kbd {
+      font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-muted);
+      border: 1px solid var(--border); border-radius: 4px; padding: 0 3px;
+    }
+    .sb-steer {
+      border: 1px solid transparent; cursor: pointer; font-family: inherit;
+    }
+    .sb-steer:hover { filter: brightness(1.08); }
+    .sb-buddy-pill { font-family: inherit; }
+    .sb-buddy-pill.off {
+      background: var(--panel); border-color: var(--border); color: var(--fg-muted);
+    }
+
+    /* --- Modal shell variants --- */
+    .modal-card.wide { width: min(1080px, 94vw); }
+    .modal-card.tall { height: min(760px, 88vh); }
+    .modal-head { font-size: 13.5px; }
+    .modal-head .modal-sub { font-size: 11px; font-weight: 450; color: var(--fg-muted); margin-top: 2px; }
+    .modal-body { overflow-y: auto; }
+    .modal-backdrop { z-index: 140; }
+    .modal-backdrop.z-top { z-index: 160; }
+
+    /* --- Settings suite: left rail + right pane --- */
+    .settings-suite { display: grid; grid-template-columns: 232px minmax(0, 1fr); height: min(700px, 84vh); }
+    .settings-rail {
+      border-right: 1px solid var(--border); background: var(--panel);
+      padding: 10px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+    }
+    .settings-rail-item {
+      display: flex; align-items: center; gap: 9px; width: 100%;
+      padding: 8px 10px; border-radius: 8px; border: 1px solid transparent;
+      background: transparent; color: var(--fg-secondary); font-family: inherit;
+      font-size: 12.5px; font-weight: 500; cursor: pointer; text-align: left;
+    }
+    .settings-rail-item:hover { background: var(--hover); color: var(--fg); }
+    .settings-rail-item.active {
+      background: var(--card); border-color: var(--border); color: var(--fg);
+      font-weight: 600; box-shadow: var(--specular);
+    }
+    .settings-rail-item .ic { color: var(--fg-muted); }
+    .settings-rail-item.active .ic { color: var(--apple-blue-text); }
+    .settings-pane { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 13px; }
+    .settings-pane-head { display: flex; flex-direction: column; gap: 3px; }
+    .settings-pane-title { font-size: 15px; font-weight: 600; letter-spacing: -0.014em; }
+    .settings-pane-desc { font-size: 12px; color: var(--fg-muted); line-height: 1.5; }
+    .settings-group { display: flex; flex-direction: column; gap: 6px; }
+    .settings-group-title {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--fg-muted); padding: 2px 2px 0;
+    }
+    .settings-foot {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 11px 16px; border-top: 1px solid var(--border); background: var(--panel);
+    }
+    .settings-live {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-muted);
+    }
+    .settings-live .status-dot { width: 6px; height: 6px; }
+    .settings-live.live .status-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .settings-live.offline .status-dot { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+
+    /* --- Cron manager --- */
+    .cron-list { display: flex; flex-direction: column; gap: 7px; }
+    .cron-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel);
+    }
+    .cron-row .cron-name { font-size: 12.5px; font-weight: 550; color: var(--fg); }
+    .cron-row .cron-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); margin-top: 2px; }
+    .cron-actions { display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; }
+    .cron-badge {
+      font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.03em;
+      padding: 2px 7px; border-radius: 980px; text-transform: uppercase; flex-shrink: 0;
+    }
+    .cron-badge.on { background: var(--green-tint); color: var(--green); }
+    .cron-badge.paused { background: var(--amber-tint); color: var(--amber); }
+
+    /* --- Add gateway modal --- */
+    .form-stack { display: flex; flex-direction: column; gap: 11px; }
+    .form-row { display: flex; flex-direction: column; gap: 5px; }
+    .form-row label { font-size: 11.5px; font-weight: 550; color: var(--fg-secondary); }
+    .form-row input, .form-row select {
+      height: 33px; padding: 0 11px; border-radius: 8px;
+      border: 1px solid var(--border-strong); background: var(--input-bg);
+      color: var(--fg); font-family: var(--font-mono); font-size: 12px; outline: none;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 3px var(--apple-blue-tint); }
+    .form-hint { font-size: 11px; color: var(--fg-muted); }
+
+    @media (max-width: 1180px) {
+      .settings-suite { grid-template-columns: 190px minmax(0, 1fr); }
+      .kb-grid { grid-template-columns: 1fr; }
+    }
+
+/* =====================================================================
+   SUBAGENT MANAGER (Left Wing) - component scoped rules.
+   Every new class name is prefixed with "sa-" so nothing leaks into
+   the global sheet.
+   Global classes deliberately reused: .wing-card, .status-dot,
+   .pr-badge, .mono.
+   ===================================================================== */
+
+.wing-card.subagent-card { gap: 9px; }
+
+/* --- Header --------------------------------------------------------- */
+.sa-head { gap: 8px; }
+.sa-title { font-size: 12.5px; font-weight: 600; color: var(--fg); }
+.sa-head-right { display: flex; align-items: center; gap: 7px; }
+.sa-count { font-size: 10.5px; letter-spacing: 0.01em; }
+
+/* --- Toolbar / filter ----------------------------------------------- */
+.sa-toolbar { display: flex; align-items: center; gap: 6px; }
+.sa-search { position: relative; display: flex; align-items: center; flex: 1 1 auto; min-width: 0; }
+.sa-search .ic {
+  position: absolute; left: 8px; top: 50%; margin-top: -7px;
+  width: 13px; height: 13px; color: var(--fg-muted); pointer-events: none;
+}
+.sa-search-input {
+  width: 100%; height: 28px; padding: 0 9px 0 26px;
+  border-radius: 7px; border: 1px solid var(--border);
+  background: var(--input-bg); color: var(--fg);
+  font-family: inherit; font-size: 11.5px; outline: none;
+  transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out);
+}
+.sa-search-input:focus { border-color: var(--border-strong); background: var(--card-elevated); }
+.sa-search-input::placeholder { color: var(--fg-muted); }
+
+/* --- List ----------------------------------------------------------- */
+.subagent-card .subagent-list { display: flex; flex-direction: column; gap: 6px; }
+
+.sa-row {
+  position: relative;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 9px; border-radius: 9px;
+  background: var(--panel); border: 1px solid var(--border);
+  transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out), opacity 150ms var(--ease-out);
+}
+.sa-row:hover { border-color: var(--border-strong); }
+.sa-row.is-dragging { opacity: 0.4; }
+.sa-row.is-new { border-color: var(--apple-blue); }
+
+/* --- Row main line -------------------------------------------------- */
+.sa-row-main { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.sa-grip {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--fg-muted); cursor: grab; opacity: 0.7; flex: none;
+}
+.sa-grip .ic { width: 11px; height: 11px; }
+.sa-row:hover .sa-grip { opacity: 1; }
+
+.sa-dot.is-standby { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.sa-dot.is-stopped { background: var(--fg-muted); box-shadow: none; }
+.sa-dot.is-running { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+.sa-name {
+  font-size: 12px; font-weight: 550; color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 132px;
+}
+.sa-name-input {
+  width: 132px; height: 24px; padding: 0 7px;
+  border-radius: 6px; border: 1px solid var(--border-strong);
+  background: var(--input-bg); color: var(--fg);
+  font-family: inherit; font-size: 12px; font-weight: 550; outline: none;
+}
+.sa-name-input:focus { border-color: var(--apple-blue); }
+
+.sa-badge {
+  font-size: 10px; padding: 2px 6px;
+  max-width: 124px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.sa-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.sa-status { font-size: 10px; letter-spacing: 0.02em; text-transform: lowercase; }
+.sa-status.is-running { color: var(--green); }
+.sa-status.is-standby { color: var(--amber); }
+.sa-status.is-stopped { color: var(--fg-muted); }
+.sa-elapsed { font-size: 10.5px; color: var(--fg-muted); white-space: nowrap; }
+
+/* --- Buttons -------------------------------------------------------- */
+.sa-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 27px; padding: 0 9px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--card);
+  box-shadow: var(--specular); color: var(--fg-secondary);
+  font-family: inherit; font-size: 11.5px; font-weight: 500;
+  cursor: pointer; white-space: nowrap;
+  transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out);
+}
+.sa-btn:hover { background: var(--card-elevated); border-color: var(--border-strong); color: var(--fg); }
+.sa-btn:focus-visible { outline: 2px solid var(--apple-blue); outline-offset: 1px; }
+.sa-btn .ic { width: 12px; height: 12px; }
+.sa-btn-mini { height: 24px; padding: 0 8px; font-size: 11px; border-radius: 7px; }
+.sa-btn-mini .ic { width: 11px; height: 11px; }
+.sa-btn-accent { color: var(--apple-blue-text); border-color: var(--apple-blue-tint); background: var(--apple-blue-tint); }
+.sa-btn-accent:hover { background: var(--apple-blue-tint); border-color: var(--apple-blue); color: var(--apple-blue-text); }
+.sa-ctl { display: flex; align-items: center; gap: 5px; margin-left: auto; flex: none; }
+
+/* --- Task label ----------------------------------------------------- */
+.sa-task {
+  font-size: 11px; color: var(--fg-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* --- Steer composer ------------------------------------------------- */
+.sa-composer { display: flex; flex-direction: column; gap: 6px; }
+.sa-composer[hidden] { display: none; }
+.sa-composer-row { display: flex; align-items: center; gap: 6px; }
+.sa-composer-input {
+  flex: 1 1 auto; min-width: 0; height: 27px; padding: 0 9px;
+  border-radius: 7px; border: 1px solid var(--border-strong);
+  background: var(--input-bg); color: var(--fg);
+  font-family: inherit; font-size: 11.5px; outline: none;
+}
+.sa-composer-input:focus { border-color: var(--apple-blue); }
+.sa-confirm {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; color: var(--green);
+}
+.sa-confirm[hidden] { display: none; }
+.sa-confirm .ic { width: 11px; height: 11px; }
+
+/* --- Chat accordion -------------------------------------------------- */
+/* Pure CSS fold-out: a fixed cap avoids any layout measurement, so the
+   transcript can never be clipped by a throttled transition. */
+.sa-acc {
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height 260ms var(--ease-out), opacity 180ms var(--ease-out);
+}
+.sa-acc.is-open { max-height: 340px; opacity: 1; }
+.sa-acc-inner { padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+.sa-acc.is-open .sa-acc-inner { padding: 7px 2px 1px; }
+.sa-transcript { display: flex; flex-direction: column; gap: 5px; }
+.sa-tl { display: flex; align-items: baseline; gap: 7px; font-size: 11px; line-height: 1.45; }
+.sa-who {
+  flex: none; width: 44px;
+  font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-muted);
+}
+.sa-who-agent { color: var(--apple-blue-text); }
+.sa-who-user { color: var(--green); }
+.sa-who-system { color: var(--fg-muted); }
+.sa-text { color: var(--fg-secondary); flex: 1 1 auto; min-width: 0; word-break: break-word; }
+.sa-time { margin-left: auto; flex: none; font-size: 9.5px; color: var(--fg-muted); }
+.sa-empty { font-size: 10.5px; color: var(--fg-muted); font-style: italic; }
+
+/* --- Drag and drop indicator ---------------------------------------- */
+.sa-row.sa-drop-before::before,
+.sa-row.sa-drop-after::after {
+  content: ""; position: absolute; left: 2px; right: 2px; height: 2px;
+  border-radius: 2px; background: var(--apple-blue);
+  box-shadow: 0 0 8px var(--apple-blue);
+}
+.sa-row.sa-drop-before::before { top: -4px; }
+.sa-row.sa-drop-after::after { bottom: -4px; }
+
+/* --- Footer stats ---------------------------------------------------- */
+.sa-footer {
+  display: flex; align-items: center; gap: 8px;
+  padding-top: 8px; border-top: 1px solid var(--border);
+  font-size: 10.5px; color: var(--fg-muted);
+}
+.sa-stat { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.sa-footer .status-dot { width: 6px; height: 6px; box-shadow: none; }
+.sa-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--border-strong); flex: none; }
+
+/* =====================================================================
+   HERMES STUDIO WEBUI v7 - SETTINGS SUITE FRAGMENT
+   Only rules the global sheet does not provide. All prefixed set-.
+   ===================================================================== */
+
+    .set-head { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .set-head-title { font-size: 13.5px; font-weight: 600; letter-spacing: -0.012em; }
+    .set-head .modal-sub { font-size: 11px; font-weight: 450; color: var(--fg-muted); margin-top: 1px; }
+
+    /* --- Filter bar (sticky at top of the settings pane) --- */
+    .set-filter {
+      position: sticky; top: 0; z-index: 3;
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 11px; height: 32px; border-radius: 9px;
+      border: 1px solid var(--border); background: var(--input-bg);
+      box-shadow: var(--specular);
+    }
+    .set-filter:focus-within { border-color: var(--apple-blue); box-shadow: 0 0 0 3px var(--apple-blue-tint); }
+    .set-filter .ic { width: 13px; height: 13px; color: var(--fg-muted); flex-shrink: 0; }
+    .set-filter-input {
+      flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+      color: var(--fg); font-family: var(--font-sans); font-size: 12px;
+    }
+    .set-filter-input::placeholder { color: var(--fg-muted); }
+
+    /* --- Pane body --- */
+    .set-pane-body { display: flex; flex-direction: column; gap: 13px; min-height: 0; }
+    .set-pane-body .fld-list { gap: 3px; }
+    .set-group-note {
+      font-size: 11px; color: var(--fg-muted); line-height: 1.5;
+      padding: 2px 2px 0;
+    }
+    .set-empty {
+      padding: 22px 12px; text-align: center; font-size: 12px; color: var(--fg-muted);
+      border: 1px dashed var(--border); border-radius: 9px;
+    }
+
+    /* --- Field controls not covered by the global sheet --- */
+    .set-switch {
+      position: relative; width: 38px; height: 22px; flex-shrink: 0;
+      border-radius: 980px; border: 1px solid var(--border-strong);
+      background: var(--panel); cursor: pointer; padding: 0;
+      transition: background 160ms var(--ease-out), border-color 160ms var(--ease-out);
+    }
+    .set-switch::after {
+      content: ""; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--fg-muted);
+      transition: transform 180ms var(--ease-spring), background 160ms;
+    }
+    .set-switch[aria-checked="true"] { background: var(--apple-blue); border-color: transparent; }
+    .set-switch[aria-checked="true"]::after { transform: translateX(16px); background: #fff; }
+    .set-switch:focus-visible { outline: 2px solid var(--apple-blue); outline-offset: 2px; }
+    .set-unit { font-family: var(--font-mono); font-size: 10px; color: var(--fg-muted); min-width: 26px; }
+    .set-fld-num { width: 86px; min-width: 86px; text-align: right; }
+
+    /* --- Keybind table --- */
+    .set-kb-group { display: flex; flex-direction: column; gap: 6px; }
+    .set-kb-group-title {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--fg-muted); padding: 2px 2px 0;
+    }
+    .set-kb-rows { display: flex; flex-direction: column; }
+    .set-kb-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 6px 2px; border-bottom: 1px solid var(--border); }
+    .set-kb-label { font-size: 12.5px; color: var(--fg-secondary); }
+    .set-kb-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .set-kb-keys { display: flex; gap: 4px; }
+    .set-kb-keys .kbd { font-size: 10px; }
+    .set-kb-rebind {
+      border: 1px solid var(--border); background: var(--card); color: var(--fg-muted);
+      font-family: inherit; font-size: 10.5px; font-weight: 550; cursor: pointer;
+      padding: 3px 8px; border-radius: 6px; transition: all 150ms var(--ease-out);
+    }
+    .set-kb-rebind:hover { color: var(--fg); border-color: var(--border-strong); background: var(--card-elevated); }
+    .set-kb-rebind.editing { display: none; }
+    .set-kb-input {
+      width: 128px; height: 24px; padding: 0 8px; border-radius: 6px;
+      border: 1px solid var(--apple-blue); background: var(--input-bg); color: var(--fg);
+      font-family: var(--font-mono); font-size: 11px; outline: none;
+      box-shadow: 0 0 0 3px var(--apple-blue-tint);
+    }
+    .set-kb-row.editing .set-kb-rebind { display: none; }
+    .set-kb-row.editing .set-kb-input { display: block; }
+    .set-kb-row:not(.editing) .set-kb-input { display: none; }
+
+    /* --- Footer --- */
+    .set-foot-actions { display: flex; align-items: center; gap: 8px; }
+    .set-foot-actions .glass-btn, .set-foot-actions .apple-pill { height: 30px; }
+    .set-foot-actions .apple-pill { padding: 0 16px; }
+
+    @media (max-width: 1180px) {
+      .set-kb-grid { grid-template-columns: 1fr; }
+    }
+
   </style>
 </head>
 <body>
@@ -564,13 +1133,12 @@
       </div>
 
       <div class="topbar-right">
-        <button class="glass-btn" id="sendToPerchTopBtn" title="Send flying buddy to his Pet Place perch">
-          <svg class="ic" style="color:var(--apple-blue-text)" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          <span id="perchBtnLabel">Pet Place</span>
-        </button>
-
         <button class="apple-pill secondary sm" id="themeToggleBtn">
           <span id="themeLabel">Apple Daylight</span>
+        </button>
+
+        <button class="glass-btn icon-only" id="openPaletteBtn" title="Command palette (Ctrl+K)">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
         </button>
 
         <button class="glass-btn icon-only" id="openSettingsBtn" title="Settings (Ctrl+,)">
@@ -703,20 +1271,36 @@
                 </div>
               </div>
 
-              <!-- Subagent & Tool Swarm Activity -->
-              <div class="wing-card">
-                <div class="wing-head">
-                  <span>Active Subagents</span>
-                  <span class="mono" style="font-size:11px;color:var(--green)">1 running</span>
-                </div>
-                <div class="subagent-row">
-                  <span>css-grid-verifier</span>
-                  <span class="mono" style="font-size:10.5px;color:var(--green)">done · 2.1s</span>
-                </div>
-                <div class="subagent-row">
-                  <span>agy-escalate (Gemini 4)</span>
-                  <span class="mono" style="font-size:10.5px;color:var(--fg-muted)">standby</span>
-                </div>
+              <div id="subagentManager">
+<div class="wing-card subagent-card" data-subagent-manager>
+  <div class="wing-head sa-head">
+    <span class="sa-title">Subagents</span>
+    <span class="sa-head-right">
+      <span class="pr-badge sa-count" data-sa="count" title="Live subagent count">0</span>
+      <button class="sa-btn sa-btn-mini sa-btn-accent" type="button" data-act="new" title="Add a new subagent" aria-label="Add a new subagent">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"></path></svg>
+        <span>New subagent</span>
+      </button>
+    </span>
+  </div>
+
+  <div class="sa-toolbar">
+    <label class="sa-search">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20.5 20.5L16.6 16.6"></path></svg>
+      <input class="sa-search-input" type="text" data-sa="filter" placeholder="Filter by name" aria-label="Filter subagents by name" autocomplete="off" spellcheck="false">
+    </label>
+  </div>
+
+  <div class="subagent-list" id="subagentList"></div>
+
+  <div class="sa-footer">
+    <span class="sa-stat"><span class="status-dot sa-dot" data-sa="run-dot"></span><span data-sa="running">0</span> running</span>
+    <span class="sa-sep" aria-hidden="true"></span>
+    <span class="sa-stat"><span data-sa="total">0</span> total</span>
+    <span class="sa-sep" aria-hidden="true"></span>
+    <span class="sa-stat"><span data-sa="elapsed">0s</span> elapsed</span>
+  </div>
+</div>
               </div>
 
               <!-- Dedicated "Pet Place" Home Perch Pad -->
@@ -896,7 +1480,6 @@
       <aside class="inspector">
         <div class="ins-header">
           <span>Inspector</span>
-          <button class="glass-btn icon-only" style="width:24px;height:24px" id="closeInspectorX">×</button>
         </div>
 
         <div class="ins-card">
@@ -991,7 +1574,7 @@
     <!-- BOTTOM STATUS BAR -->
     <footer class="statusbar">
       <div class="sb-left">
-        <span class="sb-chip mono" id="sbPath">~/worktrees/hermes-webui-v2</span>
+        <button class="sb-chip mono" id="sbPath" title="Copy worktree path">~/worktrees/hermes-webui-v2</button>
         <button class="sb-chip" id="openCronBtn">
           <svg class="ic" style="width:13px;height:13px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
           Cron (3)
@@ -1003,37 +1586,200 @@
       </div>
 
       <div class="sb-right">
-        <span class="sb-chip mono">MiniMax M3.1 · 184 t/s</span>
-        <span class="sb-chip mono">11.4K / 200K · 94% cache</span>
-        <span class="sb-steer">steer</span>
-        <span class="sb-chip"><span class="status-dot"></span>agy ready</span>
+        <button class="sb-chip mono" id="sbModelChip" title="Model and throughput">MiniMax M3.1 · 184 t/s</button>
+        <button class="sb-chip mono" id="sbContextChip" title="Context window usage">11.4K / 200K · 94% cache</button>
+        <button class="sb-steer" id="sbSteerBtn" title="Toggle steer and observe mode">steer</button>
+        <button class="sb-chip" id="sbAgyChip" title="Antigravity escalation readiness"><span class="status-dot"></span>agy ready</button>
         <button class="sb-buddy-pill" id="buddyToggleBtn">Buddy: ON</button>
       </div>
     </footer>
   </div>
 
-  <!-- SETTINGS MODAL -->
-  <div class="modal-backdrop" id="settingsModal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <span>Hermes Studio Settings (Windows)</span>
-        <button class="glass-btn icon-only" style="width:26px;height:26px" id="closeSettingsBtn">×</button>
+<div class="modal-backdrop" id="hermesSettingsModal">
+  <div class="modal-card wide tall">
+    <div class="modal-head">
+      <div class="set-head">
+        <div class="set-head-title">Hermes Settings</div>
+        <div class="modal-sub">Windows</div>
       </div>
-      <div class="modal-grid">
-        <div class="info-tile">
-          <strong>Appearance &amp; Canvas</strong>
-          <div class="kv-row"><span>Layout</span><span class="mono">3-Zone Full Canvas</span></div>
-          <div class="kv-row"><span>Skill Workflow</span><span class="mono" style="color:var(--green)">frontend-craft-unslop v1.1</span></div>
+      <button class="glass-btn icon-only" id="closeHermesSettingsBtn" type="button" title="Close settings (Esc)" aria-label="Close settings">
+        <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="settings-suite">
+      <nav class="settings-rail" id="settingsRail" aria-label="Settings categories">
+        <button class="settings-rail-item active" data-cat="general" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          <span>General</span>
+        </button>
+        <button class="settings-rail-item" data-cat="agent" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          <span>Agent &amp; Model</span>
+        </button>
+        <button class="settings-rail-item" data-cat="delegation" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          <span>Delegation &amp; Subagents</span>
+        </button>
+        <button class="settings-rail-item" data-cat="terminal" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span>Terminal &amp; Shell</span>
+        </button>
+        <button class="settings-rail-item" data-cat="display" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Display &amp; Theme</span>
+        </button>
+        <button class="settings-rail-item" data-cat="memory" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <span>Memory &amp; Context</span>
+        </button>
+        <button class="settings-rail-item" data-cat="security" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Security &amp; Privacy</span>
+        </button>
+        <button class="settings-rail-item" data-cat="tools" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.77 3.76z"/></svg>
+          <span>Tools &amp; MCP</span>
+        </button>
+        <button class="settings-rail-item" data-cat="shortcuts" type="button">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="6" y1="9" x2="6" y2="9.01"/><line x1="10" y1="9" x2="10" y2="9.01"/><line x1="14" y1="9" x2="14" y2="9.01"/><line x1="18" y1="9" x2="18" y2="9.01"/><line x1="7" y1="15" x2="17" y2="15"/></svg>
+          <span>Keyboard Shortcuts</span>
+        </button>
+      </nav>
+
+      <div class="settings-pane" id="settingsPane">
+        <div class="set-filter" role="search">
+          <svg class="ic" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <input class="set-filter-input" id="settingsFilter" type="text" placeholder="Filter settings, paths and shortcuts" autocomplete="off" spellcheck="false" aria-label="Filter settings" />
         </div>
-        <div class="info-tile">
-          <strong>Steer Buddy &amp; Pet Place</strong>
-          <div class="kv-row"><span>Drag &amp; Drop</span><span class="mono" style="color:var(--green)">Pointer Physics Active</span></div>
-          <div class="kv-row"><span>Home Perch</span><span class="mono">Left Workflow Wing</span></div>
+        <div class="settings-pane-head">
+          <div class="settings-pane-title" id="settingsPaneTitle">General</div>
+          <div class="settings-pane-desc" id="settingsPaneDesc">Model defaults, reasoning effort and interface preferences.</div>
         </div>
+        <div class="set-pane-body" id="settingsPaneBody"></div>
+      </div>
+    </div>
+
+    <div class="settings-foot">
+      <span class="settings-live offline" id="settingsLiveStatus"><span class="status-dot" aria-hidden="true"></span><span class="set-live-label" id="settingsLiveLabel">Offline - mock values</span></span>
+      <div class="set-foot-actions">
+        <button class="glass-btn" id="settingsResetBtn" type="button">Reset</button>
+        <button class="apple-pill" id="settingsSaveBtn" type="button">Save &amp; Apply</button>
       </div>
     </div>
   </div>
+</div>
 
+    <!-- COMMAND PALETTE -->
+    <div class="modal-backdrop z-top" id="cmdPalette">
+      <div class="cmd-palette">
+        <div class="cmd-search">
+          <svg class="ic" style="color:var(--fg-muted)" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <input id="cmdInput" placeholder="Search commands, views, subagents, settings..." autocomplete="off" spellcheck="false" />
+          <span class="kbd">Ctrl+K</span>
+        </div>
+        <div class="cmd-results" id="cmdResults"></div>
+      </div>
+    </div>
+
+    <!-- CRON MANAGER -->
+    <div class="modal-backdrop" id="cronModal">
+      <div class="modal-card wide">
+        <div class="modal-head">
+          <div>
+            <div>Hermes Cron Jobs</div>
+            <div class="modal-sub" id="cronModalSub">3 scheduled jobs</div>
+          </div>
+          <button class="glass-btn icon-only" style="width:26px;height:26px" id="closeCronBtn" title="Close">&#215;</button>
+        </div>
+        <div class="modal-body" style="padding:14px 16px">
+          <div class="cron-list" id="cronList"></div>
+        </div>
+        <div class="settings-foot">
+          <span class="settings-live" id="cronLiveStatus"><span class="status-dot"></span><span class="mono">checking local runtime</span></span>
+          <div style="display:flex;gap:8px">
+            <button class="pop-btn" id="cronRefreshBtn">Refresh</button>
+            <button class="pop-btn primary" id="cronAddBtn">New job</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD GATEWAY -->
+    <div class="modal-backdrop" id="addGatewayModal">
+      <div class="modal-card" style="width:min(440px,92vw)">
+        <div class="modal-head">
+          <div>
+            <div>Add Gateway</div>
+            <div class="modal-sub">Register a remote Hermes runtime</div>
+          </div>
+          <button class="glass-btn icon-only" style="width:26px;height:26px" id="closeAddGwBtn" title="Close">&#215;</button>
+        </div>
+        <div class="modal-body" style="padding:14px 16px">
+          <div class="form-stack">
+            <div class="form-row">
+              <label for="addGwName">Display name</label>
+              <input id="addGwName" placeholder="VPS Hermes" />
+            </div>
+            <div class="form-row">
+              <label for="addGwUrl">Base URL</label>
+              <input id="addGwUrl" placeholder="https://hermes.example.com" />
+            </div>
+            <div class="form-row">
+              <label for="addGwToken">Session token</label>
+              <input id="addGwToken" type="password" placeholder="optional" />
+              <div class="form-hint">Stored locally in this browser only. Never sent to the prototype host.</div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-foot">
+          <span class="settings-live offline"><span class="status-dot"></span><span class="mono">not yet connected</span></span>
+          <div style="display:flex;gap:8px">
+            <button class="pop-btn" id="cancelAddGwBtn">Cancel</button>
+            <button class="pop-btn primary" id="saveAddGwBtn">Add gateway</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW WORKTREE -->
+    <div class="modal-backdrop" id="newWorktreeModal">
+      <div class="modal-card" style="width:min(440px,92vw)">
+        <div class="modal-head">
+          <div>
+            <div>New Worktree</div>
+            <div class="modal-sub">Create an isolated git worktree</div>
+          </div>
+          <button class="glass-btn icon-only" style="width:26px;height:26px" id="closeNewWtBtn" title="Close">&#215;</button>
+        </div>
+        <div class="modal-body" style="padding:14px 16px">
+          <div class="form-stack">
+            <div class="form-row">
+              <label for="newWtBranch">Branch name</label>
+              <input id="newWtBranch" placeholder="feat/my-change" />
+            </div>
+            <div class="form-row">
+              <label for="newWtBase">Base ref</label>
+              <select id="newWtBase">
+                <option value="main">main</option>
+                <option value="develop">develop</option>
+                <option value="HEAD">HEAD (current)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="settings-foot">
+          <span class="settings-live offline"><span class="status-dot"></span><span class="mono">local workspace</span></span>
+          <div style="display:flex;gap:8px">
+            <button class="pop-btn" id="cancelNewWtBtn">Cancel</button>
+            <button class="pop-btn primary" id="saveNewWtBtn">Create worktree</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST HOST -->
+    <div class="toast-host" id="toastHost"></div>
   <script>
     const root = document.documentElement;
     const ws = document.getElementById('workspace');
@@ -1053,7 +1799,6 @@
     };
     document.getElementById('toggleSidebarBtn').addEventListener('click', toggleSidebar);
     document.getElementById('toggleInspectorBtn').addEventListener('click', toggleInspector);
-    document.getElementById('closeInspectorX').addEventListener('click', toggleInspector);
 
     // Views & Code Tabs
     document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', () => {
@@ -1099,9 +1844,13 @@
       updateFlip(clampedX);
     }
 
+    // Flight to the perch is owned by the v7 flight module (quadratic Bezier
+    // arc, wing flutter, cushion landing). This keeps the v6 physics as a
+    // fallback for the moment before the flight module boots.
     function flyToPetPlace() {
-      if (ws.classList.contains('sidebar-hidden')) {
-        // Perch pad is still visible in Left Workflow Wing!
+      if (window.HermesFlight && typeof window.HermesFlight.callHome === 'function') {
+        window.HermesFlight.callHome();
+        return;
       }
       const rect = perchPad.getBoundingClientRect();
       if (rect.width > 0) {
@@ -1151,7 +1900,6 @@
       }
     });
 
-    document.getElementById('sendToPerchTopBtn').addEventListener('click', flyToPetPlace);
     document.getElementById('petPlaceBottomBtn').addEventListener('click', flyToPetPlace);
     document.getElementById('callHomeBtn').addEventListener('click', flyToPetPlace);
     document.getElementById('quickDockBtn').addEventListener('click', flyToPetPlace);
@@ -1321,6 +2069,10 @@
       document.querySelectorAll('[data-bmode]').forEach(x => x.classList.toggle('active', x === c));
       speechText.textContent = buddyStates[curBMode].text;
       document.getElementById('speechActionBtn').textContent = buddyStates[curBMode].cta;
+      // v7: every tip carries a confidence score and a rationale.
+      if (window.HermesConfidence && typeof window.HermesConfidence.apply === 'function') {
+        window.HermesConfidence.apply(curBMode);
+      }
     }));
     document.getElementById('speechActionBtn').addEventListener('click', () => {
       appendTurn('Steer Buddy', buddyStates[curBMode].reply);
@@ -1357,15 +2109,3338 @@
     document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
 
     // Modal & Shortcuts
-    const modal = document.getElementById('settingsModal');
-    document.getElementById('openSettingsBtn').addEventListener('click', () => modal.classList.add('open'));
-    document.getElementById('openCronBtn').addEventListener('click', () => modal.classList.add('open'));
-    document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('open'));
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+    // The 6-row v6 settings modal is replaced in v7 by the 9-category Hermes
+    // Settings suite (window.HermesSettings) plus the cron manager modal.
+    // Only the global keyboard handling stays here; the runtime module owns
+    // the rest so nothing points at a modal that no longer exists.
     window.addEventListener('keydown', e => {
       if (e.ctrlKey && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleSidebar(); }
-      if (e.key === 'Escape') modal.classList.remove('open');
     });
+
+    /* =====================================================================
+       REAL WINDOWS KEYBINDS
+       Extracted from the Hermes desktop source:
+       apps/desktop/src/lib/keybinds/actions.ts
+       'mod' resolves to Ctrl on Windows.
+       ===================================================================== */
+    (function () {
+      'use strict';
+      var KEYBINDS = [
+        {
+          "id": "composer.focus",
+          "label": "Focus composer",
+          "keys": "/ / Enter",
+          "category": "Composer"
+        },
+        {
+          "id": "composer.modelPicker",
+          "label": "Model picker",
+          "keys": "Ctrl+Shift+M",
+          "category": "Composer"
+        },
+        {
+          "id": "profile.default",
+          "label": "Default profile",
+          "keys": "Ctrl+D",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.prev",
+          "label": "Previous profile",
+          "keys": "Ctrl+Shift+[",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.toggleAll",
+          "label": "Toggle all profiles",
+          "keys": "Ctrl+Shift+0",
+          "category": "Profiles"
+        },
+        {
+          "id": "session.focusSearch",
+          "label": "Search sessions",
+          "keys": "Ctrl+Shift+F",
+          "category": "Sessions"
+        },
+        {
+          "id": "conversation.scrollPageUp",
+          "label": "Scroll up one page",
+          "keys": "PgUp",
+          "category": "Sessions"
+        },
+        {
+          "id": "conversation.scrollPageDown",
+          "label": "Scroll down one page",
+          "keys": "PgDn",
+          "category": "Sessions"
+        },
+        {
+          "id": "workspace.newWorktree",
+          "label": "New worktree",
+          "keys": "Ctrl+Shift+B",
+          "category": "Sessions"
+        },
+        {
+          "id": "workspace.openFolder",
+          "label": "Open folder",
+          "keys": "Ctrl+O",
+          "category": "Sessions"
+        },
+        {
+          "id": "nav.commandPalette",
+          "label": "Command palette",
+          "keys": "Ctrl+K / Ctrl+P",
+          "category": "Navigation"
+        },
+        {
+          "id": "nav.commandCenter",
+          "label": "Command center",
+          "keys": "Ctrl+.",
+          "category": "Navigation"
+        },
+        {
+          "id": "nav.settings",
+          "label": "Settings",
+          "keys": "Ctrl+,",
+          "category": "Navigation"
+        },
+        {
+          "id": "view.toggleSidebar",
+          "label": "Toggle left sidebar",
+          "keys": "Ctrl+B",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.toggleRightSidebar",
+          "label": "Toggle right sidebar",
+          "keys": "Ctrl+J",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.toggleStatusbar",
+          "label": "Toggle status bar",
+          "keys": "Ctrl+Shift+S",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.toggleTabStrip",
+          "label": "Toggle tab strip",
+          "keys": "Ctrl+Alt+T",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.toggleReview",
+          "label": "Toggle review panel",
+          "keys": "Ctrl+G",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.showBrowser",
+          "label": "Show browser",
+          "keys": "Ctrl+Shift+L",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.toggleHud",
+          "label": "Toggle HUD",
+          "keys": "Ctrl+Shift+H",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.showTerminal",
+          "label": "Show terminal",
+          "keys": "Ctrl+`",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.newTerminal",
+          "label": "New terminal",
+          "keys": "Ctrl+Shift+`",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.nextTerminal",
+          "label": "Next terminal",
+          "keys": "Ctrl+Shift+Down",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.prevTerminal",
+          "label": "Previous terminal",
+          "keys": "Ctrl+Shift+Up",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.flipPanes",
+          "label": "Flip panes",
+          "keys": "Ctrl+\\",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.findInPage",
+          "label": "Find in page",
+          "keys": "Ctrl+F",
+          "category": "View & Panels"
+        },
+        {
+          "id": "appearance.toggleMode",
+          "label": "Toggle appearance mode",
+          "keys": "Shift+X",
+          "category": "View & Panels"
+        },
+        {
+          "id": "keybinds.openPanel",
+          "label": "Open keybinds panel",
+          "keys": "Ctrl+/",
+          "category": "View & Panels"
+        },
+        {
+          "id": "composer.voice",
+          "label": "Voice input",
+          "keys": "Ctrl+Alt+V",
+          "category": "Composer"
+        },
+        {
+          "id": "session.new",
+          "label": "New session",
+          "keys": "Alt+N / Ctrl+N",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.newTab",
+          "label": "New tab",
+          "keys": "Alt+T / Ctrl+T",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.newWindow",
+          "label": "New window",
+          "keys": "Shift+Alt+N / Ctrl+Shift+N",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.next",
+          "label": "Next session",
+          "keys": "Alt+] / Ctrl+Tab / Ctrl+PgDn",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.prev",
+          "label": "Previous session",
+          "keys": "Alt+[ / Ctrl+Shift+Tab / Ctrl+PgUp",
+          "category": "Sessions"
+        },
+        {
+          "id": "view.closeTerminal",
+          "label": "Close terminal",
+          "keys": "Shift+Alt+W / Ctrl+Shift+W",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.closeTab",
+          "label": "Close tab",
+          "keys": "Alt+W / Ctrl+W",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.reopenTab",
+          "label": "Reopen closed tab",
+          "keys": "Shift+Alt+T / Ctrl+Shift+T",
+          "category": "View & Panels"
+        },
+        {
+          "id": "profile.switch.1",
+          "label": "Slot 1",
+          "keys": "Ctrl+1",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.2",
+          "label": "Slot 2",
+          "keys": "Ctrl+2",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.3",
+          "label": "Slot 3",
+          "keys": "Ctrl+3",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.4",
+          "label": "Slot 4",
+          "keys": "Ctrl+4",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.5",
+          "label": "Slot 5",
+          "keys": "Ctrl+5",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.6",
+          "label": "Slot 6",
+          "keys": "Ctrl+6",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.7",
+          "label": "Slot 7",
+          "keys": "Ctrl+7",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.8",
+          "label": "Slot 8",
+          "keys": "Ctrl+8",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.9",
+          "label": "Slot 9",
+          "keys": "Ctrl+9",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.10",
+          "label": "Slot 10",
+          "keys": "Ctrl+Alt+1",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.11",
+          "label": "Slot 11",
+          "keys": "Ctrl+Alt+2",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.12",
+          "label": "Slot 12",
+          "keys": "Ctrl+Alt+3",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.13",
+          "label": "Slot 13",
+          "keys": "Ctrl+Alt+4",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.14",
+          "label": "Slot 14",
+          "keys": "Ctrl+Alt+5",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.15",
+          "label": "Slot 15",
+          "keys": "Ctrl+Alt+6",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.16",
+          "label": "Slot 16",
+          "keys": "Ctrl+Alt+7",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.17",
+          "label": "Slot 17",
+          "keys": "Ctrl+Alt+8",
+          "category": "Profiles"
+        },
+        {
+          "id": "profile.switch.18",
+          "label": "Slot 18",
+          "keys": "Ctrl+Alt+9",
+          "category": "Profiles"
+        },
+        {
+          "id": "view.tabSlot.1",
+          "label": "Slot 1",
+          "keys": "Ctrl+1",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.2",
+          "label": "Slot 2",
+          "keys": "Ctrl+2",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.3",
+          "label": "Slot 3",
+          "keys": "Ctrl+3",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.4",
+          "label": "Slot 4",
+          "keys": "Ctrl+4",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.5",
+          "label": "Slot 5",
+          "keys": "Ctrl+5",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.6",
+          "label": "Slot 6",
+          "keys": "Ctrl+6",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.7",
+          "label": "Slot 7",
+          "keys": "Ctrl+7",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.8",
+          "label": "Slot 8",
+          "keys": "Ctrl+8",
+          "category": "View & Panels"
+        },
+        {
+          "id": "view.tabSlot.9",
+          "label": "Slot 9",
+          "keys": "Ctrl+9",
+          "category": "View & Panels"
+        },
+        {
+          "id": "session.slot.1",
+          "label": "Slot 1",
+          "keys": "Ctrl+1",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.2",
+          "label": "Slot 2",
+          "keys": "Ctrl+2",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.3",
+          "label": "Slot 3",
+          "keys": "Ctrl+3",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.4",
+          "label": "Slot 4",
+          "keys": "Ctrl+4",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.5",
+          "label": "Slot 5",
+          "keys": "Ctrl+5",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.6",
+          "label": "Slot 6",
+          "keys": "Ctrl+6",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.7",
+          "label": "Slot 7",
+          "keys": "Ctrl+7",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.8",
+          "label": "Slot 8",
+          "keys": "Ctrl+8",
+          "category": "Sessions"
+        },
+        {
+          "id": "session.slot.9",
+          "label": "Slot 9",
+          "keys": "Ctrl+9",
+          "category": "Sessions"
+        }
+      ];
+      window.__HERMES_KEYBINDS__ = KEYBINDS;
+      if (window.HermesSettings && typeof window.HermesSettings.refreshKeybinds === 'function') {
+        window.HermesSettings.refreshKeybinds(KEYBINDS);
+      }
+    })();
+
+/* ============================================================================
+   Hermes Studio WebUI v7 - Steer Buddy flight physics
+   ----------------------------------------------------------------------------
+   The Steer Buddy never teleports. It flies along a real quadratic Bezier
+   curve so the motion reads as flight and not as a slide:
+
+       B(u) = (1 - u)^2 * P0 + 2(1 - u) * u * C + u^2 * P1
+
+   P0 is where the mascot is right now, P1 is the landing point and C is a
+   control point parked above the midpoint so the arc bows upward. The path is
+   sampled with requestAnimationFrame (no CSS transition drives the position),
+   the parametric value u is pushed through an ease in out cubic curve, the
+   mascot banks into the turn and it settles with a cushioned landing.
+
+   Public API: window.HermesFlight
+   ============================================================================ */
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------- tunables */
+  const MIN_FLIGHT_MS = 620;         // short hop
+  const MAX_FLIGHT_MS = 1150;        // long traverse across the canvas
+  const REFERENCE_TRAVEL_PX = 1200;  // px travel that maps to the longest flight
+  const DURATION_CURVE = 1.5;        // >1 keeps short hops close to the minimum
+  const MAX_BANK_DEG = 18;           // strongest roll into the turn
+  const BANK_SMOOTHING = 0.16;       // per frame lerp, gives the roll some inertia
+  const LANDING_HOLD_MS = 320;       // cushion land keyframes are 300ms
+  const PERCH_PULSE_MS = 650;        // perch ring pulse window
+  const ARRIVING_HOLD_MS = 700;      // pet place card glow window
+  const MASCOT_MIRROR_AXIS_X = 52;   // mascot viewBox is "0 0 100 110": centre x = 52
+  const VIEWPORT_MARGIN_PX = 28;     // keep the landing point inside the viewport
+  const WING_GRADIENT = 'url(#wingGlow)';
+  const DEFAULT_STATE_LABEL = 'free-roaming, drag me anywhere';
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  /* --------------------------------------------------------- dom accessors */
+  const byId = (id) => document.getElementById(id);
+  const find = (sel, root) => (root || document).querySelector(sel);
+  const buddy = () => byId('floatingBuddy');
+  const handle = () => byId('mascotHandle');
+  const perchPad = () => byId('perchPad');
+  const petPlaceCard = () => byId('petPlaceCard');
+  const stateLabel = () => byId('buddyStateLabel');
+  const perchRing = () => {
+    const pad = perchPad();
+    return pad ? find('.perch-ring', pad) : null;
+  };
+
+  const clamp = (v, lo, hi) => (v < lo ? lo : (v > hi ? hi : v));
+  const toNumber = (v, fallback) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const round2 = (n) => Math.round(n * 100) / 100;
+
+  /* --------------------------------------------------------------- easing */
+  /* Named ease in out cubic. f(0) = 0, f(1) = 1 and both end derivatives are
+     zero, so the buddy eases away from the perch and settles without a snap. */
+  function easeInOutCubic(t) {
+    if (t < 0.5) return 4 * t * t * t;
+    const u = 2 - 2 * t;
+    return 1 - (u * u * u) / 2;
+  }
+
+  /* --------------------------------------------------------------- bezier */
+  /* Point on the quadratic curve at parameter t. */
+  function bezierPoint(p0, c, p1, t) {
+    const u = 1 - t;
+    return {
+      x: u * u * p0.x + 2 * u * t * c.x + t * t * p1.x,
+      y: u * u * p0.y + 2 * u * t * c.y + t * t * p1.y
+    };
+  }
+
+  /* Tangent (direction of travel) on the quadratic curve at parameter t. */
+  function bezierTangent(p0, c, p1, t) {
+    return {
+      x: 2 * (1 - t) * (c.x - p0.x) + 2 * t * (p1.x - c.x),
+      y: 2 * (1 - t) * (c.y - p0.y) + 2 * t * (p1.y - c.y)
+    };
+  }
+
+  /* ------------------------------------------------------------- rAF shim */
+  function requestFrame(cb) {
+    if (typeof window.requestAnimationFrame === 'function') {
+      return window.requestAnimationFrame(cb);
+    }
+    return window.setTimeout(() => cb(now()), 16);
+  }
+  function cancelFrame(id) {
+    if (typeof window.cancelAnimationFrame === 'function') {
+      return window.cancelAnimationFrame(id);
+    }
+    return window.clearTimeout(id);
+  }
+  function now() {
+    if (window.performance && window.performance.now) return window.performance.now();
+    return Date.now();
+  }
+
+  /* --------------------------------------------------------------- state */
+  const flight = {
+    rafId: 0,
+    active: false,
+    timers: [],
+    listeners: []
+  };
+  const pending = []; // promise resolvers waiting for the current arrival
+
+  /* --------------------------------------------------------- svg mirroring */
+  /* Path command arity plus the index of every x component inside a command. */
+  const PATH_ARITY = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+  const PATH_X_INDEX = { M: [0], L: [0], H: [0], V: [], C: [0, 2, 4], S: [0, 2], Q: [0, 2], T: [0], A: [5] };
+
+  /* Split a path "d" attribute into command groups with their parameters. */
+  function parsePath(d) {
+    const tokens = String(d).match(/[a-zA-Z]|-?\d*\.?\d+(?:[eE][-+]?\d+)?/g) || [];
+    const groups = [];
+    let i = 0;
+    while (i < tokens.length) {
+      const token = tokens[i];
+      if (!/[a-zA-Z]/.test(token)) { i++; continue; }
+      const cmd = token;
+      i++;
+      const upper = cmd.toUpperCase();
+      if (upper === 'Z') { groups.push({ cmd: cmd, params: [] }); continue; }
+      const arity = PATH_ARITY[upper];
+      if (arity === undefined) continue;
+      let groupIndex = 0;
+      while (i < tokens.length && !/[a-zA-Z]/.test(tokens[i])) {
+        const params = [];
+        for (let k = 0; k < arity && i < tokens.length && !/[a-zA-Z]/.test(tokens[i]); k++) {
+          params.push(parseFloat(tokens[i]));
+          i++;
+        }
+        if (params.length < arity) break;
+        // "M x y x y" means moveto followed by lineto for every extra pair.
+        let effective = cmd;
+        if (groupIndex > 0 && upper === 'M') effective = cmd === 'M' ? 'L' : 'l';
+        groups.push({ cmd: effective, params: params });
+        groupIndex++;
+      }
+    }
+    return groups;
+  }
+
+  /* Reflect a path about the vertical axis x = axisX.
+     Absolute x values become (2 * axisX - x) and relative x deltas are
+     negated, which is the exact geometric mirror. y values are untouched. */
+  function mirrorPathData(d, axisX) {
+    const groups = parsePath(d);
+    const out = [];
+    for (const group of groups) {
+      const upper = group.cmd.toUpperCase();
+      const relative = group.cmd !== upper;
+      const params = group.params.slice();
+      const xIndexes = PATH_X_INDEX[upper] || [];
+      for (const index of xIndexes) {
+        params[index] = relative ? -params[index] : (2 * axisX - params[index]);
+      }
+      if (upper === 'A') {
+        // An arc flips its x axis rotation and its sweep direction when mirrored.
+        params[2] = -params[2];
+        params[4] = params[4] ? 0 : 1;
+      }
+      const parts = [group.cmd];
+      for (const p of params) parts.push(String(Math.round(p * 1000) / 1000));
+      out.push(parts.join(' '));
+    }
+    return out.join(' ');
+  }
+
+  /* Give the mascot two wings: the existing glow wing becomes the left wing
+     and a mirrored copy is appended as the right wing. The mirror axis is the
+     mascot centre x = 52 inside the "0 0 100 110" viewBox. */
+  function initWings() {
+    const h = handle();
+    if (!h) return;
+    const svg = find('svg', h);
+    if (!svg) return;
+
+    let source = null;
+    try {
+      source = find('path[fill="' + WING_GRADIENT + '"]', svg);
+    } catch (err) {
+      source = null;
+    }
+    if (!source) {
+      // Fallback: first path in the svg that references the wing gradient.
+      const paths = svg.querySelectorAll ? svg.querySelectorAll('path') : [];
+      for (const p of paths) {
+        const fill = p.getAttribute('fill') || '';
+        if (fill.indexOf('wingGlow') !== -1) { source = p; break; }
+      }
+    }
+    if (!source) return;
+
+    source.classList.add('wing-left');
+
+    // Only build the mirrored wing once.
+    if (svg.querySelector('path.wing-right')) return;
+    const d = source.getAttribute('d');
+    if (!d) return;
+
+    const right = document.createElementNS(SVG_NS, 'path');
+    right.setAttribute('d', mirrorPathData(d, MASCOT_MIRROR_AXIS_X));
+    right.setAttribute('fill', source.getAttribute('fill') || WING_GRADIENT);
+    right.setAttribute('class', 'wing-right');
+    ['opacity', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin'].forEach((name) => {
+      const value = source.getAttribute(name);
+      if (value) right.setAttribute(name, value);
+    });
+    svg.appendChild(right);
+  }
+
+  /* ------------------------------------------------------------- position */
+  function currentPosition(b) {
+    const rect = b.getBoundingClientRect();
+    return {
+      x: toNumber(b.style.left, rect.left),
+      y: toNumber(b.style.top, rect.top)
+    };
+  }
+
+  /* Landing point for a target element: its centre, clamped into the viewport
+     so a perch that is scrolled out of sight still produces a sane landing. */
+  function landingPosition(b, h, target) {
+    const rect = target.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    let cx = rect.left + rect.width / 2;
+    let cy = rect.top + rect.height / 2;
+    cx = clamp(cx, VIEWPORT_MARGIN_PX, Math.max(VIEWPORT_MARGIN_PX, vw - VIEWPORT_MARGIN_PX));
+    cy = clamp(cy, VIEWPORT_MARGIN_PX, Math.max(VIEWPORT_MARGIN_PX, vh - VIEWPORT_MARGIN_PX));
+
+    // The wrapper is positioned by its top left corner, so convert the
+    // viewport point into wrapper coordinates using the mascot handle centre.
+    const bRect = b.getBoundingClientRect();
+    const hRect = h.getBoundingClientRect();
+    const offX = (hRect.left + hRect.width / 2) - bRect.left;
+    const offY = (hRect.top + hRect.height / 2) - bRect.top;
+    return { x: cx - offX, y: cy - offY };
+  }
+
+  /* ---------------------------------------------------------------- label */
+  function setStateLabel(text) {
+    const label = stateLabel();
+    if (label) label.textContent = text;
+  }
+
+  /* --------------------------------------------------------------- cancel */
+  /* Stop a running flight cleanly: drop the frame, drop the flying state and
+     release everything that was waiting on the arrival. */
+  function cancel() {
+    if (flight.rafId) { cancelFrame(flight.rafId); flight.rafId = 0; }
+    flight.active = false;
+
+    const b = buddy();
+    const h = handle();
+    if (b) { b.classList.remove('flying'); b.classList.remove('landing'); }
+    if (h) {
+      h.classList.remove('landing');
+      h.style.setProperty('--bank', '0deg');
+      h.style.pointerEvents = '';
+      h.removeAttribute('data-flying');
+    }
+    for (const id of flight.timers) window.clearTimeout(id);
+    flight.timers.length = 0;
+
+    const ring = perchRing();
+    if (ring) ring.classList.remove('hit');
+    const card = petPlaceCard();
+    if (card) card.classList.remove('arriving');
+
+    setStateLabel(DEFAULT_STATE_LABEL);
+
+    const waiting = pending.splice(0, pending.length);
+    for (const resolve of waiting) resolve(null);
+  }
+
+  /* ---------------------------------------------------------------- settle */
+  function settle(arrival, end, opts) {
+    const b = buddy();
+    const h = handle();
+
+    flight.active = false;
+    flight.rafId = 0;
+
+    if (b) {
+      // Snap exactly onto the target, then hand over to the cushion landing.
+      b.style.left = end.x.toFixed(2) + 'px';
+      b.style.top = end.y.toFixed(2) + 'px';
+      b.classList.remove('flying');
+      b.classList.add('landing');
+    }
+    if (h) {
+      h.classList.add('landing');
+      h.style.setProperty('--bank', '0deg');
+      h.style.pointerEvents = '';
+      h.removeAttribute('data-flying');
+    }
+
+    const ring = perchRing();
+    if (ring) ring.classList.add('hit');
+    const card = petPlaceCard();
+    if (card) card.classList.add('arriving');
+
+    flight.timers.push(window.setTimeout(() => {
+      if (b) b.classList.remove('landing');
+      if (h) h.classList.remove('landing');
+    }, LANDING_HOLD_MS));
+    flight.timers.push(window.setTimeout(() => { if (ring) ring.classList.remove('hit'); }, PERCH_PULSE_MS));
+    flight.timers.push(window.setTimeout(() => { if (card) card.classList.remove('arriving'); }, ARRIVING_HOLD_MS));
+
+    // Status line: the caller (callHome) gets the last word on the label.
+    if (!opts || !opts.onArrive) setStateLabel(DEFAULT_STATE_LABEL);
+
+    const waiting = pending.splice(0, pending.length);
+    for (const resolve of waiting) resolve(arrival);
+
+    if (opts && typeof opts.onArrive === 'function') {
+      try { opts.onArrive(arrival); } catch (err) { /* arrival handlers must not break the flight */ }
+    }
+    const listeners = flight.listeners.slice();
+    for (const listener of listeners) {
+      try { listener(arrival); } catch (err) { /* one bad listener must not break the rest */ }
+    }
+  }
+
+  /* ----------------------------------------------------------------- fly */
+  function flyTo(targetEl, opts) {
+    opts = opts || {};
+    const b = buddy();
+    const h = handle();
+    if (!b || !h) return Promise.resolve(null);
+
+    const target = resolveTarget(targetEl);
+    if (!target) return Promise.resolve(null);
+
+    // A new flight always cancels the previous one cleanly.
+    cancel();
+
+    const start = currentPosition(b);
+    const end = landingPosition(b, h, target);
+
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.hypot(dx, dy);
+
+    // Duration scales mildly with the travel distance: 620ms for a short hop
+    // up to 1150ms for a long traverse across the canvas. The curve is
+    // super-linear so short hops stay close to the minimum.
+    const travel = Math.pow(clamp(distance / REFERENCE_TRAVEL_PX, 0, 1), DURATION_CURVE);
+    const duration = typeof opts.duration === 'number'
+      ? opts.duration
+      : MIN_FLIGHT_MS + (MAX_FLIGHT_MS - MIN_FLIGHT_MS) * travel;
+
+    // Control point above the midpoint so the arc bows upward.
+    const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    let lift = clamp(distance * 0.32 + 30, 40, 260);
+    // Do not let the arc sail far off the top of the screen.
+    lift = Math.min(lift, Math.max(40, mid.y + 120));
+    const control = { x: mid.x, y: mid.y - lift };
+
+    // Flight state.
+    flight.active = true;
+    b.classList.add('flying');
+    // While the buddy is in the air the handle is not a drag target.
+    h.style.pointerEvents = 'none';
+    h.setAttribute('data-flying', '1');
+    setStateLabel(target === perchPad() ? 'flying home' : 'in flight');
+
+    let bank = 0;
+    let startedAt = 0;
+
+    const frame = (timestamp) => {
+      if (!flight.active) return;
+      if (!startedAt) startedAt = timestamp;
+      const raw = clamp((timestamp - startedAt) / duration, 0, 1);
+      const u = easeInOutCubic(raw);
+
+      const point = bezierPoint(start, control, end, u);
+      b.style.left = point.x.toFixed(2) + 'px';
+      b.style.top = point.y.toFixed(2) + 'px';
+
+      // Bank into the turn: the sign follows the horizontal travel direction and
+      // the magnitude follows the horizontal speed of the curve.
+      const tangent = bezierTangent(start, control, end, u);
+      const peak = Math.max(Math.abs(control.x - start.x), Math.abs(end.x - control.x), 1);
+      const targetBank = clamp((tangent.x / peak) * MAX_BANK_DEG, -MAX_BANK_DEG, MAX_BANK_DEG);
+      bank += (targetBank - bank) * BANK_SMOOTHING;
+      h.style.setProperty('--bank', bank.toFixed(2) + 'deg');
+
+      // Keep the speech bubble on the sensible side of the screen.
+      const flip = point.x > (window.innerWidth * 0.56);
+      if (b.classList.contains('flip-left') !== flip) b.classList.toggle('flip-left', flip);
+
+      if (raw < 1) {
+        flight.rafId = requestFrame(frame);
+      } else {
+        settle(target, end, opts);
+      }
+    };
+
+    return new Promise((resolve) => {
+      pending.push(resolve);
+      flight.rafId = requestFrame(frame);
+    });
+  }
+
+  function resolveTarget(target) {
+    if (!target) return null;
+    if (typeof target === 'string') return byId(target);
+    if (target.nodeType === 1) return target;
+    return null;
+  }
+
+  /* ------------------------------------------------------------ call home */
+  /* Fly the buddy to the centre of the perch pad and dock him there. */
+  function callHome() {
+    const pad = perchPad();
+    if (!pad) return Promise.resolve(null);
+    return flyTo(pad, {
+      onArrive: function () {
+        const label = stateLabel();
+        if (label) label.textContent = 'docked at Pet Place';
+        const hint = find('#perchHintText', pad) || find('.perch-hint', pad);
+        if (hint) hint.textContent = 'Docked at Pet Place - drag him out anytime!';
+        const bottomBtn = byId('petPlaceBottomBtn');
+        if (bottomBtn) bottomBtn.classList.add('active-place');
+        const b = buddy();
+        if (b) b.classList.add('perched');
+      }
+    });
+  }
+
+  /* ---------------------------------------------------------------- wiring */
+  function bindButton(el, fn) {
+    if (!el) return;
+    if (el.getAttribute('data-flight-bound')) return;
+    el.setAttribute('data-flight-bound', '1');
+    el.addEventListener('click', fn);
+  }
+
+  function init() {
+    initWings();
+
+    // Every "Pet Place" affordance sends the buddy home.
+    bindButton(byId('callHomeBtn'), () => callHome());
+    bindButton(byId('sendToPerchTopBtn'), () => callHome());
+    bindButton(byId('petPlaceBottomBtn'), () => callHome());
+    bindButton(byId('quickDockBtn'), () => callHome());
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  /* ----------------------------------------------------------- public api */
+  window.HermesFlight = {
+    flyTo: function (targetEl, opts) { return flyTo(targetEl, opts); },
+    callHome: function () { return callHome(); },
+    cancel: function () { cancel(); },
+    isFlying: function () { return flight.active === true; },
+    onSettle: function (cb) {
+      if (typeof cb === 'function') flight.listeners.push(cb);
+      // Returns an unsubscribe helper so callers can detach cleanly.
+      return function () {
+        const index = flight.listeners.indexOf(cb);
+        if (index !== -1) flight.listeners.splice(index, 1);
+      };
+    }
+  };
+})();
+
+/* ============================================================================
+   Hermes Studio WebUI v7 - Steer Buddy confidence scoring
+   ----------------------------------------------------------------------------
+   Every Steer Buddy tip carries a confidence score. The score is rendered as
+   a small pill badge that holds an inline SVG progress ring:
+
+       circumference = 2 * PI * r          (r = 6, viewBox "0 0 16 16")
+       dashoffset    = circumference * (1 - percent / 100)
+
+   The value circle uses stroke="currentColor" so the badge colour drives the
+   ring colour. Clicking the badge toggles a rationale line that explains why
+   the confidence is the level it is.
+
+   Public API: window.HermesConfidence
+   ============================================================================ */
+(function () {
+  'use strict';
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const RING_R = 6;                             // ring radius inside the 16x16 viewBox
+  const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R; // 37.699..., the full ring length
+  const DEFAULT_MODE = 'tip';
+
+  /* Level table: mode -> level, percent, colour tone and the rationale text.
+     Percent values are fixed per mode so the badge always reads 96%, 89% or 78%. */
+  const LEVELS = {
+    tip: {
+      level: 'HIGH',
+      percent: 96,
+      tone: 'emerald',
+      why: 'High confidence: this tip is read straight from the live workflow state and the current plan, so it matches the step Hermes is actually running right now.'
+    },
+    unblock: {
+      level: 'MEDIUM',
+      percent: 89,
+      tone: 'amber',
+      why: 'Medium confidence: I can see the blocked step and the usual OAuth fix, but only you can finish the browser click, so the outcome still depends on that approval.'
+    },
+    conflict: {
+      level: 'LOW',
+      percent: 78,
+      tone: 'blue',
+      why: 'Low confidence: two earlier instructions disagree and I cannot read which one you meant, so any choice I make could be the wrong one.'
+    }
+  };
+
+  let currentMode = DEFAULT_MODE;
+  let dom = null;
+
+  /* ------------------------------------------------------------- helpers */
+  function byId(id) { return document.getElementById(id); }
+
+  function normalize(mode) {
+    const key = String(mode == null ? '' : mode).trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(LEVELS, key) ? key : currentMode;
+  }
+
+  function speechBubble() {
+    return byId('speechBubble') || (byId('speechText') && byId('speechText').closest('.speech-bubble'));
+  }
+
+  /* --------------------------------------------------------------- build */
+  /* Create the confidence row and the rationale line, then slot them into the
+     existing speech bubble markup:
+        .speech-top
+        #speechText
+        .conf-row      <- new
+        .conf-why      <- new
+        .speech-toolbar
+     The DOM is only built once, later calls just re-render the values. */
+  function ensureDom() {
+    if (dom && dom.row && dom.row.isConnected) return dom;
+
+    const bubble = speechBubble();
+    const speechText = byId('speechText');
+    if (!bubble || !speechText) return null;
+
+    const toolbar = bubble.querySelector('.speech-toolbar');
+
+    let row = bubble.querySelector('.conf-row');
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'conf-row';
+
+      const badge = document.createElement('button');
+      badge.type = 'button';
+      badge.className = 'conf-badge';
+      badge.setAttribute('aria-expanded', 'false');
+
+      // Inline progress ring: a muted track plus a value arc on top of it.
+      const ring = document.createElementNS(SVG_NS, 'svg');
+      ring.setAttribute('class', 'conf-ring');
+      ring.setAttribute('viewBox', '0 0 16 16');
+      ring.setAttribute('aria-hidden', 'true');
+      ring.setAttribute('focusable', 'false');
+
+      const track = document.createElementNS(SVG_NS, 'circle');
+      track.setAttribute('class', 'track');
+      track.setAttribute('cx', '8');
+      track.setAttribute('cy', '8');
+      track.setAttribute('r', String(RING_R));
+      track.setAttribute('fill', 'none');
+      track.setAttribute('stroke-width', '2');
+
+      const val = document.createElementNS(SVG_NS, 'circle');
+      val.setAttribute('class', 'val');
+      val.setAttribute('cx', '8');
+      val.setAttribute('cy', '8');
+      val.setAttribute('r', String(RING_R));
+      val.setAttribute('fill', 'none');
+      val.setAttribute('stroke-width', '2');
+      val.setAttribute('stroke', 'currentColor'); // badge colour drives the ring
+      val.setAttribute('stroke-linecap', 'round');
+      val.setAttribute('stroke-dasharray', RING_CIRCUMFERENCE.toFixed(3));
+      val.setAttribute('stroke-dashoffset', RING_CIRCUMFERENCE.toFixed(3));
+
+      ring.appendChild(track);
+      ring.appendChild(val);
+
+      const pct = document.createElement('span');
+      pct.className = 'conf-pct';
+
+      badge.appendChild(ring);
+      badge.appendChild(pct);
+
+      const label = document.createElement('span');
+      label.className = 'conf-label';
+      label.textContent = 'confidence';
+      // Muted, small and pushed to the far right of the row.
+      label.setAttribute('style', 'margin-left:auto;font-size:10.5px;color:var(--fg-muted);letter-spacing:.02em;');
+
+      row.appendChild(badge);
+      row.appendChild(label);
+
+      // Clicking the badge toggles the rationale line underneath.
+      badge.addEventListener('click', function () {
+        const why = bubble.querySelector('.conf-why');
+        if (!why) return;
+        const open = why.classList.toggle('open');
+        badge.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      if (toolbar && toolbar.parentNode) {
+        toolbar.parentNode.insertBefore(row, toolbar);
+      } else {
+        bubble.appendChild(row);
+      }
+    }
+
+    let why = bubble.querySelector('.conf-why');
+    if (!why) {
+      why = document.createElement('div');
+      why.className = 'conf-why';
+
+      const tag = document.createElement('span');
+      tag.className = 'why-tag';
+      tag.textContent = 'why';
+
+      const text = document.createElement('span');
+      text.className = 'why-text';
+
+      why.appendChild(tag);
+      why.appendChild(text);
+
+      // The rationale sits directly after the confidence row.
+      if (row.nextSibling) {
+        row.parentNode.insertBefore(why, row.nextSibling);
+      } else {
+        row.parentNode.appendChild(why);
+      }
+    }
+
+    dom = {
+      bubble: bubble,
+      row: row,
+      badge: row.querySelector('.conf-badge'),
+      pct: row.querySelector('.conf-pct'),
+      val: row.querySelector('.conf-ring .val'),
+      why: why,
+      tag: why.querySelector('.why-tag'),
+      text: why.querySelector('.why-text')
+    };
+    return dom;
+  }
+
+  /* -------------------------------------------------------------- render */
+  /* Re-render the badge value, the ring offset, the badge colour class and
+     the rationale text for the given mode. */
+  function apply(mode) {
+    const key = normalize(mode);
+    currentMode = key;
+    const conf = LEVELS[key];
+
+    const els = ensureDom();
+    if (!els) return false;
+
+    if (els.badge) {
+      // Swap the colour tone class: emerald / amber / blue.
+      els.badge.classList.remove('emerald', 'amber', 'blue');
+      els.badge.classList.add(conf.tone);
+      els.badge.setAttribute('title', conf.level + ' confidence (' + conf.percent + '%)');
+      els.badge.setAttribute('aria-label', conf.level + ' confidence ' + conf.percent + ' percent');
+    }
+
+    if (els.pct) {
+      els.pct.textContent = conf.percent + '%';
+    }
+
+    if (els.val) {
+      // Arc length shrinks with the score: dashoffset = circumference * (1 - pct).
+      const offset = RING_CIRCUMFERENCE * (1 - conf.percent / 100);
+      els.val.setAttribute('stroke-dasharray', RING_CIRCUMFERENCE.toFixed(3));
+      els.val.setAttribute('stroke-dashoffset', offset.toFixed(3));
+      els.val.setAttribute('stroke', 'currentColor');
+    }
+
+    if (els.tag) els.tag.textContent = conf.level;
+    if (els.text) els.text.textContent = conf.why;
+
+    return true;
+  }
+
+  /* -------------------------------------------------------------- setMode */
+  /* Switch the active buddy mode, mirror the chip selection and re-render. */
+  function setMode(mode) {
+    const key = normalize(mode);
+    currentMode = key;
+
+    const chips = document.querySelectorAll('[data-bmode]');
+    for (let i = 0; i < chips.length; i++) {
+      const chip = chips[i];
+      chip.classList.toggle('active', chip.getAttribute('data-bmode') === key);
+    }
+
+    apply(key);
+  }
+
+  /* --------------------------------------------------------------- wiring */
+  function init() {
+    ensureDom();
+    apply(currentMode);
+
+    // Delegated so chips added later are handled as well.
+    document.addEventListener('click', function (event) {
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+      const chip = target.closest('[data-bmode]');
+      if (!chip) return;
+      const mode = chip.getAttribute('data-bmode');
+      if (!mode) return;
+      setMode(mode);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  /* ----------------------------------------------------------- public api */
+  window.HermesConfidence = {
+    /* Switch mode and refresh every confidence artefact. */
+    setMode: function (mode) {
+      setMode(mode);
+      return currentMode;
+    },
+    /* Re-render the badge, ring, colour class and rationale for a mode. */
+    apply: function (mode) {
+      apply(mode);
+      return currentMode;
+    },
+    /* The mode currently on screen. */
+    current: function () {
+      return currentMode;
+    }
+  };
+})();
+
+/* =====================================================================
+   SUBAGENT MANAGER (Left Wing) - self contained IIFE.
+   Exposes window.HermesSubagents.reset() for orchestrator re-init.
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  var SA_ROOT_ID = 'subagentManager';
+  var SA_ICON = {
+    grip: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5.5h.01M15 5.5h.01M9 12h.01M15 12h.01M9 18.5h.01M15 18.5h.01"></path></svg>',
+    stop: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"></rect></svg>',
+    play: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6l10 6.4-10 6.4z"></path></svg>',
+    chat: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12c0 4.1-3.8 7.4-8.5 7.4-1 0-2-.15-2.9-.42L4 21l1.6-3.7C4 15.9 3.5 14 3.5 12c0-4.1 3.8-7.4 8.5-7.4s8.5 3.3 8.5 7.4z"></path></svg>',
+    send: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L10.5 13.5M21 3l-6.8 18-3.7-8.5L3 8.8z"></path></svg>',
+    check: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"></path></svg>',
+    plus: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"></path></svg>'
+  };
+
+  var saState = {
+    agents: [],
+    filter: '',
+    openChatId: null,
+    composerId: null,
+    timers: {},
+    seq: 0,
+    bound: false
+  };
+  var saRoot = null;
+  var saCard = null;
+  var saList = null;
+
+  /* ---------- helpers ---------- */
+  function saEl(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text !== undefined && text !== null) { n.textContent = text; }
+    return n;
+  }
+  function saIcon(name) {
+    var wrap = document.createElement('span');
+    wrap.className = 'sa-ic';
+    wrap.innerHTML = SA_ICON[name] || '';
+    return wrap.firstChild;
+  }
+  function saFmt(sec) {
+    if (!isFinite(sec) || sec < 0) { sec = 0; }
+    if (sec >= 60) {
+      var m = Math.floor(sec / 60);
+      var s = Math.floor(sec % 60);
+      return m + 'm ' + (s < 10 ? '0' : '') + s + 's';
+    }
+    var v = Math.round(sec * 10) / 10;
+    if (Math.abs(v - Math.round(v)) < 0.05) { return Math.round(v) + 's'; }
+    return v.toFixed(1) + 's';
+  }
+  function saClock(offsetSec) {
+    var d = new Date();
+    if (offsetSec) { d = new Date(d.getTime() - offsetSec * 1000); }
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  function saFind(id) {
+    for (var i = 0; i < saState.agents.length; i++) {
+      if (saState.agents[i].id === id) { return saState.agents[i]; }
+    }
+    return null;
+  }
+  function saRowEl(id) {
+    if (!saList) { return null; }
+    return saList.querySelector('.sa-row[data-id="' + id + '"]');
+  }
+
+  /* ---------- seed data ---------- */
+  function saSeed() {
+    return [
+      {
+        id: 'sa-css-grid-verifier',
+        name: 'css-grid-verifier',
+        model: 'gemini-4-neon-medium',
+        status: 'running',
+        elapsed: 2.1,
+        task: 'Verify 3-zone grid at 1440px',
+        transcript: [
+          { who: 'agent', text: 'Grid verified at 1440px and 1920px, no overflow.', ago: 95 },
+          { who: 'system', text: 'Tool sweep finished in 12 calls.', ago: 80 }
+        ]
+      },
+      {
+        id: 'sa-agy-escalate',
+        name: 'agy-escalate',
+        model: 'claude-opus-5-5-high',
+        status: 'standby',
+        elapsed: 0,
+        task: 'Second opinion on audit blockers',
+        transcript: [
+          { who: 'system', text: 'Waiting for escalation trigger.', ago: 240 }
+        ]
+      },
+      {
+        id: 'sa-citation-auditor',
+        name: 'citation-auditor',
+        model: 'gemini-4-hydrogen-medium',
+        status: 'running',
+        elapsed: 41,
+        task: 'Cross-check 12 DOI references',
+        transcript: [
+          { who: 'agent', text: '11 of 12 DOIs resolved via Crossref.', ago: 120 },
+          { who: 'user', text: 'Retry the failing one with the title search.', ago: 90 }
+        ]
+      },
+      {
+        id: 'sa-browser-scout',
+        name: 'browser-scout',
+        model: 'gemini-3.8-flash-medium',
+        status: 'stopped',
+        elapsed: 18,
+        task: 'Scraping docs page for widget API',
+        transcript: [
+          { who: 'system', text: 'Paused by user at step 3.', ago: 300 }
+        ]
+      }
+    ];
+  }
+
+  /* ---------- transcript rendering ---------- */
+  function saTranscriptLine(entry) {
+    var line = saEl('div', 'sa-tl');
+    var who = saEl('span', 'sa-who sa-who-' + entry.who, entry.who);
+    var text = saEl('span', 'sa-text', entry.text);
+    var time = saEl('span', 'sa-time mono', entry.time);
+    line.appendChild(who);
+    line.appendChild(text);
+    line.appendChild(time);
+    return line;
+  }
+  function saRenderTranscript(agent) {
+    var host = saList.querySelector('.sa-row[data-id="' + agent.id + '"] [data-role="transcript"]');
+    if (!host) { return; }
+    host.textContent = '';
+    if (!agent.transcript.length) {
+      host.appendChild(saEl('div', 'sa-empty', 'No messages yet.'));
+    } else {
+      for (var i = 0; i < agent.transcript.length; i++) {
+        host.appendChild(saTranscriptLine(agent.transcript[i]));
+      }
+    }
+    saSizeAccordion(agent);
+  }
+  function saSizeAccordion(agent) {
+    // The accordion animates with grid-template-rows, so no height
+    // measurement is needed and it cannot be clipped.
+    return;
+  }
+
+  /* ---------- row building ---------- */
+  function saBuildRow(agent) {
+    var row = saEl('div', 'sa-row');
+    row.setAttribute('data-id', agent.id);
+    row.setAttribute('draggable', 'true');
+
+    var main = saEl('div', 'sa-row-main');
+
+    var grip = saEl('span', 'sa-grip');
+    grip.setAttribute('title', 'Drag to reorder');
+    grip.setAttribute('aria-hidden', 'true');
+    grip.appendChild(saIcon('grip'));
+    main.appendChild(grip);
+
+    var dot = saEl('span', 'status-dot sa-dot is-' + agent.status);
+    dot.setAttribute('data-role', 'dot');
+    main.appendChild(dot);
+
+    var name = saEl('span', 'sa-name', agent.name);
+    name.setAttribute('data-role', 'name');
+    main.appendChild(name);
+
+    var nameInput = saEl('input', 'sa-name-input');
+    nameInput.setAttribute('data-role', 'name-input');
+    nameInput.setAttribute('type', 'text');
+    nameInput.setAttribute('aria-label', 'Subagent name');
+    nameInput.value = agent.name;
+    main.appendChild(nameInput);
+
+    var badge = saEl('span', 'pr-badge sa-badge', agent.model);
+    badge.setAttribute('data-role', 'model');
+    badge.setAttribute('title', agent.model);
+    main.appendChild(badge);
+
+    var right = saEl('span', 'sa-right');
+    var status = saEl('span', 'sa-status is-' + agent.status, agent.status);
+    status.setAttribute('data-role', 'status');
+    var elapsed = saEl('span', 'sa-elapsed mono', saFmt(agent.elapsed));
+    elapsed.setAttribute('data-role', 'elapsed');
+    right.appendChild(status);
+    right.appendChild(elapsed);
+    main.appendChild(right);
+
+    var ctl = saEl('span', 'sa-ctl');
+
+    var steerBtn = saEl('button', 'sa-btn', 'Steer');
+    steerBtn.setAttribute('data-act', 'steer');
+    steerBtn.setAttribute('type', 'button');
+    steerBtn.setAttribute('title', 'Steer ' + agent.name);
+    steerBtn.setAttribute('aria-label', 'Steer ' + agent.name);
+    steerBtn.setAttribute('aria-expanded', 'false');
+    steerBtn.setAttribute('data-role', 'steer-btn');
+    ctl.appendChild(steerBtn);
+
+    var toggleBtn = saEl('button', 'sa-btn');
+    toggleBtn.setAttribute('data-act', 'toggle');
+    toggleBtn.setAttribute('type', 'button');
+    toggleBtn.setAttribute('data-role', 'toggle-btn');
+    if (agent.status === 'running') {
+      toggleBtn.appendChild(saIcon('stop'));
+      toggleBtn.appendChild(saEl('span', null, 'Stop'));
+      toggleBtn.setAttribute('title', 'Stop ' + agent.name);
+      toggleBtn.setAttribute('aria-label', 'Stop ' + agent.name);
+    } else {
+      toggleBtn.appendChild(saIcon('play'));
+      toggleBtn.appendChild(saEl('span', null, 'Resume'));
+      toggleBtn.setAttribute('title', 'Resume ' + agent.name);
+      toggleBtn.setAttribute('aria-label', 'Resume ' + agent.name);
+    }
+    ctl.appendChild(toggleBtn);
+
+    var chatBtn = saEl('button', 'sa-btn');
+    chatBtn.appendChild(saIcon('chat'));
+    chatBtn.appendChild(saEl('span', null, 'Chat'));
+    chatBtn.setAttribute('data-act', 'chat');
+    chatBtn.setAttribute('type', 'button');
+    chatBtn.setAttribute('title', 'Chat log for ' + agent.name);
+    chatBtn.setAttribute('aria-label', 'Chat log for ' + agent.name);
+    chatBtn.setAttribute('aria-expanded', 'false');
+    chatBtn.setAttribute('aria-controls', 'acc-' + agent.id);
+    chatBtn.setAttribute('data-role', 'chat-btn');
+    ctl.appendChild(chatBtn);
+
+    main.appendChild(ctl);
+    row.appendChild(main);
+
+    var task = saEl('div', 'sa-task', agent.task);
+    task.setAttribute('data-role', 'task');
+    task.setAttribute('title', agent.task);
+    row.appendChild(task);
+
+    var composer = saEl('div', 'sa-composer');
+    composer.setAttribute('data-role', 'composer');
+    composer.hidden = true;
+    var composerRow = saEl('div', 'sa-composer-row');
+    var composerInput = saEl('input', 'sa-composer-input');
+    composerInput.setAttribute('data-role', 'composer-input');
+    composerInput.setAttribute('type', 'text');
+    composerInput.setAttribute('aria-label', 'Steer message for ' + agent.name);
+    composerInput.setAttribute('placeholder', 'Message to ' + agent.name);
+    var sendBtn = saEl('button', 'sa-btn sa-btn-accent');
+    sendBtn.appendChild(saIcon('send'));
+    sendBtn.appendChild(saEl('span', null, 'Send'));
+    sendBtn.setAttribute('data-act', 'send');
+    sendBtn.setAttribute('type', 'button');
+    sendBtn.setAttribute('title', 'Send steer message');
+    composerRow.appendChild(composerInput);
+    composerRow.appendChild(sendBtn);
+    composer.appendChild(composerRow);
+    var confirm = saEl('div', 'sa-confirm');
+    confirm.setAttribute('data-role', 'confirm');
+    confirm.hidden = true;
+    composer.appendChild(confirm);
+    row.appendChild(composer);
+
+    var acc = saEl('div', 'sa-acc');
+    acc.setAttribute('data-role', 'acc');
+    acc.setAttribute('id', 'acc-' + agent.id);
+    acc.setAttribute('role', 'region');
+    acc.setAttribute('aria-label', 'Chat log for ' + agent.name);
+    var accInner = saEl('div', 'sa-acc-inner');
+    accInner.setAttribute('data-role', 'acc-inner');
+    var transcript = saEl('div', 'sa-transcript');
+    transcript.setAttribute('data-role', 'transcript');
+    accInner.appendChild(transcript);
+    acc.appendChild(accInner);
+    row.appendChild(acc);
+
+    if (agent.editing) {
+      row.classList.add('is-editing');
+      setTimeout(function () {
+        try { nameInput.focus(); nameInput.select(); } catch (e) { /* noop */ }
+      }, 0);
+    }
+    return row;
+  }
+
+  function saSyncRows() {
+    if (!saList) { return; }
+    var wanted = saState.agents.map(function (a) { return a.id; });
+    var existing = Array.prototype.slice.call(saList.querySelectorAll('.sa-row'));
+    // remove rows that are gone
+    for (var i = 0; i < existing.length; i++) {
+      if (wanted.indexOf(existing[i].getAttribute('data-id')) === -1) {
+        existing[i].parentNode.removeChild(existing[i]);
+      }
+    }
+    // create missing rows and enforce DOM order
+    for (var j = 0; j < wanted.length; j++) {
+      var id = wanted[j];
+      var agent = saFind(id);
+      var row = saRowEl(id);
+      if (!row) {
+        row = saBuildRow(agent);
+        saList.appendChild(row);
+        saRenderTranscript(agent);
+      }
+      saList.appendChild(row);
+    }
+    saApplyFilter();
+  }
+
+  function saRenderAll() {
+    if (!saList) { return; }
+    saList.textContent = '';
+    for (var i = 0; i < saState.agents.length; i++) {
+      saList.appendChild(saBuildRow(saState.agents[i]));
+    }
+    for (var j = 0; j < saState.agents.length; j++) {
+      saRenderTranscript(saState.agents[j]);
+    }
+    if (saState.openChatId) {
+      var open = saFind(saState.openChatId);
+      if (open) { saOpenAccordion(open, true); }
+    }
+    saApplyFilter();
+    saPaintStats();
+  }
+
+  /* ---------- painting ---------- */
+  function saPaintStats() {
+    if (!saCard) { return; }
+    var running = 0;
+    var total = 0;
+    var sum = 0;
+    for (var i = 0; i < saState.agents.length; i++) {
+      var a = saState.agents[i];
+      total += 1;
+      sum += a.elapsed;
+      if (a.status === 'running') { running += 1; }
+    }
+    var countEl = saCard.querySelector('[data-sa="count"]');
+    if (countEl) {
+      countEl.textContent = String(total);
+      countEl.setAttribute('title', total + ' subagent' + (total === 1 ? '' : 's'));
+    }
+    var runEl = saCard.querySelector('[data-sa="running"]');
+    if (runEl) { runEl.textContent = String(running); }
+    var totEl = saCard.querySelector('[data-sa="total"]');
+    if (totEl) { totEl.textContent = String(total); }
+    var elEl = saCard.querySelector('[data-sa="elapsed"]');
+    if (elEl) { elEl.textContent = saFmt(sum); }
+  }
+
+  function saApplyFilter() {
+    if (!saList) { return; }
+    var q = (saState.filter || '').trim().toLowerCase();
+    var rows = saList.querySelectorAll('.sa-row');
+    for (var i = 0; i < rows.length; i++) {
+      var agent = saFind(rows[i].getAttribute('data-id'));
+      if (!agent) { continue; }
+      var hit = !q || agent.name.toLowerCase().indexOf(q) !== -1;
+      rows[i].style.display = hit ? '' : 'none';
+    }
+  }
+
+  function saUpdateRow(agent) {
+    var row = saRowEl(agent.id);
+    if (!row) { return; }
+    var dot = row.querySelector('[data-role="dot"]');
+    if (dot) { dot.className = 'status-dot sa-dot is-' + agent.status; }
+    var status = row.querySelector('[data-role="status"]');
+    if (status) {
+      status.className = 'sa-status is-' + agent.status;
+      status.textContent = agent.status;
+    }
+    var elapsed = row.querySelector('[data-role="elapsed"]');
+    if (elapsed) { elapsed.textContent = saFmt(agent.elapsed); }
+    var toggleBtn = row.querySelector('[data-role="toggle-btn"]');
+    if (toggleBtn) {
+      toggleBtn.textContent = '';
+      if (agent.status === 'running') {
+        toggleBtn.appendChild(saIcon('stop'));
+        toggleBtn.appendChild(saEl('span', null, 'Stop'));
+        toggleBtn.setAttribute('title', 'Stop ' + agent.name);
+        toggleBtn.setAttribute('aria-label', 'Stop ' + agent.name);
+      } else {
+        toggleBtn.appendChild(saIcon('play'));
+        toggleBtn.appendChild(saEl('span', null, 'Resume'));
+        toggleBtn.setAttribute('title', 'Resume ' + agent.name);
+        toggleBtn.setAttribute('aria-label', 'Resume ' + agent.name);
+      }
+    }
+  }
+
+  /* ---------- timers ---------- */
+  function saStartTimer(agent) {
+    if (saState.timers[agent.id]) { return; }
+    saState.timers[agent.id] = setInterval(function () {
+      agent.elapsed += 1;
+      saUpdateRow(agent);
+      saPaintStats();
+    }, 1000);
+  }
+  function saStopTimer(agent) {
+    if (saState.timers[agent.id]) {
+      clearInterval(saState.timers[agent.id]);
+      delete saState.timers[agent.id];
+    }
+  }
+  function saStopAllTimers() {
+    for (var k in saState.timers) {
+      if (Object.prototype.hasOwnProperty.call(saState.timers, k)) {
+        clearInterval(saState.timers[k]);
+      }
+    }
+    saState.timers = {};
+  }
+
+  /* ---------- accordion ---------- */
+  function saCloseAccordion(agent) {
+    var row = saRowEl(agent.id);
+    if (!row) { return; }
+    var acc = row.querySelector('[data-role="acc"]');
+    if (acc) {
+      acc.classList.remove('is-open');
+      acc.style.maxHeight = '';
+    }
+    var btn = row.querySelector('[data-role="chat-btn"]');
+    if (btn) { btn.setAttribute('aria-expanded', 'false'); }
+  }
+  function saOpenAccordion(agent, keepHeight) {
+    var row = saRowEl(agent.id);
+    if (!row) { return; }
+    var acc = row.querySelector('[data-role="acc"]');
+    if (!acc) { return; }
+    acc.classList.add('is-open');
+    acc.style.maxHeight = '';
+    var btn = row.querySelector('[data-role="chat-btn"]');
+    if (btn) { btn.setAttribute('aria-expanded', 'true'); }
+  }
+  function saToggleAccordion(agent) {
+    var row = saRowEl(agent.id);
+    if (!row) { return; }
+    var acc = row.querySelector('[data-role="acc"]');
+    if (!acc) { return; }
+    if (acc.classList.contains('is-open')) {
+      saCloseAccordion(agent);
+      if (saState.openChatId === agent.id) { saState.openChatId = null; }
+    } else {
+      // only one accordion open at a time
+      var others = saState.agents.slice();
+      for (var i = 0; i < others.length; i++) {
+        if (others[i].id !== agent.id) { saCloseAccordion(others[i]); }
+      }
+      saState.openChatId = agent.id;
+      saOpenAccordion(agent, false);
+    }
+  }
+
+  /* ---------- composer ---------- */
+  function saOpenComposer(agent) {
+    var row = saRowEl(agent.id);
+    if (!row) { return; }
+    var composer = row.querySelector('[data-role="composer"]');
+    var input = row.querySelector('[data-role="composer-input"]');
+    var confirm = row.querySelector('[data-role="confirm"]');
+    if (!composer || !input) { return; }
+    // close other composers
+    for (var i = 0; i < saState.agents.length; i++) {
+      if (saState.agents[i].id === agent.id) { continue; }
+      var otherRow = saRowEl(saState.agents[i].id);
+      if (!otherRow) { continue; }
+      var otherComposer = otherRow.querySelector('[data-role="composer"]');
+      var otherConfirm = otherRow.querySelector('[data-role="confirm"]');
+      var otherBtn = otherRow.querySelector('[data-role="steer-btn"]');
+      if (otherComposer) { otherComposer.hidden = true; }
+      if (otherConfirm) { otherConfirm.hidden = true; otherConfirm.textContent = ''; }
+      if (otherBtn) { otherBtn.setAttribute('aria-expanded', 'false'); }
+    }
+    composer.hidden = false;
+    if (confirm) { confirm.hidden = true; confirm.textContent = ''; }
+    input.value = agent.name;
+    saState.composerId = agent.id;
+    var steerBtn = row.querySelector('[data-role="steer-btn"]');
+    if (steerBtn) { steerBtn.setAttribute('aria-expanded', 'true'); }
+    try { input.focus(); input.setSelectionRange(input.value.length, input.value.length); } catch (e) { /* noop */ }
+  }
+
+  function saSendSteer(agent) {
+    var row = saRowEl(agent.id);
+    if (!row) { return; }
+    var input = row.querySelector('[data-role="composer-input"]');
+    var confirm = row.querySelector('[data-role="confirm"]');
+    if (!input) { return; }
+    var text = (input.value || '').trim();
+    if (!text) { text = agent.name; }
+    agent.transcript.push({ who: 'user', text: text, time: saClock(0) });
+    saRenderTranscript(agent);
+    // steer implies the agent is running again
+    if (agent.status !== 'running') {
+      agent.status = 'running';
+      saUpdateRow(agent);
+      saStartTimer(agent);
+    }
+    saOpenAccordion(agent, false);
+    saState.openChatId = agent.id;
+    var composerRow = row.querySelector('.sa-composer-row');
+    if (composerRow) { composerRow.style.display = 'none'; }
+    if (confirm) {
+      confirm.textContent = '';
+      confirm.appendChild(saIcon('check'));
+      confirm.appendChild(saEl('span', null, 'Message sent to ' + agent.name + ' at ' + saClock(0)));
+      confirm.hidden = false;
+    }
+    saPaintStats();
+  }
+
+  /* ---------- status toggle ---------- */
+  function saToggleStatus(agent) {
+    if (agent.status === 'running') {
+      agent.status = 'stopped';
+      saStopTimer(agent);
+    } else {
+      agent.status = 'running';
+      saStartTimer(agent);
+    }
+    saUpdateRow(agent);
+    saPaintStats();
+  }
+
+  /* ---------- new subagent ---------- */
+  function saAddAgent() {
+    saState.seq += 1;
+    var agent = {
+      id: 'sa-new-' + saState.seq,
+      name: 'agent-' + saState.seq,
+      model: 'unassigned',
+      status: 'standby',
+      elapsed: 0,
+      task: 'New task, not started yet',
+      transcript: [],
+      editing: true
+    };
+    saState.agents.push(agent);
+    saState.filter = '';
+    var filterInput = saCard ? saCard.querySelector('[data-sa="filter"]') : null;
+    if (filterInput) { filterInput.value = ''; }
+    saSyncRows();
+    saPaintStats();
+    var row = saRowEl(agent.id);
+    if (row) {
+      var input = row.querySelector('[data-role="name-input"]');
+      if (input) {
+        try { input.focus(); input.select(); } catch (e) { /* noop */ }
+      }
+    }
+  }
+
+  function saCommitName(agent, value) {
+    var clean = (value || '').trim();
+    if (!clean) { clean = agent.name; }
+    agent.name = clean;
+    agent.editing = false;
+    var row = saRowEl(agent.id);
+    if (row) {
+      row.classList.remove('is-editing');
+      var name = row.querySelector('[data-role="name"]');
+      if (name) { name.textContent = agent.name; }
+      var input = row.querySelector('[data-role="name-input"]');
+      if (input) { input.value = agent.name; }
+    }
+    saApplyFilter();
+  }
+
+  /* ---------- drag and drop ---------- */
+  var saDragId = null;
+  function saClearDropMarks() {
+    if (!saList) { return; }
+    var marked = saList.querySelectorAll('.sa-drop-before, .sa-drop-after');
+    for (var i = 0; i < marked.length; i++) {
+      marked[i].classList.remove('sa-drop-before');
+      marked[i].classList.remove('sa-drop-after');
+    }
+  }
+  function saOnDragStart(e) {
+    var row = e.target.closest ? e.target.closest('.sa-row') : null;
+    if (!row) { return; }
+    saDragId = row.getAttribute('data-id');
+    row.classList.add('is-dragging');
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', saDragId); } catch (err) { /* noop */ }
+    }
+  }
+  function saOnDragOver(e) {
+    if (!saDragId) { return; }
+    e.preventDefault();
+    if (e.dataTransfer) { e.dataTransfer.dropEffect = 'move'; }
+    var row = e.target.closest ? e.target.closest('.sa-row') : null;
+    saClearDropMarks();
+    if (!row || row.getAttribute('data-id') === saDragId) { return; }
+    var rect = row.getBoundingClientRect();
+    var before = (e.clientY - rect.top) < rect.height / 2;
+    row.classList.add(before ? 'sa-drop-before' : 'sa-drop-after');
+  }
+  function saOnDrop(e) {
+    if (!saDragId) { return; }
+    e.preventDefault();
+    var row = e.target.closest ? e.target.closest('.sa-row') : null;
+    var targetId = row ? row.getAttribute('data-id') : null;
+    var before = true;
+    if (row) {
+      var rect = row.getBoundingClientRect();
+      before = (e.clientY - rect.top) < rect.height / 2;
+    }
+    saClearDropMarks();
+    if (targetId && targetId !== saDragId) {
+      saReorder(saDragId, targetId, before);
+    }
+    saDragId = null;
+  }
+  function saOnDragEnd() {
+    saClearDropMarks();
+    var rows = saList ? saList.querySelectorAll('.sa-row.is-dragging') : [];
+    for (var i = 0; i < rows.length; i++) { rows[i].classList.remove('is-dragging'); }
+    saDragId = null;
+  }
+  function saReorder(dragId, targetId, before) {
+    var from = -1;
+    var to = -1;
+    for (var i = 0; i < saState.agents.length; i++) {
+      if (saState.agents[i].id === dragId) { from = i; }
+      if (saState.agents[i].id === targetId) { to = i; }
+    }
+    if (from < 0 || to < 0) { return; }
+    var moved = saState.agents.splice(from, 1)[0];
+    var insertAt = saState.agents.findIndex(function (a) { return a.id === targetId; });
+    if (insertAt < 0) { insertAt = saState.agents.length; }
+    if (!before) { insertAt += 1; }
+    saState.agents.splice(insertAt, 0, moved);
+    saSyncRows();
+  }
+
+  /* ---------- events ---------- */
+  function saOnClick(e) {
+    var actEl = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!actEl) { return; }
+    var act = actEl.getAttribute('data-act');
+    if (act === 'new') { saAddAgent(); return; }
+    var row = actEl.closest('.sa-row');
+    if (!row) { return; }
+    var agent = saFind(row.getAttribute('data-id'));
+    if (!agent) { return; }
+    if (act === 'steer') {
+      saOpenComposer(agent);
+    } else if (act === 'toggle') {
+      saToggleStatus(agent);
+    } else if (act === 'chat') {
+      saToggleAccordion(agent);
+    } else if (act === 'send') {
+      saSendSteer(agent);
+    }
+  }
+  function saOnInput(e) {
+    var t = e.target;
+    if (!t || !t.getAttribute) { return; }
+    if (t.getAttribute('data-sa') === 'filter') {
+      saState.filter = t.value || '';
+      saApplyFilter();
+      return;
+    }
+    var role = t.getAttribute('data-role');
+    if (role === 'name-input') {
+      var row = t.closest('.sa-row');
+      var agent = row ? saFind(row.getAttribute('data-id')) : null;
+      if (agent) {
+        agent.name = t.value;
+        var nameEl = row.querySelector('[data-role="name"]');
+        if (nameEl) { nameEl.textContent = t.value; }
+        saApplyFilter();
+      }
+    }
+  }
+  function saOnKeyDown(e) {
+    if (e.key !== 'Enter' && e.key !== 'Escape') { return; }
+    var t = e.target;
+    if (!t || !t.getAttribute) { return; }
+    var role = t.getAttribute('data-role');
+    if (role === 'composer-input') {
+      var row = t.closest('.sa-row');
+      var agent = row ? saFind(row.getAttribute('data-id')) : null;
+      if (!agent) { return; }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saSendSteer(agent);
+      } else {
+        var composer = row.querySelector('[data-role="composer"]');
+        if (composer) { composer.hidden = true; }
+        var btn = row.querySelector('[data-role="steer-btn"]');
+        if (btn) { btn.setAttribute('aria-expanded', 'false'); }
+        saState.composerId = null;
+      }
+      return;
+    }
+    if (role === 'name-input') {
+      var nrow = t.closest('.sa-row');
+      var nagent = nrow ? saFind(nrow.getAttribute('data-id')) : null;
+      if (!nagent) { return; }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saCommitName(nagent, t.value);
+        t.blur();
+      } else {
+        saCommitName(nagent, nagent.name);
+      }
+    }
+  }
+  function saOnMouseDown(e) {
+    // keep native text inputs usable inside draggable rows
+    var t = e.target;
+    if (t && t.tagName === 'INPUT') {
+      var row = t.closest('.sa-row');
+      if (!row) { return; }
+      row.setAttribute('draggable', 'false');
+      setTimeout(function () { row.setAttribute('draggable', 'true'); }, 0);
+    }
+  }
+  function saBind() {
+    if (!saCard || saState.bound) { return; }
+    saState.bound = true;
+    saCard.addEventListener('click', saOnClick);
+    saCard.addEventListener('input', saOnInput);
+    saCard.addEventListener('keydown', saOnKeyDown);
+    saCard.addEventListener('mousedown', saOnMouseDown);
+    if (saList) {
+      saList.addEventListener('dragstart', saOnDragStart);
+      saList.addEventListener('dragover', saOnDragOver);
+      saList.addEventListener('drop', saOnDrop);
+      saList.addEventListener('dragend', saOnDragEnd);
+    }
+  }
+
+  /* ---------- boot ---------- */
+  function saLocate() {
+    var root = document.getElementById(SA_ROOT_ID);
+    if (!root) { return false; }
+    var card = root.querySelector('[data-subagent-manager]');
+    if (!card && root.hasAttribute('data-subagent-manager')) { card = root; }
+    if (!card) { card = root.querySelector('.wing-card'); }
+    if (!card) { return false; }
+    var list = card.querySelector('#subagentList');
+    if (!list) { list = root.querySelector('#subagentList'); }
+    if (!list) { return false; }
+    saRoot = root;
+    saCard = card;
+    saList = list;
+    return true;
+  }
+
+  function saInit() {
+    if (!saLocate()) { return false; }
+    saState.bound = false;
+    saBind();
+    saState.agents = saSeed();
+    saState.filter = '';
+    saState.openChatId = null;
+    saState.composerId = null;
+    saState.seq = 0;
+    saStopAllTimers();
+    saRenderAll();
+    for (var i = 0; i < saState.agents.length; i++) {
+      if (saState.agents[i].status === 'running') { saStartTimer(saState.agents[i]); }
+    }
+    return true;
+  }
+
+  function saReset() {
+    saStopAllTimers();
+    if (!saLocate()) {
+      saInit();
+      return;
+    }
+    saState.bound = false;
+    saState.agents = saSeed();
+    saState.filter = '';
+    saState.openChatId = null;
+    saState.composerId = null;
+    saState.seq = 0;
+    saBind();
+    saRenderAll();
+    var filterInput = saCard.querySelector('[data-sa="filter"]');
+    if (filterInput) { filterInput.value = ''; }
+    for (var i = 0; i < saState.agents.length; i++) {
+      if (saState.agents[i].status === 'running') { saStartTimer(saState.agents[i]); }
+    }
+  }
+
+  window.HermesSubagents = {
+    reset: function () { saReset(); },
+    getState: function () {
+      return saState.agents.map(function (a) {
+        return {
+          id: a.id, name: a.name, status: a.status, elapsed: a.elapsed,
+          model: a.model, task: a.task,
+          messages: a.transcript.length
+        };
+      });
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { saInit(); });
+  } else {
+    saInit();
+  }
+})();
+
+/* =====================================================================
+   HERMES STUDIO WEBUI v7 - SETTINGS SUITE FRAGMENT
+   Self-contained IIFE. Exposes window.HermesSettings.
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------
+     Single source of truth for all field data. The orchestrator can
+     swap this object for live /api/config data.
+     ------------------------------------------------------------------ */
+  var CATEGORY_DEFS = [
+    {
+      key: 'general',
+      title: 'General',
+      desc: 'Core agent behaviour, model selection and interface preferences.',
+      groups: [
+        {
+          title: 'Model & Reasoning',
+          fields: [
+            { path: 'agent.default_model', label: 'Default model', type: 'text', value: 'minimax-m2.5', desc: 'Model used when a session does not override it.' },
+            { path: 'agent.effort', label: 'Effort', type: 'select', value: 'medium', options: ['low', 'medium', 'high', 'ultra'], desc: 'Reasoning budget spent per turn.' },
+            { path: 'agent.reasoning_effort', label: 'Reasoning effort', type: 'select', value: 'medium', options: ['none', 'low', 'medium', 'high'], desc: 'Extra thinking depth before the first token.' },
+            { path: 'agent.language', label: 'Language', type: 'text', value: 'en', desc: 'Preferred language for replies and code comments.' }
+          ]
+        },
+        {
+          title: 'Interface',
+          fields: [
+            { path: 'ui.theme', label: 'Theme', type: 'select', value: 'dark', options: ['dark', 'apple', 'system'], desc: 'Visual theme for the cockpit.' },
+            { path: 'ui.compact_mode', label: 'Compact mode', type: 'toggle', value: false, desc: 'Tighter spacing across panels and lists.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'agent',
+      title: 'Agent & Model',
+      desc: 'Runtime limits, sampling and capability flags for the agent loop.',
+      groups: [
+        {
+          title: 'Runtime',
+          fields: [
+            { path: 'agent.max_iterations', label: 'Max iterations', type: 'number', value: 50, min: 1, max: 500, desc: 'Maximum tool-calling turns per request.' },
+            { path: 'agent.timeout_seconds', label: 'Timeout', type: 'number', value: 900, min: 30, max: 7200, unit: 's', desc: 'Wall-clock budget for a single request.' },
+            { path: 'agent.max_tokens', label: 'Max tokens', type: 'number', value: 32000, min: 1024, step: 1024, desc: 'Upper bound on tokens generated per response.' }
+          ]
+        },
+        {
+          title: 'Sampling',
+          fields: [
+            { path: 'agent.temperature', label: 'Temperature', type: 'number', value: 0.7, min: 0, max: 2, step: 0.05, desc: 'Higher values produce more varied output.' }
+          ]
+        },
+        {
+          title: 'Capabilities',
+          fields: [
+            { path: 'agent.stream', label: 'Streaming', type: 'toggle', value: true, desc: 'Stream tokens as they arrive.' },
+            { path: 'agent.vision', label: 'Vision', type: 'toggle', value: true, desc: 'Allow image attachments to be read by the model.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'delegation',
+      title: 'Delegation & Subagents',
+      desc: 'Control how the agent fans work out to child agents.',
+      groups: [
+        {
+          title: 'Control',
+          fields: [
+            { path: 'delegation.enabled', label: 'Enable delegation', type: 'toggle', value: true, desc: 'Allow the agent to spawn child agents.' },
+            { path: 'delegation.max_concurrent_children', label: 'Max concurrent children', type: 'number', value: 10, min: 1, max: 32, desc: 'Parallel child agents per parent.' },
+            { path: 'delegation.child_timeout_seconds', label: 'Child timeout', type: 'number', value: 300, min: 30, max: 3600, unit: 's', desc: 'Timeout applied to each child run.' },
+            { path: 'delegation.parent_idle_timeout_seconds', label: 'Parent idle timeout', type: 'number', value: 1800, min: 60, max: 86400, unit: 's', desc: 'Idle time before the parent run is stopped.' },
+            { path: 'delegation.max_retries', label: 'Max retries', type: 'number', value: 2, min: 0, max: 10, desc: 'Retries for a failed child run.' },
+            { path: 'delegation.model', label: 'Child model', type: 'text', value: 'inherit', desc: 'Model for children. Use inherit to follow the parent.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'terminal',
+      title: 'Terminal & Shell',
+      desc: 'Shell, working directory and background job behaviour.',
+      groups: [
+        {
+          title: 'Shell',
+          fields: [
+            { path: 'terminal.shell', label: 'Shell', type: 'text', value: 'bash', desc: 'Shell binary used for terminal tool calls.' },
+            { path: 'terminal.cwd', label: 'Working directory', type: 'text', value: 'C:/Users/Ejer/Documents/Hermes', desc: 'Start directory for new terminal sessions.' },
+            { path: 'terminal.timeout_seconds', label: 'Command timeout', type: 'number', value: 300, min: 10, max: 3600, unit: 's', desc: 'Timeout for a foreground command.' }
+          ]
+        },
+        {
+          title: 'Background jobs',
+          fields: [
+            { path: 'terminal.background_notify', label: 'Notify on completion', type: 'toggle', value: true, desc: 'Raise a toast when a background command finishes.' },
+            { path: 'terminal.persist_on_release', label: 'Persist on release', type: 'toggle', value: true, desc: 'Keep background shells alive after the session ends.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'display',
+      title: 'Display & Theme',
+      desc: 'Canvas theme, density, motion and layout preferences.',
+      groups: [
+        {
+          title: 'Appearance',
+          fields: [
+            { path: 'display.theme', label: 'Canvas theme', type: 'select', value: 'dark', options: ['dark', 'apple', 'system'], desc: 'Theme applied to the workspace canvas.' },
+            { path: 'display.font_scale', label: 'Font scale', type: 'number', value: 1, min: 0.85, max: 1.4, step: 0.05, desc: 'Global text scale factor.' }
+          ]
+        },
+        {
+          title: 'Layout & motion',
+          fields: [
+            { path: 'display.compact_sidebar', label: 'Compact sidebar', type: 'toggle', value: false, desc: 'Reduce sidebar row height.' },
+            { path: 'display.show_status_bar', label: 'Status bar', type: 'toggle', value: true, desc: 'Show the status bar along the bottom edge.' },
+            { path: 'display.animations', label: 'Animations', type: 'toggle', value: true, desc: 'Flight arc and transition effects.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'memory',
+      title: 'Memory & Context',
+      desc: 'Budgets and lifetimes for recalled memory and user profile.',
+      groups: [
+        {
+          title: 'Budgets',
+          fields: [
+            { path: 'memory.enabled', label: 'Enable memory', type: 'toggle', value: true, desc: 'Load recalled memories into session context.' },
+            { path: 'memory.char_budget', label: 'Memory budget', type: 'number', value: 4000, min: 0, max: 40000, step: 100, unit: 'chars', desc: 'Character budget for recalled memories.' },
+            { path: 'memory.user_char_budget', label: 'Profile budget', type: 'number', value: 1800, min: 0, max: 20000, step: 100, unit: 'chars', desc: 'Character budget for the user profile.' }
+          ]
+        },
+        {
+          title: 'Lifecycle',
+          fields: [
+            { path: 'memory.auto_load_skills', label: 'Auto load skills', type: 'toggle', value: true, desc: 'Load relevant skills at session start.' },
+            { path: 'memory.persist', label: 'Persist to disk', type: 'toggle', value: true, desc: 'Write new memories to the profile store.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'security',
+      title: 'Security & Privacy',
+      desc: 'Redaction, network reach and destructive action guards.',
+      groups: [
+        {
+          title: 'Safety',
+          fields: [
+            { path: 'security.redact_secrets', label: 'Redact secrets', type: 'toggle', value: true, desc: 'Mask tokens and keys before they reach the model.' },
+            { path: 'security.confirm_destructive', label: 'Confirm destructive actions', type: 'toggle', value: true, desc: 'Ask before destructive shell commands.' },
+            { path: 'security.audit_log', label: 'Audit log', type: 'toggle', value: false, desc: 'Record tool calls to the audit log.' }
+          ]
+        },
+        {
+          title: 'Network',
+          fields: [
+            { path: 'security.allow_network', label: 'Allow network access', type: 'toggle', value: true, desc: 'Permit outbound network requests from tools.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'tools',
+      title: 'Tools & MCP',
+      desc: 'Tool loading strategy, MCP servers and built-in toolkits.',
+      groups: [
+        {
+          title: 'Loading',
+          fields: [
+            { path: 'tools.eager_tool_limit', label: 'Eager tool limit', type: 'number', value: 21, min: 1, max: 200, desc: 'Tools loaded eagerly into context.' },
+            { path: 'tools.deferred_tools', label: 'Deferred tools', type: 'toggle', value: true, desc: 'Load extra tools on demand instead of eagerly.' }
+          ]
+        },
+        {
+          title: 'Integrations',
+          fields: [
+            { path: 'tools.mcp_servers', label: 'MCP servers', type: 'text', value: 'filesystem,github', desc: 'Comma separated MCP servers to attach.' }
+          ]
+        },
+        {
+          title: 'Toolkits',
+          fields: [
+            { path: 'tools.artifacts', label: 'Artifacts', type: 'toggle', value: true, desc: 'Enable the artifacts toolkit.' },
+            { path: 'tools.whiteboard', label: 'Whiteboard', type: 'toggle', value: true, desc: 'Enable the whiteboard toolkit.' }
+          ]
+        }
+      ]
+    },
+    {
+      key: 'shortcuts',
+      title: 'Keyboard Shortcuts',
+      desc: 'Windows key bindings for the cockpit.',
+      groups: []
+    }
+  ];
+
+  /* Fallback bindings used when window.__HERMES_KEYBINDS__ is absent. */
+  var DEFAULT_KEYBINDS = [
+    { id: 'chat.new', label: 'New chat', keys: 'Ctrl+N', category: 'Navigation' },
+    { id: 'view.sidebar', label: 'Toggle sidebar', keys: 'Ctrl+B', category: 'Navigation' },
+    { id: 'view.palette', label: 'Quick palette', keys: 'Ctrl+K', category: 'Navigation' },
+    { id: 'view.settings', label: 'Open settings', keys: 'Ctrl+,', category: 'Navigation' },
+    { id: 'view.workspace.next', label: 'Next workspace', keys: 'Ctrl+Alt+Right', category: 'Navigation' },
+    { id: 'chat.send', label: 'Send message', keys: 'Ctrl+Enter', category: 'Chat' },
+    { id: 'chat.newline', label: 'New line', keys: 'Shift+Enter', category: 'Chat' },
+    { id: 'chat.stop', label: 'Stop generation', keys: 'Ctrl+.', category: 'Chat' },
+    { id: 'chat.search', label: 'Search conversation', keys: 'Ctrl+F', category: 'Chat' },
+    { id: 'view.inspector', label: 'Toggle inspector', keys: 'Ctrl+I', category: 'View' },
+    { id: 'view.theme', label: 'Toggle theme', keys: 'Ctrl+Shift+D', category: 'View' },
+    { id: 'action.cancel', label: 'Cancel action', keys: 'Escape', category: 'View' }
+  ];
+
+  var CATEGORY_BY_KEY = {};
+  CATEGORY_DEFS.forEach(function (c) { CATEGORY_BY_KEY[c.key] = c; });
+
+  var state = {
+    values: {},
+    baseline: {},
+    category: 'general',
+    filter: '',
+    editing: null
+  };
+
+  var dom = {};
+
+  /* ------------------------------------------------------------------ */
+  /* helpers                                                             */
+  /* ------------------------------------------------------------------ */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text !== undefined && text !== null) { n.textContent = String(text); }
+    return n;
+  }
+
+  function allFields() {
+    var out = [];
+    CATEGORY_DEFS.forEach(function (c) {
+      (c.groups || []).forEach(function (g) {
+        (g.fields || []).forEach(function (f) { out.push(f); });
+      });
+    });
+    return out;
+  }
+
+  function defaultValues() {
+    var v = {};
+    allFields().forEach(function (f) { v[f.path] = f.value; });
+    return v;
+  }
+
+  function flatten(obj, prefix, out) {
+    out = out || {};
+    prefix = prefix || '';
+    Object.keys(obj).forEach(function (k) {
+      var v = obj[k];
+      var p = prefix ? prefix + '.' + k : k;
+      if (v && typeof v === 'object' && !Array.isArray(v)) { flatten(v, p, out); }
+      else { out[p] = v; }
+    });
+    return out;
+  }
+
+  function chordParts(chord) {
+    if (Array.isArray(chord)) { return chord.slice(); }
+    return String(chord == null ? '' : chord).split('+').map(function (p) { return p.trim(); }).filter(Boolean);
+  }
+
+  function liveEndpoint(detail) {
+    if (typeof detail === 'string' && detail) { return detail; }
+    if (detail && typeof detail === 'object' && detail.endpoint) { return detail.endpoint; }
+    return '127.0.0.1:9119';
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* field controls                                                      */
+  /* ------------------------------------------------------------------ */
+  function createControl(field) {
+    var ctl = el('div', 'fld-ctl');
+    var value = state.values[field.path];
+
+    if (field.type === 'toggle') {
+      var btn = el('button', 'fld-toggle set-fld-toggle');
+      btn.type = 'button';
+      btn.setAttribute('role', 'switch');
+      btn.setAttribute('aria-checked', value ? 'true' : 'false');
+      btn.setAttribute('aria-label', field.label);
+      if (value) { btn.classList.add('on'); }
+      var readout = el('span', 'set-toggle-state', value ? 'On' : 'Off');
+      btn.addEventListener('click', function () {
+        var next = !(state.values[field.path] === true || state.values[field.path] === 'true');
+        state.values[field.path] = next;
+        btn.classList.toggle('on', next);
+        btn.setAttribute('aria-checked', next ? 'true' : 'false');
+        readout.textContent = next ? 'On' : 'Off';
+      });
+      ctl.appendChild(btn);
+      ctl.appendChild(readout);
+
+    } else if (field.type === 'select') {
+      var sel = el('select');
+      sel.setAttribute('aria-label', field.label);
+      (field.options || []).forEach(function (opt) {
+        var o = el('option', null, opt);
+        o.value = opt;
+        if (String(value) === String(opt)) { o.selected = true; }
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', function () { state.values[field.path] = sel.value; });
+      ctl.appendChild(sel);
+
+    } else if (field.type === 'number') {
+      var num = el('input', 'set-fld-num');
+      num.type = 'number';
+      num.setAttribute('aria-label', field.label);
+      if (field.min !== undefined) { num.min = field.min; }
+      if (field.max !== undefined) { num.max = field.max; }
+      if (field.step !== undefined) { num.step = field.step; }
+      num.value = (value === null || value === undefined) ? '' : value;
+      num.addEventListener('input', function () {
+        state.values[field.path] = num.value === '' ? null : Number(num.value);
+      });
+      ctl.appendChild(num);
+      if (field.unit) { ctl.appendChild(el('span', 'set-unit', field.unit)); }
+
+    } else {
+      var txt = el('input');
+      txt.type = 'text';
+      txt.setAttribute('aria-label', field.label);
+      txt.value = (value === null || value === undefined) ? '' : String(value);
+      txt.addEventListener('input', function () { state.values[field.path] = txt.value; });
+      ctl.appendChild(txt);
+    }
+
+    return ctl;
+  }
+
+  function createFieldRow(field) {
+    var row = el('div', 'fld-row');
+    row.setAttribute('data-path', field.path);
+    var meta = el('div', 'fld-meta');
+    meta.appendChild(el('div', 'fld-label', field.label));
+    meta.appendChild(el('div', 'fld-path', field.path));
+    if (field.desc) { meta.appendChild(el('div', 'fld-desc', field.desc)); }
+    row.appendChild(meta);
+    row.appendChild(createControl(field));
+    return row;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* keybind table                                                       */
+  /* ------------------------------------------------------------------ */
+  function keybindSource() {
+    var list = window.__HERMES_KEYBINDS__;
+    if (Object.prototype.toString.call(list) === '[object Array]' && list.length) { return list; }
+    return DEFAULT_KEYBINDS;
+  }
+
+  function keybindOverrides() {
+    if (!window.__HERMES_KEYBIND_OVERRIDES__ || typeof window.__HERMES_KEYBIND_OVERRIDES__ !== 'object') {
+      window.__HERMES_KEYBIND_OVERRIDES__ = {};
+    }
+    return window.__HERMES_KEYBIND_OVERRIDES__;
+  }
+
+  function renderKeys(container, chord) {
+    container.innerHTML = '';
+    chordParts(chord).forEach(function (part) {
+      container.appendChild(el('span', 'kbd', part));
+    });
+  }
+
+  function createKeybindRow(item) {
+    var overrides = keybindOverrides();
+    var id = item.id;
+    var raw = (overrides[id] !== undefined && overrides[id] !== null && overrides[id] !== '')
+      ? overrides[id]
+      : (Array.isArray(item.keys) ? item.keys.join('+') : item.keys);
+    var chord = raw == null ? '' : String(raw);
+
+    var row = el('div', 'kb-row set-kb-row');
+    row.setAttribute('data-kb', id);
+    row.appendChild(el('span', 'set-kb-label', item.label || id));
+
+    var side = el('div', 'set-kb-side');
+    var keys = el('div', 'kb-keys');
+    renderKeys(keys, chord);
+    side.appendChild(keys);
+
+    var rebind = el('button', 'set-kb-rebind', 'Rebind');
+    rebind.type = 'button';
+    rebind.setAttribute('aria-label', 'Rebind ' + (item.label || id));
+
+    var input = el('input', 'set-kb-input');
+    input.type = 'text';
+    input.value = chord;
+    input.setAttribute('aria-label', 'New shortcut for ' + (item.label || id));
+
+    function commit() {
+      var next = input.value.trim();
+      if (next) { keybindOverrides()[id] = next; } else { delete keybindOverrides()[id]; }
+      row.classList.remove('editing');
+      renderKeys(keys, next || chord);
+      state.editing = null;
+    }
+
+    function cancel() {
+      row.classList.remove('editing');
+      renderKeys(keys, chord);
+      state.editing = null;
+    }
+
+    rebind.addEventListener('click', function () {
+      state.editing = id;
+      row.classList.add('editing');
+      input.focus();
+      if (input.select) { input.select(); }
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
+    });
+    input.addEventListener('blur', function () {
+      if (row.classList.contains('editing')) { commit(); }
+    });
+
+    side.appendChild(rebind);
+    side.appendChild(input);
+    row.appendChild(side);
+    return row;
+  }
+
+  function renderKeybinds(body) {
+    var items = keybindSource();
+    var groups = [];
+    var index = {};
+
+    items.forEach(function (item) {
+      var name = item.category || item.group || 'General';
+      if (!Object.prototype.hasOwnProperty.call(index, name)) {
+        index[name] = { name: name, items: [] };
+        groups.push(index[name]);
+      }
+      index[name].items.push(item);
+    });
+
+    body.appendChild(el('div', 'set-group-note', 'Pick Rebind next to any action, then press Enter to store the new Windows shortcut.'));
+
+    groups.forEach(function (g) {
+      var group = el('div', 'settings-group');
+      group.appendChild(el('div', 'settings-group-title', g.name));
+      var grid = el('div', 'kb-grid');
+      g.items.forEach(function (item) { grid.appendChild(createKeybindRow(item)); });
+      group.appendChild(grid);
+      body.appendChild(group);
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* rendering                                                           */
+  /* ------------------------------------------------------------------ */
+  function renderCategory(key) {
+    var cat = CATEGORY_BY_KEY[key] || CATEGORY_BY_KEY.general;
+    state.category = cat.key;
+
+    if (dom.rail) {
+      var items = dom.rail.querySelectorAll('.settings-rail-item');
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.toggle('active', items[i].getAttribute('data-cat') === cat.key);
+      }
+    }
+    if (dom.title) { dom.title.textContent = cat.title; }
+    if (dom.desc) { dom.desc.textContent = cat.desc; }
+
+    if (!dom.body) { return; }
+    dom.body.innerHTML = '';
+
+    if (cat.key === 'shortcuts') {
+      renderKeybinds(dom.body);
+    } else {
+      (cat.groups || []).forEach(function (g) {
+        var group = el('div', 'settings-group');
+        group.appendChild(el('div', 'settings-group-title', g.title));
+        var list = el('div', 'fld-list');
+        (g.fields || []).forEach(function (f) { list.appendChild(createFieldRow(f)); });
+        group.appendChild(list);
+        dom.body.appendChild(group);
+      });
+    }
+
+    var empty = el('div', 'set-empty', 'No settings match this filter.');
+    empty.style.display = 'none';
+    dom.empty = empty;
+    dom.body.appendChild(empty);
+
+    applyFilter();
+  }
+
+  function applyFilter() {
+    if (!dom.body) { return; }
+    var q = (state.filter || '').trim().toLowerCase();
+    var rows = dom.body.querySelectorAll('.fld-row, .kb-row');
+    var shown = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var hay = ((row.textContent || '') + ' ' + (row.getAttribute('data-path') || '')).toLowerCase();
+      var hit = !q || hay.indexOf(q) !== -1;
+      row.style.display = hit ? '' : 'none';
+      if (hit) { shown++; }
+    }
+    if (dom.empty) { dom.empty.style.display = (q && shown === 0) ? '' : 'none'; }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* save / reset                                                        */
+  /* ------------------------------------------------------------------ */
+  function collectChanged() {
+    var out = {};
+    Object.keys(state.values).forEach(function (p) {
+      var a = state.values[p];
+      var b = state.baseline[p];
+      if (String(a) !== String(b)) { out[p] = a; }
+    });
+    return out;
+  }
+
+  function save() {
+    var changed = collectChanged();
+    document.dispatchEvent(new CustomEvent('hermes:settings-change', { detail: { values: changed } }));
+    Object.keys(state.values).forEach(function (p) { state.baseline[p] = state.values[p]; });
+    close();
+  }
+
+  function reset() {
+    var d = defaultValues();
+    Object.keys(state.values).forEach(function (p) {
+      if (!Object.prototype.hasOwnProperty.call(d, p)) { delete state.values[p]; }
+    });
+    Object.keys(d).forEach(function (p) { state.values[p] = d[p]; });
+    renderCategory(state.category);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* modal open / close                                                 */
+  /* ------------------------------------------------------------------ */
+  function open() {
+    if (!dom.modal) { return; }
+    dom.modal.classList.add('open');
+    renderCategory(state.category);
+    if (dom.filter) { dom.filter.focus(); }
+  }
+
+  function close() {
+    if (!dom.modal) { return; }
+    dom.modal.classList.remove('open');
+  }
+
+  function isOpen() {
+    return !!(dom.modal && dom.modal.classList.contains('open'));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* public API                                                          */
+  /* ------------------------------------------------------------------ */
+  function setLive(isLive, detail) {
+    var node = dom.live;
+    if (!node) { return; }
+    var on = !!isLive;
+    node.classList.toggle('live', on);
+    node.classList.toggle('offline', !on);
+    var label = dom.liveLabel || node;
+    label.textContent = on ? ('Live - connected to ' + liveEndpoint(detail)) : 'Offline - mock values';
+  }
+
+  function applyValues(obj) {
+    if (!obj || typeof obj !== 'object') { return; }
+    var flat = flatten(obj);
+    Object.keys(flat).forEach(function (p) {
+      state.values[p] = flat[p];
+      state.baseline[p] = flat[p];
+    });
+    renderCategory(state.category);
+  }
+
+  function getValues() {
+    var out = {};
+    Object.keys(state.values).forEach(function (p) { out[p] = state.values[p]; });
+    return out;
+  }
+
+  function init() {
+    dom.modal = document.getElementById('hermesSettingsModal');
+    dom.rail = document.getElementById('settingsRail');
+    dom.pane = document.getElementById('settingsPane');
+    dom.title = document.getElementById('settingsPaneTitle');
+    dom.desc = document.getElementById('settingsPaneDesc');
+    dom.filter = document.getElementById('settingsFilter');
+    dom.live = document.getElementById('settingsLiveStatus');
+    dom.liveLabel = document.getElementById('settingsLiveLabel');
+    dom.resetBtn = document.getElementById('settingsResetBtn');
+    dom.saveBtn = document.getElementById('settingsSaveBtn');
+    dom.closeBtn = document.getElementById('closeHermesSettingsBtn');
+
+    state.values = defaultValues();
+    state.baseline = defaultValues();
+
+    if (dom.pane) {
+      dom.body = el('div', 'set-pane-body');
+      dom.pane.appendChild(dom.body);
+    }
+
+    if (dom.rail) {
+      dom.rail.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('.settings-rail-item') : null;
+        if (!btn) { return; }
+        var key = btn.getAttribute('data-cat');
+        if (key) { renderCategory(key); }
+      });
+    }
+
+    if (dom.filter) {
+      dom.filter.addEventListener('input', function () {
+        state.filter = dom.filter.value || '';
+        applyFilter();
+      });
+    }
+
+    if (dom.resetBtn) { dom.resetBtn.addEventListener('click', reset); }
+    if (dom.saveBtn) { dom.saveBtn.addEventListener('click', save); }
+    if (dom.closeBtn) { dom.closeBtn.addEventListener('click', close); }
+
+    if (dom.modal) {
+      dom.modal.addEventListener('click', function (e) {
+        if (e.target === dom.modal) { close(); }
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.key === 'Escape' || e.key === 'Esc') && isOpen()) {
+        if (state.editing) { return; }
+        close();
+      }
+    });
+
+    setLive(false);
+    renderCategory('general');
+
+    window.HermesSettings = {
+      setLive: setLive,
+      applyValues: applyValues,
+      open: open,
+      close: close,
+      render: renderCategory,
+      reset: reset,
+      getValues: getValues,
+      getKeybindOverrides: keybindOverrides,
+      config: CATEGORY_DEFS,
+      isOpen: isOpen
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+    /* =====================================================================
+       HERMES STUDIO WEBUI v7 - RUNTIME LAYER
+       Command palette, interactive bars, cron manager, toasts,
+       and live /api/config + /api/status auto-wiring.
+       ===================================================================== */
+    (function () {
+      'use strict';
+
+      const $ = (sel, root) => (root || document).querySelector(sel);
+      const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+      /* ------------------------------------------------------------------
+         TOASTS
+         ------------------------------------------------------------------ */
+      const toastHost = $('#toastHost');
+      function toast(message, detail) {
+        if (!toastHost) return;
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML = '<span class="toast-dot"></span><span></span>' +
+          (detail ? '<span class="mono"></span>' : '');
+        el.children[1].textContent = message;
+        if (detail) el.children[2].textContent = detail;
+        toastHost.appendChild(el);
+        setTimeout(() => {
+          el.classList.add('leaving');
+          setTimeout(() => el.remove(), 200);
+        }, 2600);
+      }
+      window.HermesToast = toast;
+
+      /* ------------------------------------------------------------------
+         MODAL OPEN / CLOSE
+         Every modal in v7 uses the same backdrop contract so one helper
+         can drive all of them.
+         ------------------------------------------------------------------ */
+      const openModals = [];
+      function openModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.classList.add('open');
+        if (!openModals.includes(id)) openModals.push(id);
+      }
+      function closeModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.classList.remove('open');
+        const i = openModals.indexOf(id);
+        if (i > -1) openModals.splice(i, 1);
+      }
+      function closeTopModal() {
+        if (!openModals.length) return;
+        closeModal(openModals[openModals.length - 1]);
+      }
+      function isModalOpen(id) {
+        const m = document.getElementById(id);
+        return !!(m && m.classList.contains('open'));
+      }
+      window.HermesModals = { open: openModal, close: closeModal, closeTop: closeTopModal, isOpen: isModalOpen };
+
+      $$('.modal-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', e => {
+          if (e.target === backdrop) closeModal(backdrop.id);
+        });
+      });
+      $$('[id^="close"]').forEach(btn => {
+        const target = btn.id.replace(/^close/, '').replace(/Btn$/, '');
+        const map = {
+          CronBtn: 'cronModal',
+          AddGwBtn: 'addGatewayModal',
+          NewWtBtn: 'newWorktreeModal',
+          SettingsBtn: 'settingsModal',
+          HermesSettingsBtn: 'hermesSettingsModal'
+        };
+        const modalId = map[target] || (target.charAt(0).toLowerCase() + target.slice(1));
+        btn.addEventListener('click', () => closeModal(modalId));
+      });
+
+      /* ------------------------------------------------------------------
+         POPOVERS
+         One open at a time, click-outside closes, Escape closes.
+         ------------------------------------------------------------------ */
+      let openPop = null;
+      function closePopovers() {
+        $$('.popover.open').forEach(p => p.classList.remove('open'));
+        $$('.pop-wrap.open').forEach(p => p.classList.remove('open'));
+        openPop = null;
+      }
+      function bindPopover(triggerId, popId) {
+        const trigger = document.getElementById(triggerId);
+        const pop = document.getElementById(popId);
+        if (!trigger || !pop) return;
+        trigger.addEventListener('click', e => {
+          e.stopPropagation();
+          const wasOpen = pop.classList.contains('open');
+          closePopovers();
+          if (!wasOpen) {
+            pop.classList.add('open');
+            trigger.closest('.pop-wrap')?.classList.add('open');
+            openPop = popId;
+          }
+        });
+      }
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.popover') && !e.target.closest('.pop-wrap')) closePopovers();
+      });
+      window.HermesPopovers = { close: closePopovers };
+
+      /* ------------------------------------------------------------------
+         COMMAND PALETTE
+         Ctrl+K opens. Fuzzy prefix match over commands, views, subagents,
+         settings categories and keybind actions.
+         ------------------------------------------------------------------ */
+      const cmdPalette = $('#cmdPalette');
+      const cmdInput = $('#cmdInput');
+      const cmdResults = $('#cmdResults');
+      const paletteCommands = [];
+
+      function registerCommand(group, label, keys, run) {
+        paletteCommands.push({ group, label, keys, run, hay: (label + ' ' + group).toLowerCase() });
+      }
+      window.HermesRegisterCommand = registerCommand;
+
+      function renderPalette(query) {
+        if (!cmdResults) return;
+        const q = (query || '').trim().toLowerCase();
+        const hits = paletteCommands
+          .filter(c => !q || c.hay.indexOf(q) > -1)
+          .slice(0, 40);
+        cmdResults.innerHTML = '';
+        if (!hits.length) {
+          cmdResults.innerHTML = '<div class="cmd-empty">No matching command</div>';
+          return;
+        }
+        hits.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'cmd-item';
+          b.innerHTML = '<span></span><span class="cmd-group"></span>';
+          b.children[0].textContent = c.label;
+          b.children[1].textContent = c.keys || c.group;
+          b.addEventListener('click', () => {
+            closeModal('cmdPalette');
+            cmdInput.value = '';
+            c.run();
+          });
+          cmdResults.appendChild(b);
+        });
+      }
+
+      function openPalette() {
+        renderPalette(cmdInput ? cmdInput.value : '');
+        openModal('cmdPalette');
+        setTimeout(() => cmdInput && cmdInput.focus(), 30);
+      }
+      if (cmdInput) {
+        cmdInput.addEventListener('input', () => renderPalette(cmdInput.value));
+        cmdInput.addEventListener('keydown', e => {
+          if (e.key === 'Escape') { closeModal('cmdPalette'); cmdInput.value = ''; }
+          if (e.key === 'Enter') {
+            const first = cmdResults.querySelector('.cmd-item');
+            if (first) first.click();
+          }
+        });
+      }
+
+      /* ------------------------------------------------------------------
+         BOTTOM STATUS BAR CHIPS
+         Every chip in v7 is a real control. Spans became buttons and each
+         one opens a popover or runs an action.
+         ------------------------------------------------------------------ */
+      function chip(label, title, group, onClick) {
+        return { label, title, group, onClick };
+      }
+
+      function buildStatusBarControls() {
+        const right = $('.sb-right');
+        if (!right) return;
+
+        // Replace the three static right-hand spans with interactive chips.
+        const staticSpans = Array.from(right.children).filter(
+          el => el.tagName === 'SPAN' && !el.id && !el.classList.contains('sb-steer')
+        );
+        staticSpans.forEach(el => {
+          const text = el.textContent.trim();
+          const b = document.createElement('button');
+          b.className = 'sb-chip mono';
+          b.textContent = text;
+          b.title = 'Open details';
+          b.addEventListener('click', () => {
+            toast(text, 'click for live detail');
+          });
+          el.replaceWith(b);
+        });
+
+        // The steer chip becomes a toggle.
+        const steer = $('.sb-steer');
+        if (steer) {
+          const b = document.createElement('button');
+          b.className = 'sb-steer';
+          b.id = 'sbSteerBtn';
+          b.textContent = steer.textContent;
+          b.title = 'Toggle steer mode';
+          let steerOn = true;
+          b.addEventListener('click', () => {
+            steerOn = !steerOn;
+            b.textContent = steerOn ? 'steer' : 'observe';
+            b.style.opacity = steerOn ? '1' : '0.62';
+            toast(steerOn ? 'Steer mode on' : 'Observe mode on', 'agent stays read-only');
+          });
+          steer.replaceWith(b);
+        }
+
+        // The path chip becomes a copyable worktree path.
+        const pathChip = $('#sbPath');
+        if (pathChip) {
+          const b = document.createElement('button');
+          b.className = 'sb-chip mono';
+          b.id = 'sbPath';
+          b.textContent = pathChip.textContent;
+          b.title = 'Copy worktree path';
+          b.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(b.textContent);
+              toast('Path copied', b.textContent);
+            } catch (err) {
+              toast('Path', b.textContent);
+            }
+          });
+          pathChip.replaceWith(b);
+        }
+      }
+
+      /* ------------------------------------------------------------------
+         TOP BAR
+         v6 had a duplicate Pet Place control in the top bar and the
+         bottom bar. The top bar one is removed; the bottom bar keeps it.
+         The inspector header X is redundant with the inspector toggle.
+         ------------------------------------------------------------------ */
+      function dedupeTopBar() {
+        const dup = $('#sendToPerchTopBtn');
+        if (dup) dup.remove();
+        const insX = $('#closeInspectorX');
+        if (insX) insX.remove();
+      }
+
+      /* ------------------------------------------------------------------
+         CRON MANAGER
+         ------------------------------------------------------------------ */
+      const CRON_SEED = [
+        {
+          id: 'cron-daily-audit',
+          name: 'Daily frontend unslop audit',
+          schedule: '0 7 * * *',
+          model: 'gemini-4-hydrogen-medium',
+          enabled: true,
+          last: '2h ago',
+          next: 'in 11h',
+          noAgent: false
+        },
+        {
+          id: 'cron-backup-watch',
+          name: 'Workfolder backup watcher',
+          schedule: '*/30 * * * *',
+          model: 'none (script only)',
+          enabled: true,
+          last: '14m ago',
+          next: 'in 16m',
+          noAgent: true
+        },
+        {
+          id: 'cron-vps-ping',
+          name: 'VPS heartbeat ping',
+          schedule: '*/5 * * * *',
+          model: 'none (script only)',
+          enabled: false,
+          last: '2d ago',
+          next: 'paused',
+          noAgent: true
+        }
+      ];
+      let cronJobs = CRON_SEED.slice();
+
+      function renderCron() {
+        const list = $('#cronList');
+        if (!list) return;
+        list.innerHTML = '';
+        const sub = $('#cronModalSub');
+        if (sub) sub.textContent = cronJobs.length + ' scheduled job' + (cronJobs.length === 1 ? '' : 's');
+
+        cronJobs.forEach(job => {
+          const row = document.createElement('div');
+          row.className = 'cron-row';
+          const badge = job.enabled
+            ? '<span class="cron-badge on">on</span>'
+            : '<span class="cron-badge paused">paused</span>';
+          row.innerHTML =
+            '<span class="cron-badge ' + (job.enabled ? 'on' : 'paused') + '">' + (job.enabled ? 'on' : 'paused') + '</span>' +
+            '<div><div class="cron-name"></div><div class="cron-meta"></div></div>' +
+            '<div class="cron-actions"></div>';
+          row.querySelector('.cron-name').textContent = job.name;
+          row.querySelector('.cron-meta').textContent =
+            job.schedule + '  |  ' + job.model + '  |  last ' + job.last + '  |  next ' + job.next;
+
+          const actions = row.querySelector('.cron-actions');
+          const toggle = document.createElement('button');
+          toggle.className = 'pop-btn';
+          toggle.textContent = job.enabled ? 'Pause' : 'Resume';
+          toggle.addEventListener('click', () => {
+            job.enabled = !job.enabled;
+            job.next = job.enabled ? 'in ' + (job.noAgent ? '16m' : '11h') : 'paused';
+            renderCron();
+            toast(job.name, job.enabled ? 'resumed' : 'paused');
+          });
+          const run = document.createElement('button');
+          run.className = 'pop-btn';
+          run.textContent = 'Run now';
+          run.addEventListener('click', () => {
+            toast('Triggered ' + job.name, 'queued');
+          });
+          actions.appendChild(toggle);
+          actions.appendChild(run);
+          list.appendChild(row);
+          void badge;
+        });
+      }
+
+      /* ------------------------------------------------------------------
+         LIVE API WIRING
+         When the page is served from the local Hermes runtime on
+         127.0.0.1:9119 the app hydrates from /api/status and /api/config.
+         Served from a static host it stays in offline mock mode.
+         ------------------------------------------------------------------ */
+      const LOCAL_HOSTS = ['127.0.0.1', 'localhost', '[::1]'];
+      const API_PORT = '9119';
+
+      const api = {
+        live: false,
+        base: '',
+        token: '',
+        status: null,
+        config: null,
+        lastError: null
+      };
+
+      function apiBase() {
+        const loc = window.location;
+        // The dashboard injects window.__HERMES_SESSION_TOKEN__ into the
+        // index.html it serves, so a page served BY the dashboard is always
+        // same-origin with the API. A page opened from disk is not, so the
+        // loopback runtime is addressed directly.
+        if (api.token && loc.origin !== 'null') return loc.origin;
+        if (LOCAL_HOSTS.indexOf(loc.hostname) > -1) {
+          return loc.port === API_PORT ? loc.origin : loc.protocol + '//' + loc.hostname + ':' + API_PORT;
+        }
+        return '';
+      }
+
+      function authHeaders() {
+        const h = {};
+        if (api.token) {
+          h['X-Hermes-Session-Token'] = api.token;
+          h['Authorization'] = 'Bearer ' + api.token;
+        }
+        return h;
+      }
+
+      async function apiGet(path) {
+        if (!api.base) return null;
+        const res = await fetch(api.base + path, { headers: authHeaders(), credentials: 'include' });
+        if (!res.ok) throw new Error(path + ' -> ' + res.status);
+        return res.json();
+      }
+
+      async function apiPut(path, body) {
+        if (!api.base) return null;
+        const res = await fetch(api.base + path, {
+          method: 'PUT',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          credentials: 'include',
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(path + ' -> ' + res.status);
+        return res.json();
+      }
+
+      function readInjectedToken() {
+        const candidates = [
+          window.__HERMES_SESSION_TOKEN__,
+          window.HERMES_SESSION_TOKEN,
+          window.__sessionToken__,
+            (window.__HERMES_CONFIG__ && window.__HERMES_CONFIG__.session_token)
+        ];
+        for (const c of candidates) {
+          if (typeof c === 'string' && c.length) return c;
+        }
+        try {
+          const m = document.cookie.match(/(?:hermes_)?session_token=([^;]+)/);
+          if (m) return decodeURIComponent(m[1]);
+        } catch (err) { /* cookie read can fail in sandboxed frames */ }
+        return '';
+      }
+
+      function setLiveStatus(live, detail) {
+        api.live = live;
+        const el = $('#settingsLiveStatus');
+        if (el) {
+          el.className = 'settings-live ' + (live ? 'live' : 'offline');
+          el.innerHTML = '<span class="status-dot"></span><span class="mono"></span>';
+          el.querySelector('.mono').textContent = detail ||
+            (live ? 'Live - connected to ' + api.base : 'Offline - mock values');
+        }
+        const cronEl = $('#cronLiveStatus');
+        if (cronEl) {
+          cronEl.className = 'settings-live ' + (live ? 'live' : 'offline');
+          cronEl.innerHTML = '<span class="status-dot"></span><span class="mono"></span>';
+          cronEl.querySelector('.mono').textContent = live
+            ? 'Live - ' + api.base
+            : 'Offline - local mock schedule';
+        }
+        if (window.HermesSettings && window.HermesSettings.setLive) {
+          window.HermesSettings.setLive(live, live ? api.base : 'mock');
+        }
+      }
+
+      function hydrateFromStatus(status) {
+        if (!status) return;
+        const model = status.model || (status.agent && status.agent.model);
+        const provider = status.provider || (status.agent && status.agent.provider);
+        const tokens = status.tokens || status.usage || {};
+        const tps = status.tps || status.tokens_per_second;
+
+        const chips = $$('.sb-right .sb-chip');
+        chips.forEach(c => {
+          const txt = c.textContent;
+          if (provider && /MiniMax|Claude|Gemini|GPT/i.test(txt) && !model) {
+            c.textContent = provider + (tps ? ' · ' + tps + ' t/s' : '');
+          }
+          if (tokens && tokens.used && tokens.limit && /\/.*K|K \//.test(txt)) {
+            c.textContent = tokens.used + ' / ' + tokens.limit +
+              (tokens.cache_pct != null ? ' · ' + tokens.cache_pct + '% cache' : '');
+          }
+        });
+
+        const badge = $('#turnMetaBadge');
+        if (badge && status.gateway) badge.textContent = status.gateway;
+
+        const gwDot = $('#gwDot');
+        const gwName = $('#gwName');
+        const gwPing = $('#gwPing');
+        if (gwName && status.gateway) gwName.textContent = status.gateway;
+        if (gwPing && status.ping_ms != null) gwPing.textContent = status.ping_ms + 'ms';
+        if (gwDot && status.online === false) gwDot.classList.add('vps');
+      }
+
+      function hydrateFromConfig(cfg) {
+        if (!cfg) return;
+        const values = cfg.values || cfg.config || cfg;
+        if (window.HermesSettings && window.HermesSettings.applyValues) {
+          window.HermesSettings.applyValues(values);
+        }
+        const theme = values.ui && values.ui.theme;
+        if (theme === 'dark' || theme === 'apple') {
+          document.documentElement.setAttribute('data-theme', theme);
+          const lbl = $('#themeLabel');
+          if (lbl) lbl.textContent = theme === 'dark' ? 'Apple Daylight' : 'Obsidian Dark';
+        }
+      }
+
+      async function probeRuntime() {
+        // Read the token FIRST: when the dashboard served this page it
+        // injected one, and that also means the page is same-origin with the
+        // API. Computing the base before the token would point a
+        // dashboard-served page at the wrong port.
+        api.token = readInjectedToken();
+        api.base = apiBase();
+        if (!api.base) {
+          setLiveStatus(false, 'Offline - static host, mock values');
+          return false;
+        }
+        try {
+          const status = await apiGet('/api/status');
+          api.status = status;
+          hydrateFromStatus(status);
+          let cfg = null;
+          try { cfg = await apiGet('/api/config'); } catch (err) { cfg = null; }
+          api.config = cfg;
+          hydrateFromConfig(cfg);
+          setLiveStatus(true, 'Live - connected to ' + api.base);
+          return true;
+        } catch (err) {
+          api.lastError = err.message;
+          setLiveStatus(false, 'Offline - ' + err.message);
+          return false;
+        }
+      }
+      window.HermesApi = { probe: probeRuntime, get: apiGet, put: apiPut, state: api };
+
+      /* ------------------------------------------------------------------
+         GLOBAL SHORTCUTS (Windows chords)
+         ------------------------------------------------------------------ */
+      document.addEventListener('keydown', e => {
+        const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+        if (e.ctrlKey && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          openPalette();
+          return;
+        }
+        if (e.key === 'Escape') {
+          if (openModals.length) { closeTopModal(); return; }
+          closePopovers();
+          return;
+        }
+        if (inField) return;
+        if (e.ctrlKey && e.key.toLowerCase() === ',') {
+          e.preventDefault();
+          openModal('settingsModal');
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === 'j') {
+          e.preventDefault();
+          const ws = $('#workspace');
+          if (ws) ws.classList.toggle('inspector-hidden');
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === 'b') {
+          e.preventDefault();
+          const ws = $('#workspace');
+          if (ws) ws.classList.toggle('sidebar-hidden');
+        }
+      });
+
+      /* ------------------------------------------------------------------
+         BOOT
+         ------------------------------------------------------------------ */
+      function boot() {
+        dedupeTopBar();
+        buildStatusBarControls();
+        renderCron();
+        // The gateway and worktree popovers are already wired by the v6 core
+        // (which toggles the sibling popover closed). Binding them again here
+        // would cancel the toggle, so they are left alone.
+        bindPopover('sbPath', 'sbPathPop');
+
+        // Top bar palette trigger. The button ships in the markup, so bind it
+        // whether it already exists or has to be created.
+        const topRight = $('.topbar-right');
+        let paletteBtn = $('#openPaletteBtn');
+        if (!paletteBtn && topRight) {
+          paletteBtn = document.createElement('button');
+          paletteBtn.className = 'glass-btn icon-only';
+          paletteBtn.id = 'openPaletteBtn';
+          paletteBtn.title = 'Command palette (Ctrl+K)';
+          paletteBtn.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>';
+          topRight.insertBefore(paletteBtn, $('#openSettingsBtn'));
+        }
+        if (paletteBtn) paletteBtn.addEventListener('click', openPalette);
+
+        // Settings modal wiring (the 9-category suite is a separate module).
+        const openSettings = $('#openSettingsBtn');
+        if (openSettings) {
+          openSettings.addEventListener('click', () => {
+            if (window.HermesSettings && window.HermesSettings.open) {
+              window.HermesSettings.open();
+            } else {
+              openModal('settingsModal');
+            }
+          });
+        }
+
+        const cronBtn = $('#openCronBtn');
+        if (cronBtn) cronBtn.addEventListener('click', () => { renderCron(); openModal('cronModal'); });
+        const cronRefresh = $('#cronRefreshBtn');
+        if (cronRefresh) cronRefresh.addEventListener('click', () => { renderCron(); toast('Cron list refreshed'); });
+        const cronAdd = $('#cronAddBtn');
+        if (cronAdd) cronAdd.addEventListener('click', () => toast('New job', 'opens the hermes cron CLI'));
+
+        // Register palette commands.
+        registerCommand('Navigation', 'Toggle Sidebar', 'Ctrl+B', () => {
+          const ws = $('#workspace'); if (ws) ws.classList.toggle('sidebar-hidden');
+        });
+        registerCommand('Navigation', 'Toggle Inspector', 'Ctrl+J', () => {
+          const ws = $('#workspace'); if (ws) ws.classList.toggle('inspector-hidden');
+        });
+        registerCommand('Navigation', 'Open Command Palette', 'Ctrl+K', openPalette);
+        registerCommand('Settings', 'Open Hermes Settings', 'Ctrl+,', () => {
+          if (window.HermesSettings && window.HermesSettings.open) window.HermesSettings.open();
+          else openModal('settingsModal');
+        });
+        registerCommand('Settings', 'Open Cron Manager', '', () => { renderCron(); openModal('cronModal'); });
+        registerCommand('Buddy', 'Call Buddy Home', '', () => {
+          if (window.HermesFlight && window.HermesFlight.callHome) window.HermesFlight.callHome();
+        });
+        registerCommand('Buddy', 'Toggle Buddy Overlay', '', () => {
+          const b = $('#buddyToggleBtn'); if (b) b.click();
+        });
+        registerCommand('Gateway', 'Switch Gateway', '', () => { const b = $('#gwBtn'); if (b) b.click(); });
+        registerCommand('Gateway', 'Add Gateway', '', () => openModal('addGatewayModal'));
+        registerCommand('Worktree', 'Switch Worktree', '', () => { const b = $('#wtBtn'); if (b) b.click(); });
+        registerCommand('Worktree', 'New Worktree', '', () => openModal('newWorktreeModal'));
+        ['chat', 'plugins', 'worktrees', 'skills', 'gallery'].forEach(v => {
+          registerCommand('View', 'Open ' + v + ' view', '', () => {
+            const item = document.querySelector('.nav-item[data-view="' + v + '"]');
+            if (item) item.click();
+          });
+        });
+
+        // Probe the local runtime for live data.
+        probeRuntime();
+        setInterval(probeRuntime, 20000);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+
   </script>
 </body>
 </html>
