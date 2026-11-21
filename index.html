@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hermes Agent - Studio Workspace</title>
+  <title>Hermes Agent - Full-Canvas Studio v6</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,24 +12,23 @@
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
       --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    /* Dark Mode: Obsidian Glass + Apple Blue (matches Nano Banana Image 1) */
     [data-theme="dark"] {
       --canvas: #090a0e;
-      --canvas-glow: radial-gradient(1100px 540px at 52% -10%, rgba(0, 113, 227, 0.11), transparent 65%);
+      --canvas-glow: radial-gradient(1300px 600px at 50% -12%, rgba(0, 113, 227, 0.12), transparent 68%);
       --panel: #0e1016;
       --card: #13161f;
       --card-elevated: #181c27;
-      --card-glass: rgba(24, 28, 39, 0.72);
       --input-bg: #11141c;
       --hover: rgba(255, 255, 255, 0.045);
       --active: rgba(255, 255, 255, 0.08);
       --border: rgba(255, 255, 255, 0.075);
       --border-strong: rgba(255, 255, 255, 0.14);
       --specular: inset 0 1px 0 rgba(255, 255, 255, 0.09);
-      --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 32px rgba(0, 0, 0, 0.38);
-      --shadow-float: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 20px 50px rgba(0, 0, 0, 0.6);
+      --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.36);
+      --shadow-float: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 22px 54px rgba(0, 0, 0, 0.65);
       --fg: #f5f5f7;
       --fg-secondary: #a1a7b5;
       --fg-muted: #687082;
@@ -41,13 +40,11 @@
       --green-tint: rgba(48, 209, 88, 0.14);
       --amber: #ff9f0a;
       --amber-tint: rgba(255, 159, 10, 0.15);
-      --amber-bubble-bg: linear-gradient(145deg, rgba(62, 46, 26, 0.92), rgba(40, 30, 18, 0.94));
-      --amber-bubble-border: rgba(255, 179, 64, 0.28);
-      --amber-bubble-fg: #f5e6cf;
+      --amber-bubble-bg: linear-gradient(145deg, rgba(58, 43, 24, 0.96), rgba(36, 27, 16, 0.97));
+      --amber-bubble-border: rgba(255, 179, 64, 0.34);
+      --amber-bubble-fg: #f7e8d0;
       --red: #ff453a;
-      --red-tint: rgba(255, 69, 58, 0.14);
       --purple: #bf5af2;
-      --purple-tint: rgba(191, 90, 242, 0.16);
       --diff-add-bg: rgba(48, 209, 88, 0.13);
       --diff-add-fg: #67e888;
       --diff-del-bg: rgba(255, 69, 58, 0.14);
@@ -55,22 +52,20 @@
       --code-bg: #0c0e14;
     }
 
-    /* Light Mode: Apple Daylight (#f5f5f7 / #ffffff / #1d1d1f / #0071e3) */
     [data-theme="apple"] {
       --canvas: #f5f5f7;
-      --canvas-glow: radial-gradient(1100px 540px at 52% -10%, rgba(0, 113, 227, 0.06), transparent 65%);
+      --canvas-glow: radial-gradient(1300px 600px at 50% -12%, rgba(0, 113, 227, 0.06), transparent 68%);
       --panel: #ececef;
       --card: #ffffff;
       --card-elevated: #ffffff;
-      --card-glass: rgba(255, 255, 255, 0.78);
       --input-bg: #ffffff;
       --hover: rgba(0, 0, 0, 0.04);
       --active: rgba(0, 0, 0, 0.07);
       --border: rgba(0, 0, 0, 0.08);
       --border-strong: rgba(0, 0, 0, 0.15);
       --specular: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
-      --shadow-float: 0 18px 48px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+      --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-float: 0 18px 48px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
       --fg: #1d1d1f;
       --fg-secondary: #515154;
       --fg-muted: #86868b;
@@ -82,13 +77,11 @@
       --green-tint: rgba(29, 154, 60, 0.12);
       --amber: #c96e00;
       --amber-tint: rgba(201, 110, 0, 0.12);
-      --amber-bubble-bg: linear-gradient(145deg, #fff8ed, #fcedd6);
-      --amber-bubble-border: rgba(201, 110, 0, 0.25);
+      --amber-bubble-bg: linear-gradient(145deg, #fff9ef, #fcedd6);
+      --amber-bubble-border: rgba(201, 110, 0, 0.28);
       --amber-bubble-fg: #3a260b;
       --red: #d72c20;
-      --red-tint: rgba(215, 44, 32, 0.11);
       --purple: #8944ab;
-      --purple-tint: rgba(137, 68, 171, 0.12);
       --diff-add-bg: rgba(29, 154, 60, 0.12);
       --diff-add-fg: #13732b;
       --diff-del-bg: rgba(215, 44, 32, 0.11);
@@ -103,7 +96,7 @@
       background-image: var(--canvas-glow);
       color: var(--fg);
       font-family: var(--font-sans);
-      font-size: 14px;
+      font-size: 13.5px;
       line-height: 1.5;
       letter-spacing: -0.011em;
       -webkit-font-smoothing: antialiased;
@@ -112,484 +105,471 @@
     .mono { font-family: var(--font-mono); letter-spacing: -0.01em; }
     svg.ic { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.65; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-    /* App Frame */
-    .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; }
 
-    /* Top Header Bar (matches Image 1 layout, 100% Windows) */
+    /* TOP BAR */
     .topbar {
-      height: 52px; flex-shrink: 0;
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
+      height: 50px; flex-shrink: 0;
+      background: var(--panel); border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px; gap: 12px;
-      z-index: 30;
+      padding: 0 14px; gap: 10px; z-index: 30;
     }
-    .topbar-left, .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-left, .topbar-right { display: flex; align-items: center; gap: 8px; }
 
-    /* Tactile Pill & Glass Controls */
     .glass-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      height: 32px; padding: 0 12px;
-      border-radius: 9px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      box-shadow: var(--specular);
-      color: var(--fg);
-      font-family: inherit; font-size: 13px; font-weight: 500;
-      cursor: pointer;
-      transition: all 160ms var(--ease-out);
+      display: inline-flex; align-items: center; gap: 7px;
+      height: 31px; padding: 0 11px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--card);
+      box-shadow: var(--specular); color: var(--fg);
+      font-family: inherit; font-size: 12.5px; font-weight: 500;
+      cursor: pointer; transition: all 150ms var(--ease-out);
     }
-    .glass-btn:hover { background: var(--card-elevated); border-color: var(--border-strong); transform: translateY(-0.5px); }
-    .glass-btn.icon-only { width: 32px; padding: 0; justify-content: center; color: var(--fg-secondary); }
+    .glass-btn:hover { background: var(--card-elevated); border-color: var(--border-strong); }
+    .glass-btn.icon-only { width: 31px; padding: 0; justify-content: center; color: var(--fg-secondary); }
     .glass-btn.icon-only:hover, .glass-btn.icon-only.active { color: var(--fg); }
 
-    /* Apple Pill Buttons (from apple.md + Image 3) */
     .apple-pill {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      height: 32px; padding: 0 16px;
-      border-radius: 980px;
-      border: 1px solid transparent;
-      background: var(--apple-blue);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 14px rgba(0, 113, 227, 0.28);
-      color: #ffffff;
-      font-family: inherit; font-size: 13px; font-weight: 500;
-      cursor: pointer;
-      transition: all 160ms var(--ease-out);
+      height: 31px; padding: 0 15px; border-radius: 980px;
+      border: 1px solid transparent; background: var(--apple-blue);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 12px rgba(0, 113, 227, 0.26);
+      color: #ffffff; font-family: inherit; font-size: 12.5px; font-weight: 500;
+      cursor: pointer; transition: all 150ms var(--ease-out);
     }
     .apple-pill:hover { background: var(--apple-blue-hover); transform: translateY(-0.5px); }
     .apple-pill.secondary {
-      background: transparent;
-      color: var(--apple-blue-text);
-      border-color: rgba(0, 113, 227, 0.45);
-      box-shadow: none;
+      background: transparent; color: var(--apple-blue-text);
+      border-color: rgba(0, 113, 227, 0.45); box-shadow: none;
     }
     .apple-pill.secondary:hover { background: var(--apple-blue-tint); }
-    .apple-pill.sm { height: 27px; padding: 0 12px; font-size: 12px; }
+    .apple-pill.sm { height: 26px; padding: 0 11px; font-size: 11.5px; }
 
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
+    .status-dot { width: 7.5px; height: 7.5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
     .status-dot.vps { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
-
     .pr-badge {
-      font-family: var(--font-mono); font-size: 11px; font-weight: 500;
-      padding: 2px 8px; border-radius: 980px;
+      font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+      padding: 2px 7px; border-radius: 980px;
       background: var(--apple-blue-tint); color: var(--apple-blue-text);
     }
-    .search-pill {
-      display: inline-flex; align-items: center; justify-content: space-between;
-      width: 220px; height: 32px; padding: 0 10px 0 12px;
-      border-radius: 9px; border: 1px solid var(--border);
-      background: var(--input-bg); color: var(--fg-muted);
-      font-size: 12.5px; cursor: pointer;
-    }
-    .search-pill:hover { border-color: var(--border-strong); color: var(--fg-secondary); }
     .kbd {
-      font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-secondary);
+      font-family: var(--font-mono); font-size: 10px; color: var(--fg-secondary);
       background: var(--card-elevated); border: 1px solid var(--border);
-      padding: 1px 5px; border-radius: 5px;
+      padding: 1px 5px; border-radius: 4px;
     }
 
-    /* 3-Column Workspace Grid (Proportioned like Image 1) */
+    /* FULL-CANVAS WORKSPACE (Fills 100% of Wide Monitors - Zero Empty Gutters!) */
     .workspace {
       flex: 1; min-height: 0;
       display: grid;
-      grid-template-columns: 268px minmax(0, 1fr) 364px;
-      transition: grid-template-columns 220ms var(--ease-out);
+      grid-template-columns: 248px minmax(0, 1fr) 348px;
+      transition: grid-template-columns 200ms var(--ease-out);
     }
-    .workspace.sidebar-hidden { grid-template-columns: 0px minmax(0, 1fr) 364px; }
-    .workspace.inspector-hidden { grid-template-columns: 268px minmax(0, 1fr) 0px; }
+    .workspace.sidebar-hidden { grid-template-columns: 0px minmax(0, 1fr) 348px; }
+    .workspace.inspector-hidden { grid-template-columns: 248px minmax(0, 1fr) 0px; }
     .workspace.sidebar-hidden.inspector-hidden { grid-template-columns: 0px minmax(0, 1fr) 0px; }
 
     /* LEFT SIDEBAR */
     .sidebar {
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      padding: 14px 12px; gap: 14px;
+      background: var(--panel); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 12px 10px; gap: 12px;
       overflow: hidden; white-space: nowrap;
     }
-    .workspace.sidebar-hidden .sidebar { padding: 14px 0; border-right: none; }
+    .workspace.sidebar-hidden .sidebar { padding: 12px 0; border-right: none; }
 
     .profile-card {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 9px 12px; border-radius: 11px;
+      padding: 8px 11px; border-radius: 10px;
       background: var(--card); border: 1px solid var(--border);
       box-shadow: var(--specular); cursor: pointer;
-      transition: all 160ms var(--ease-out);
     }
-    .profile-card:hover { border-color: var(--border-strong); background: var(--card-elevated); }
     .avatar-circle {
-      width: 28px; height: 28px; border-radius: 50%;
+      width: 26px; height: 26px; border-radius: 50%;
       background: linear-gradient(135deg, #3a445e, #1e2433);
       border: 1px solid rgba(255,255,255,0.16);
-      display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 12px;
+      display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 11.5px;
     }
-
     .nav-group { display: flex; flex-direction: column; gap: 2px; }
     .nav-item {
       display: flex; align-items: center; justify-content: space-between;
-      height: 36px; padding: 0 11px; border-radius: 9px;
+      height: 34px; padding: 0 10px; border-radius: 8px;
       border: 1px solid transparent; background: transparent;
-      color: var(--fg-secondary); font-family: inherit; font-size: 13.5px; font-weight: 500;
-      cursor: pointer; transition: all 140ms var(--ease-out);
+      color: var(--fg-secondary); font-family: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer;
     }
-    .nav-item-left { display: flex; align-items: center; gap: 10px; }
+    .nav-item-left { display: flex; align-items: center; gap: 9px; }
     .nav-item:hover { background: var(--hover); color: var(--fg); }
-    .nav-item.active {
-      background: var(--card); border-color: var(--border);
-      box-shadow: var(--specular); color: var(--fg); font-weight: 600;
-    }
-    .nav-count {
-      font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted);
-      background: var(--hover); padding: 1px 7px; border-radius: 980px;
-    }
+    .nav-item.active { background: var(--card); border-color: var(--border); box-shadow: var(--specular); color: var(--fg); font-weight: 600; }
+    .nav-count { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); background: var(--hover); padding: 1px 6px; border-radius: 980px; }
 
-    .section-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 8px 4px; font-size: 11.5px; font-weight: 600;
-      color: var(--fg-muted);
-    }
-    .sessions-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 2px; font-size: 11px; font-weight: 600; color: var(--fg-muted); }
+    .sessions-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
     .session-card {
-      display: flex; flex-direction: column; gap: 3px;
-      padding: 9px 11px; border-radius: 10px;
-      border: 1px solid transparent; background: transparent;
-      text-align: left; cursor: pointer; transition: all 140ms var(--ease-out);
+      display: flex; flex-direction: column; gap: 2px;
+      padding: 8px 10px; border-radius: 9px; border: 1px solid transparent;
+      background: transparent; text-align: left; cursor: pointer;
     }
     .session-card:hover { background: var(--hover); }
-    .session-card.active {
-      background: var(--card); border-color: var(--border);
-      box-shadow: var(--specular);
-    }
-    .session-title { font-size: 13px; font-weight: 550; color: var(--fg); overflow: hidden; text-overflow: ellipsis; }
-    .session-sub { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); display: flex; align-items: center; gap: 6px; }
+    .session-card.active { background: var(--card); border-color: var(--border); box-shadow: var(--specular); }
+    .session-title { font-size: 12.5px; font-weight: 550; color: var(--fg); overflow: hidden; text-overflow: ellipsis; }
+    .session-sub { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); display: flex; align-items: center; gap: 5px; }
 
-    /* CENTER STAGE (Proportioned & Rich like Image 1) */
+    /* CENTER FULL-WIDTH 3-ZONE STAGE (Fills Both Red-Circled Margin Areas Productively!) */
     .stage {
-      display: flex; flex-direction: column; min-width: 0; min-height: 0;
-      padding: 18px 24px 14px;
-      justify-content: space-between; gap: 14px;
+      min-width: 0; min-height: 0;
+      padding: 14px;
       overflow-y: auto;
+      display: flex; flex-direction: column;
     }
-    .stage-inner {
-      width: 100%; max-width: 920px; margin: 0 auto;
-      display: flex; flex-direction: column; gap: 14px;
+    .view { display: none; flex: 1; min-height: 0; }
+    .view.active { display: flex; flex-direction: column; }
+
+    .cockpit-grid {
+      flex: 1; min-height: 0;
+      display: grid;
+      /* Left Wing (Workflow State + Pet Place) | Center Chat & Live Plan | Right Wing (Context Radar + Workfolder Ledger) */
+      grid-template-columns: 276px minmax(480px, 1fr) 276px;
+      gap: 14px;
+      align-items: stretch;
     }
 
-    .view { display: none; flex-direction: column; gap: 16px; width: 100%; max-width: 920px; margin: 0 auto; }
-    .view.active { display: flex; }
+    .wing-col {
+      display: flex; flex-direction: column; gap: 12px;
+      min-width: 0;
+    }
+    .wing-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 13px; box-shadow: var(--shadow-card);
+      padding: 12px 13px; display: flex; flex-direction: column; gap: 9px;
+    }
+    .wing-head {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12.5px; font-weight: 600; color: var(--fg);
+    }
 
-    /* Message Cards (matching Image 1) */
-    .chat-turn { display: flex; gap: 12px; align-items: flex-start; }
+    /* Left Wing 1: Live Workflow State DAG (Step-by-step agent pipeline) */
+    .dag-list { display: flex; flex-direction: column; gap: 7px; position: relative; }
+    .dag-node {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+      padding: 7px 9px; border-radius: 9px;
+      background: var(--panel); border: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .dag-node.running {
+      border-color: rgba(0, 113, 227, 0.55);
+      background: var(--apple-blue-tint);
+    }
+    .dag-left { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+    .dag-title { font-weight: 550; color: var(--fg); line-height: 1.3; }
+    .dag-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); margin-top: 2px; }
+
+    /* Left Wing 2: Subagent & Tool Telemetry */
+    .subagent-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 8px; border-radius: 8px; background: var(--panel);
+      border: 1px solid var(--border); font-size: 11.5px;
+    }
+
+    /* Left Wing 3: Dedicated "Pet Place" Home Perch Pad! */
+    .pet-place-card {
+      margin-top: auto;
+      background: linear-gradient(180deg, var(--card), var(--panel));
+      border: 1.5px dashed var(--border-strong);
+      border-radius: 13px; padding: 11px 12px;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: all 180ms var(--ease-out);
+      position: relative;
+    }
+    .pet-place-card.highlight {
+      border-color: var(--apple-blue);
+      background: var(--apple-blue-tint);
+      box-shadow: 0 0 24px rgba(0, 113, 227, 0.25);
+    }
+    .perch-pad {
+      height: 82px; border-radius: 10px;
+      background: radial-gradient(circle at 50% 75%, rgba(0, 113, 227, 0.18), transparent 70%), var(--code-bg);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .perch-ring {
+      width: 58px; height: 14px; border-radius: 50%;
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.12);
+      position: absolute; bottom: 10px;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+    }
+    .perch-hint { font-size: 11px; color: var(--fg-muted); text-align: center; z-index: 1; }
+
+    /* Center Column: Conversation + Code Widget + Editable Live Plan + Composer */
+    .center-col {
+      display: flex; flex-direction: column; justify-content: space-between;
+      gap: 12px; min-width: 0; min-height: 0;
+    }
+    .chat-stack {
+      display: flex; flex-direction: column; gap: 12px;
+      overflow-y: auto; padding-right: 2px;
+    }
+    .chat-turn { display: flex; gap: 10px; align-items: flex-start; }
     .turn-icon {
-      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
       background: var(--card-elevated); border: 1px solid var(--border-strong);
       display: grid; place-items: center; color: var(--fg-secondary); margin-top: 2px;
     }
-    .turn-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-    .turn-author { font-size: 13px; font-weight: 600; color: var(--fg); display: flex; align-items: center; gap: 8px; }
-    .turn-text { font-size: 14.5px; color: var(--fg-secondary); line-height: 1.55; }
+    .turn-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .turn-author { font-size: 12.5px; font-weight: 600; color: var(--fg); display: flex; align-items: center; gap: 8px; }
+    .turn-text { font-size: 13.5px; color: var(--fg-secondary); line-height: 1.5; }
     .turn-text code {
-      font-family: var(--font-mono); font-size: 12.5px;
+      font-family: var(--font-mono); font-size: 12px;
       color: var(--apple-blue-text); background: var(--apple-blue-tint);
-      padding: 2px 6px; border-radius: 5px;
+      padding: 1.5px 5px; border-radius: 5px;
     }
 
-    /* Assistant Elevated Card with Preview | Diff | Logs widget */
     .assistant-card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; box-shadow: var(--shadow-card);
-      padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;
+      border-radius: 13px; box-shadow: var(--shadow-card);
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 11px;
     }
-    .code-widget {
-      background: var(--code-bg); border: 1px solid var(--border);
-      border-radius: 11px; overflow: hidden;
-    }
-    .cw-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; border-bottom: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .cw-tabs { display: flex; align-items: center; gap: 4px; }
-    .cw-tab {
-      padding: 4px 11px; border-radius: 7px; border: none;
-      background: transparent; color: var(--fg-muted);
-      font-family: inherit; font-size: 12.5px; font-weight: 550; cursor: pointer;
-    }
+    .code-widget { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 11px; border-bottom: 1px solid var(--border); }
+    .cw-tabs { display: flex; gap: 4px; }
+    .cw-tab { padding: 3.5px 10px; border-radius: 6px; border: none; background: transparent; color: var(--fg-muted); font-family: inherit; font-size: 12px; font-weight: 550; cursor: pointer; }
     .cw-tab.active { background: var(--card-elevated); color: var(--fg); box-shadow: var(--specular); }
-    .cw-pane { display: none; padding: 13px 16px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; overflow-x: auto; }
+    .cw-pane { display: none; padding: 11px 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; overflow-x: auto; }
     .cw-pane.active { display: block; }
-    .ln { color: var(--fg-muted); user-select: none; display: inline-block; width: 24px; }
+    .ln { color: var(--fg-muted); user-select: none; display: inline-block; width: 22px; }
     .kw { color: #ff7b72; }
     .fn { color: #d2a8ff; }
     .str { color: #79c0ff; }
     .num { color: #ffa657; }
 
-    /* SIDE-BY-SIDE DOCK: Editable Live Plan (Left) + Illustrated Walking Buddy & Speech Bubble (Right) */
-    .bottom-dock {
-      width: 100%; max-width: 920px; margin: 0 auto;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .plan-and-buddy {
-      display: grid;
-      grid-template-columns: 350px minmax(0, 1fr);
-      gap: 18px;
-      align-items: end;
-    }
-
-    /* Live Plan Card (matches Image 1 + interactive comments & add task) */
+    /* Center Bottom Dock: Editable Live Plan + Composer */
+    .center-dock { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
     .plan-card {
       background: var(--card); border: 1px solid var(--border-strong);
-      border-radius: 13px; box-shadow: var(--shadow-card);
-      padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+      border-radius: 12px; box-shadow: var(--shadow-card);
+      padding: 10px 13px; display: flex; flex-direction: column; gap: 7px;
     }
     .plan-top { display: flex; align-items: center; justify-content: space-between; }
-    .plan-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
-    .plan-items { display: flex; flex-direction: column; gap: 6px; }
-    .plan-item {
-      display: flex; flex-direction: column; gap: 4px;
-      padding: 5px 7px; border-radius: 8px; transition: background 140ms;
-    }
-    .plan-item:hover { background: var(--hover); }
-    .plan-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .plan-check-wrap { display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 13px; }
-    .chk {
-      width: 17px; height: 17px; border-radius: 5px;
-      border: 1.5px solid var(--fg-muted); display: grid; place-items: center;
-      flex-shrink: 0; transition: all 140ms;
-    }
+    .plan-title { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; }
+    .plan-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 10px; }
+    .plan-item { display: flex; flex-direction: column; gap: 3px; padding: 4px 6px; border-radius: 7px; background: var(--panel); border: 1px solid var(--border); }
+    .plan-item-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .plan-check-wrap { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 12px; min-width: 0; }
+    .chk { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--fg-muted); display: grid; place-items: center; flex-shrink: 0; font-size: 10px; }
     .plan-item.done .chk { background: var(--apple-blue); border-color: var(--apple-blue); color: #fff; }
     .plan-item.done .plan-label { color: var(--fg-secondary); }
-    .plan-item.active .plan-label { color: var(--fg); font-weight: 600; }
-    .comment-btn {
-      opacity: 0.55; border: none; background: transparent; color: var(--fg-secondary);
-      cursor: pointer; padding: 2px 5px; border-radius: 5px; font-size: 11px;
+    .plan-item.active { border-color: rgba(0, 113, 227, 0.45); }
+    .plan-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .comment-btn { border: none; background: transparent; color: var(--fg-muted); cursor: pointer; padding: 1px 5px; border-radius: 4px; font-size: 10.5px; flex-shrink: 0; }
+    .comment-btn:hover { background: var(--hover); color: var(--fg); }
+    .plan-note { font-size: 11px; color: var(--apple-blue-text); background: var(--apple-blue-tint); padding: 2px 7px; border-radius: 5px; display: flex; justify-content: space-between; }
+    .inline-input-row { display: flex; gap: 6px; margin-top: 4px; grid-column: 1 / -1; }
+    .inline-input-row input { flex: 1; height: 27px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--input-bg); color: var(--fg); font-size: 12px; outline: none; }
+
+    .composer-bar {
+      display: flex; align-items: center; gap: 9px;
+      background: var(--card); border: 1px solid var(--border-strong);
+      border-radius: 12px; padding: 6px 8px 6px 14px; box-shadow: var(--shadow-card);
     }
-    .plan-item:hover .comment-btn { opacity: 1; background: var(--hover); color: var(--fg); }
-    .plan-note {
-      margin-left: 26px; font-size: 11.5px; color: var(--apple-blue-text);
-      background: var(--apple-blue-tint); padding: 3px 8px; border-radius: 6px;
+    .composer-bar input { flex: 1; border: none; outline: none; background: transparent; color: var(--fg); font-family: inherit; font-size: 13.5px; }
+
+    /* Right Wing (Inside Center Stage: Context Radar + Workfolder Ledger & Touched Files) */
+    .meter-bar { height: 7px; border-radius: 99px; background: var(--panel); border: 1px solid var(--border); overflow: hidden; display: flex; }
+    .m-sys { width: 22%; background: var(--apple-blue); }
+    .m-sk { width: 12%; background: var(--green); }
+    .m-hist { width: 15%; background: var(--amber); }
+    .file-pill {
       display: flex; align-items: center; justify-content: space-between;
-    }
-    .inline-input-row { display: flex; gap: 6px; margin-top: 4px; }
-    .inline-input-row input {
-      flex: 1; height: 28px; padding: 0 9px; border-radius: 7px;
-      border: 1px solid var(--border-strong); background: var(--input-bg);
-      color: var(--fg); font-size: 12px; outline: none;
+      padding: 6px 9px; border-radius: 8px; background: var(--panel);
+      border: 1px solid var(--border); font-size: 11.5px;
     }
 
-    /* Illustrated Walking Buddy + Warm Speech Bubble (matches Image 1!) */
-    .buddy-zone {
-      display: flex; align-items: flex-end; gap: 14px;
-      padding-bottom: 2px; min-height: 116px;
-      transition: opacity 180ms ease;
+    /* RIGHT INSPECTOR (Git Worktree Diff + Visual Artifact Preview) */
+    .inspector {
+      background: var(--panel); border-left: 1px solid var(--border);
+      padding: 12px; display: flex; flex-direction: column; gap: 12px;
+      overflow-y: auto; white-space: nowrap;
     }
-    .buddy-zone.hidden { opacity: 0; pointer-events: none; height: 0; min-height: 0; overflow: hidden; }
-    .mascot-wrap {
-      width: 78px; height: 88px; flex-shrink: 0;
-      cursor: pointer; position: relative;
-      animation: mascot-walk 3.2s ease-in-out infinite alternate;
+    .workspace.inspector-hidden .inspector { padding: 12px 0; border-left: none; }
+    .ins-header { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; }
+    .ins-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-card); overflow: hidden; display: flex; flex-direction: column; }
+    .ins-card-head { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .diff-box { font-family: var(--font-mono); font-size: 11px; line-height: 1.6; padding: 6px 0; overflow-x: auto; background: var(--code-bg); }
+    .diff-line { padding: 0 11px; display: flex; gap: 9px; }
+    .diff-line.add { background: var(--diff-add-bg); color: var(--diff-add-fg); }
+    .diff-line.del { background: var(--diff-del-bg); color: var(--diff-del-fg); }
+
+    .artifact-mini { margin: 10px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--code-bg); overflow: hidden; }
+    .am-top { height: 20px; background: var(--card-elevated); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 10px; color: var(--fg-muted); }
+    .am-body { display: grid; grid-template-columns: 46px 1fr; height: 104px; }
+    .am-rail { border-right: 1px solid var(--border); padding: 7px 5px; display: flex; flex-direction: column; gap: 4px; }
+    .am-bar { height: 4px; border-radius: 3px; background: var(--border-strong); }
+    .am-bar.blue { background: var(--apple-blue); width: 75%; }
+    .am-stage { padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; justify-content: center; }
+
+    /* FREE-FLYING / DRAGGABLE STEER BUDDY OVERLAY */
+    .floating-buddy {
+      position: fixed;
+      left: 520px;
+      top: 470px;
+      z-index: 90;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      user-select: none;
+      touch-action: none;
+      transition: left 520ms var(--ease-spring), top 520ms var(--ease-spring), opacity 180ms ease;
     }
-    @keyframes mascot-walk {
-      0% { transform: translateX(0px) translateY(0px) rotate(-1.5deg); }
-      50% { transform: translateX(10px) translateY(-4px) rotate(1.5deg); }
-      100% { transform: translateX(20px) translateY(0px) rotate(-1deg); }
+    .floating-buddy.dragging {
+      transition: none !important;
+      cursor: grabbing;
     }
+    .floating-buddy.hidden { opacity: 0; pointer-events: none; }
+    .floating-buddy.flip-left { flex-direction: row-reverse; }
+
+    .mascot-handle {
+      width: 74px; height: 84px; flex-shrink: 0;
+      cursor: grab; position: relative;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
+      animation: float-idle 2.8s ease-in-out infinite alternate;
+    }
+    .floating-buddy.dragging .mascot-handle {
+      cursor: grabbing;
+      transform: scale(1.08) rotate(-6deg);
+      animation: none;
+    }
+    @keyframes float-idle {
+      0% { transform: translateY(0px) rotate(-1.5deg); }
+      100% { transform: translateY(-6px) rotate(1.5deg); }
+    }
+
     .speech-bubble {
-      position: relative;
       background: var(--amber-bubble-bg);
       border: 1px solid var(--amber-bubble-border);
       color: var(--amber-bubble-fg);
-      border-radius: 14px 14px 14px 4px;
-      padding: 12px 15px;
-      box-shadow: var(--shadow-card);
-      max-width: 430px;
-      display: flex; flex-direction: column; gap: 8px;
+      border-radius: 13px 13px 13px 4px;
+      padding: 10px 13px;
+      box-shadow: var(--shadow-float);
+      width: 310px;
+      display: flex; flex-direction: column; gap: 7px;
+      transition: opacity 160ms ease, transform 160ms ease;
     }
-    .speech-text { font-size: 13px; line-height: 1.45; }
-    .speech-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-    .mode-chips { display: flex; gap: 4px; }
+    .floating-buddy.flip-left .speech-bubble { border-radius: 13px 13px 4px 13px; }
+    .floating-buddy.perched .speech-bubble { width: 255px; }
+    .speech-top { display: flex; align-items: center; justify-content: space-between; font-size: 10.5px; opacity: 0.8; }
+    .speech-text { font-size: 12.2px; line-height: 1.42; }
+    .speech-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+    .mode-chips { display: flex; gap: 3px; }
     .mode-chip {
-      font-size: 11px; font-weight: 550; padding: 2px 8px; border-radius: 980px;
-      border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.2);
+      font-size: 10.5px; font-weight: 550; padding: 2px 7px; border-radius: 980px;
+      border: 1px solid rgba(255,255,255,0.16); background: rgba(0,0,0,0.22);
       color: inherit; cursor: pointer;
     }
     .mode-chip.active { background: var(--apple-blue); border-color: var(--apple-blue); color: #fff; }
 
-    /* Sleek Composer Bar */
-    .composer-bar {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--card); border: 1px solid var(--border-strong);
-      border-radius: 13px; padding: 7px 9px 7px 15px;
-      box-shadow: var(--shadow-card);
-    }
-    .composer-bar input {
-      flex: 1; border: none; outline: none; background: transparent;
-      color: var(--fg); font-family: inherit; font-size: 14px;
-    }
-    .composer-bar input::placeholder { color: var(--fg-muted); }
-
-    /* RIGHT INSPECTOR (Real Git Diff + Visual Artifact Mini-Window like Image 1) */
-    .inspector {
-      background: var(--panel); border-left: 1px solid var(--border);
-      padding: 14px; display: flex; flex-direction: column; gap: 14px;
-      overflow-y: auto; white-space: nowrap;
-    }
-    .workspace.inspector-hidden .inspector { padding: 14px 0; border-left: none; }
-    .ins-header { display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; font-weight: 600; padding: 0 2px; }
-    .ins-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 13px; box-shadow: var(--shadow-card);
-      overflow: hidden; display: flex; flex-direction: column;
-    }
-    .ins-card-head {
-      padding: 11px 13px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .ins-card-title { font-size: 13px; font-weight: 600; }
-    .ins-card-sub { font-size: 11.5px; color: var(--fg-muted); margin-top: 1px; }
-
-    .diff-box { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.6; padding: 8px 0; overflow-x: auto; background: var(--code-bg); }
-    .diff-line { padding: 0 12px; display: flex; gap: 10px; }
-    .diff-line.add { background: var(--diff-add-bg); color: var(--diff-add-fg); }
-    .diff-line.del { background: var(--diff-del-bg); color: var(--diff-del-fg); }
-
-    /* Visual Artifact Mini-Window Preview */
-    .artifact-mini {
-      margin: 12px; border-radius: 9px; border: 1px solid var(--border-strong);
-      background: var(--code-bg); overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-    }
-    .am-top { height: 22px; background: var(--card-elevated); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 9px; font-size: 10px; color: var(--fg-muted); }
-    .am-body { display: grid; grid-template-columns: 52px 1fr; height: 118px; }
-    .am-rail { border-right: 1px solid var(--border); padding: 8px 6px; display: flex; flex-direction: column; gap: 5px; }
-    .am-bar { height: 5px; border-radius: 3px; background: var(--border-strong); }
-    .am-bar.blue { background: var(--apple-blue); width: 75%; }
-    .am-stage { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
-
-    /* BOTTOM STATUS BAR (Matches Image 1 & Hermes Desktop) */
+    /* BOTTOM STATUS BAR */
     .statusbar {
-      height: 36px; flex-shrink: 0;
+      height: 35px; flex-shrink: 0;
       background: var(--panel); border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 14px; font-size: 12px; color: var(--fg-secondary);
-      z-index: 30;
+      padding: 0 14px; font-size: 11.5px; color: var(--fg-secondary); z-index: 30;
     }
-    .sb-left, .sb-right { display: flex; align-items: center; gap: 8px; }
+    .sb-left, .sb-right { display: flex; align-items: center; gap: 7px; }
     .sb-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      height: 25px; padding: 0 10px; border-radius: 7px;
+      height: 24px; padding: 0 9px; border-radius: 6px;
       background: var(--card); border: 1px solid var(--border);
-      color: var(--fg-secondary); font-size: 11.5px; cursor: pointer;
+      color: var(--fg-secondary); font-size: 11px; cursor: pointer;
     }
     .sb-chip:hover { color: var(--fg); border-color: var(--border-strong); }
+    .sb-chip.active-place { border-color: var(--apple-blue); color: var(--apple-blue-text); background: var(--apple-blue-tint); font-weight: 600; }
     .sb-steer {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #0b0800; font-weight: 700; border: none;
-      padding: 0 10px; height: 24px; border-radius: 6px; font-size: 11.5px;
-      display: inline-flex; align-items: center;
+      background: linear-gradient(135deg, #f59e0b, #d97706); color: #0b0800;
+      font-weight: 700; padding: 0 9px; height: 23px; border-radius: 6px;
+      font-size: 11px; display: inline-flex; align-items: center;
     }
     .sb-buddy-pill {
-      display: inline-flex; align-items: center; gap: 7px;
-      height: 25px; padding: 0 11px; border-radius: 980px;
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 24px; padding: 0 10px; border-radius: 980px;
       background: var(--green-tint); border: 1px solid rgba(48, 209, 88, 0.35);
-      color: var(--green); font-weight: 600; font-size: 11.5px; cursor: pointer;
+      color: var(--green); font-weight: 600; font-size: 11px; cursor: pointer;
     }
 
     /* Popovers & Modals */
     .pop-wrap { position: relative; }
     .popover {
-      position: absolute; top: calc(100% + 8px); left: 0; width: 290px;
+      position: absolute; top: calc(100% + 7px); left: 0; width: 280px;
       background: var(--card-elevated); border: 1px solid var(--border-strong);
-      border-radius: 12px; box-shadow: var(--shadow-float);
-      padding: 6px; display: none; flex-direction: column; gap: 2px; z-index: 80;
+      border-radius: 11px; box-shadow: var(--shadow-float);
+      padding: 5px; display: none; flex-direction: column; gap: 2px; z-index: 80;
     }
-    .popover.up { top: auto; bottom: calc(100% + 8px); }
     .popover.open { display: flex; }
-    .pop-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 10px; border-radius: 8px; border: none;
-      background: transparent; color: var(--fg); font-family: inherit;
-      font-size: 12.5px; cursor: pointer; text-align: left;
-    }
+    .pop-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 9px; border-radius: 7px; border: none; background: transparent; color: var(--fg); font-family: inherit; font-size: 12px; cursor: pointer; text-align: left; }
     .pop-item:hover { background: var(--hover); }
     .pop-item.selected { background: var(--apple-blue-tint); color: var(--apple-blue-text); font-weight: 600; }
 
-    .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(6px); display: none; place-items: center; z-index: 100;
-    }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(6px); display: none; place-items: center; z-index: 120; }
     .modal-backdrop.open { display: grid; }
-    .modal-card {
-      width: min(740px, 92vw); background: var(--card);
-      border: 1px solid var(--border-strong); border-radius: 16px;
-      box-shadow: var(--shadow-float); overflow: hidden;
-    }
-    .modal-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-weight: 600; }
-    .modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 18px; }
-    .info-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 11px; padding: 13px; display: flex; flex-direction: column; gap: 6px; }
-    .kv-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--fg-secondary); padding: 3px 0; }
+    .modal-card { width: min(720px, 92vw); background: var(--card); border: 1px solid var(--border-strong); border-radius: 15px; box-shadow: var(--shadow-float); overflow: hidden; }
+    .modal-head { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-weight: 600; }
+    .modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; padding: 16px; }
+    .info-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .kv-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--fg-secondary); padding: 2px 0; }
 
-    @media (max-width: 1120px) {
+    @media (max-width: 1360px) {
+      .cockpit-grid { grid-template-columns: 245px minmax(0, 1fr); }
+      .right-wing { display: none; }
+    }
+    @media (max-width: 1040px) {
       .workspace { grid-template-columns: 0px minmax(0, 1fr) 0px; }
-      .plan-and-buddy { grid-template-columns: 1fr; }
+      .cockpit-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="app">
-    <!-- TOP BAR (Clean Windows + Gateway + Worktree + Theme Switcher + Settings) -->
+    <!-- TOP BAR -->
     <header class="topbar">
       <div class="topbar-left">
         <button class="glass-btn icon-only" id="toggleSidebarBtn" title="Toggle Sidebar (Ctrl+B)">
           <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
         </button>
 
-        <!-- Gateway Switcher (Laptop / VPS) -->
         <div class="pop-wrap">
           <button class="glass-btn" id="gwBtn">
             <span class="status-dot" id="gwDot"></span>
             <span id="gwName">Laptop Hermes</span>
-            <span class="mono" style="font-size:11.5px;color:var(--fg-muted)" id="gwPing">2ms</span>
-            <svg class="ic" style="width:13px;height:13px;color:var(--fg-muted)" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            <span class="mono" style="font-size:11px;color:var(--fg-muted)" id="gwPing">2ms</span>
+            <svg class="ic" style="width:12px;height:12px;color:var(--fg-muted)" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="popover" id="gwPop">
-            <button class="pop-item selected" data-gw="laptop">
-              <span style="display:flex;align-items:center;gap:8px"><span class="status-dot"></span>Laptop Hermes (127.0.0.1)</span>
-              <span class="mono" style="font-size:11px;color:var(--green)">2ms</span>
-            </button>
-            <button class="pop-item" data-gw="vps">
-              <span style="display:flex;align-items:center;gap:8px"><span class="status-dot vps"></span>VPS Hermes (Hetzner 24/7)</span>
-              <span class="mono" style="font-size:11px;color:var(--purple)">28ms</span>
-            </button>
+            <button class="pop-item selected" data-gw="laptop"><span>Laptop Hermes (127.0.0.1)</span><span class="mono" style="color:var(--green)">2ms</span></button>
+            <button class="pop-item" data-gw="vps"><span>VPS Hermes (Hetzner 24/7)</span><span class="mono" style="color:var(--purple)">28ms</span></button>
           </div>
         </div>
 
-        <!-- Git Worktree Switcher -->
         <div class="pop-wrap">
           <button class="glass-btn" id="wtBtn">
             <svg class="ic" style="color:var(--apple-blue-text)" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
             <span class="mono" id="wtName">wt/feat-webui-v2</span>
-            <span class="mono" style="font-size:11.5px"><span style="color:var(--green)" id="wtAdd">+142</span> <span style="color:var(--red)" id="wtDel">-18</span></span>
+            <span class="mono" style="font-size:11px"><span style="color:var(--green)" id="wtAdd">+142</span> <span style="color:var(--red)" id="wtDel">-18</span></span>
             <span class="pr-badge" id="wtPr">PR #48</span>
           </button>
           <div class="popover" id="wtPop">
             <button class="pop-item selected" data-wt="feat"><span class="mono">wt/feat-webui-v2</span><span class="pr-badge">PR #48</span></button>
-            <button class="pop-item" data-wt="fix"><span class="mono">wt/fix-cache-meta</span><span class="mono" style="font-size:11px;color:var(--amber)">3 modified</span></button>
-            <button class="pop-item" data-wt="main"><span class="mono">main</span><span class="mono" style="font-size:11px;color:var(--green)">clean</span></button>
+            <button class="pop-item" data-wt="fix"><span class="mono">wt/fix-cache-meta</span><span class="mono" style="color:var(--amber)">3 mod</span></button>
+            <button class="pop-item" data-wt="main"><span class="mono">main</span><span class="mono" style="color:var(--green)">clean</span></button>
           </div>
         </div>
       </div>
 
       <div class="topbar-right">
-        <button class="search-pill" id="openCmdBtn">
-          <span style="display:flex;align-items:center;gap:7px">
-            <svg class="ic" style="width:13.5px;height:13.5px" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Search or jump...
-          </span>
-          <span class="kbd">Ctrl+K</span>
+        <button class="glass-btn" id="sendToPerchTopBtn" title="Send flying buddy to his Pet Place perch">
+          <svg class="ic" style="color:var(--apple-blue-text)" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span id="perchBtnLabel">Pet Place</span>
         </button>
 
-        <!-- Apple Daylight / Obsidian Dark Toggle -->
-        <button class="apple-pill secondary sm" id="themeToggleBtn" title="Switch between Obsidian Glass and Apple Daylight">
+        <button class="apple-pill secondary sm" id="themeToggleBtn">
           <span id="themeLabel">Apple Daylight</span>
         </button>
 
@@ -603,64 +583,45 @@
       </div>
     </header>
 
-    <!-- 3-COLUMN WORKSPACE -->
+    <!-- WORKSPACE -->
     <div class="workspace" id="workspace">
       <!-- LEFT SIDEBAR -->
       <aside class="sidebar">
-        <div class="profile-card" id="profileCard" title="Click to switch profile (default / chill-guy)">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div class="avatar-circle" id="profAvatar">D</div>
+        <div class="profile-card" id="profileCard">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div class="avatar-circle" id="profAvatar">C</div>
             <div>
-              <div style="font-size:13.5px;font-weight:600" id="profName">default</div>
-              <div style="font-size:11px;color:var(--fg-muted)" id="profSub">Ledger active</div>
+              <div style="font-size:13px;font-weight:600" id="profName">chill-guy</div>
+              <div style="font-size:10.5px;color:var(--fg-muted)" id="profSub">No ledger · Low effort</div>
             </div>
           </div>
-          <svg class="ic" style="width:14px;height:14px;color:var(--fg-muted)" viewBox="0 0 24 24"><polyline points="7 10 12 15 17 10"/></svg>
+          <svg class="ic" style="width:13px;height:13px;color:var(--fg-muted)" viewBox="0 0 24 24"><polyline points="7 10 12 15 17 10"/></svg>
         </div>
 
         <nav class="nav-group">
           <button class="nav-item active" data-view="chat">
-            <span class="nav-item-left">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              Workspace
-            </span>
+            <span class="nav-item-left"><svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Workspace</span>
             <span class="nav-count">Live</span>
           </button>
           <button class="nav-item" data-view="plugins">
-            <span class="nav-item-left">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-              Plugins
-            </span>
+            <span class="nav-item-left"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>Plugins</span>
             <span class="nav-count">5</span>
           </button>
           <button class="nav-item" data-view="worktrees">
-            <span class="nav-item-left">
-              <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="13" y2="12"/></svg>
-              Worktrees
-            </span>
+            <span class="nav-item-left"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="13" y2="12"/></svg>Worktrees</span>
             <span class="nav-count">3</span>
           </button>
           <button class="nav-item" data-view="skills">
-            <span class="nav-item-left">
-              <svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-              Skills
-            </span>
-            <span class="nav-count">121</span>
+            <span class="nav-item-left"><svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Skills</span>
+            <span class="nav-count">122</span>
           </button>
           <button class="nav-item" data-view="gallery">
-            <span class="nav-item-left">
-              <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              Concept Art
-            </span>
+            <span class="nav-item-left"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Concept Art</span>
             <span class="nav-count">4</span>
           </button>
         </nav>
 
-        <div class="section-head">
-          <span>Sessions</span>
-          <button class="glass-btn icon-only" style="width:22px;height:22px;border-radius:6px" id="newSessionBtn" title="New Session (Ctrl+N)">+</button>
-        </div>
-
+        <div class="section-head"><span>Sessions</span><span>+</span></div>
         <div class="sessions-list">
           <button class="session-card active" data-wt="feat">
             <div class="session-title">Sidebar width &amp; grid fix</div>
@@ -671,7 +632,7 @@
             <div class="session-sub"><span>wt/feat-webui-v2</span><span style="color:var(--green)">●</span><span>Worktree</span></div>
           </button>
           <button class="session-card" data-wt="main">
-            <div class="session-title">Sync 121 agent skills</div>
+            <div class="session-title">Sync 122 agent skills</div>
             <div class="session-sub"><span>main</span><span>●</span><span>Clean base</span></div>
           </button>
           <button class="session-card" data-wt="fix">
@@ -681,266 +642,297 @@
         </div>
       </aside>
 
-      <!-- CENTER STAGE -->
+      <!-- CENTER STAGE (Fills Wide Monitors with Left Workflow Wing + Center Chat + Right Telemetry Wing) -->
       <main class="stage">
-        <!-- MAIN WORKSPACE VIEW -->
         <div class="view active" id="view-chat">
-          <div class="stage-inner" id="chatContainer">
-            <div class="chat-turn">
-              <div class="turn-icon">
-                <svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div class="turn-body">
-                <div class="turn-author">User</div>
-                <div class="turn-text">Tighten the sidebar width to 268px, use Apple tactile buttons and clean surface lighting, and verify <code>PR #48</code> in the inspector.</div>
-              </div>
-            </div>
-
-            <div class="assistant-card">
-              <div class="chat-turn">
-                <div class="turn-icon" style="background:var(--apple-blue-tint);border-color:rgba(0,113,227,0.35);color:var(--apple-blue-text)">
-                  <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+          <div class="cockpit-grid">
+            <!-- LEFT WING (Replaces Left Red-Circled Empty Area!) -->
+            <div class="wing-col">
+              <!-- Live Workflow Execution Pipeline -->
+              <div class="wing-card">
+                <div class="wing-head">
+                  <span>Workflow Pipeline</span>
+                  <span class="pr-badge">step 3 / 5</span>
                 </div>
-                <div class="turn-body">
-                  <div class="turn-author">
-                    <span>Hermes Assistant</span>
-                    <span class="pr-badge" id="turnMetaBadge">Laptop Hermes / wt/feat-webui-v2</span>
-                  </div>
-                  <div class="turn-text">Patched the grid rules in <code>AppLayout.tsx</code>, replaced flat wireframe borders with specular top-lit surfaces, and verified responsive breakpoints:</div>
-                </div>
-              </div>
-
-              <!-- Interactive Preview | Diff | Logs Code & Widget Showcase -->
-              <div class="code-widget">
-                <div class="cw-header">
-                  <div class="cw-tabs">
-                    <button class="cw-tab active" data-cw="code">Preview</button>
-                    <button class="cw-tab" data-cw="why">Why v4 Felt Cheap vs v5</button>
-                    <button class="cw-tab" data-cw="logs">Verification Logs</button>
-                  </div>
-                  <span class="mono" style="font-size:11.5px;color:var(--fg-muted)">web/src/AppLayout.tsx</span>
-                </div>
-
-                <div class="cw-pane active" id="cw-code">
-                  <div><span class="ln">1</span><span class="kw">export function</span> <span class="fn">AppLayout</span>() {</div>
-                  <div><span class="ln">2</span>  <span class="kw">return</span> (</div>
-                  <div><span class="ln">3</span>    &lt;<span class="str">div</span> className=<span class="str">"grid grid-cols-[268px_minmax(0,1fr)_364px]"</span>&gt;</div>
-                  <div><span class="ln">4</span>      &lt;<span class="fn">Sidebar</span> width={<span class="num">268</span>} collapsible /&gt;</div>
-                  <div><span class="ln">5</span>      &lt;<span class="fn">Stage</span> planDock=<span class="str">"side-by-side"</span> buddy=<span class="str">"steer-copilot"</span> /&gt;</div>
-                  <div><span class="ln">6</span>      &lt;<span class="fn">Inspector</span> diff=<span class="str">"PR #48"</span> artifactPreview /&gt;</div>
-                  <div><span class="ln">7</span>    &lt;/<span class="str">div</span>&gt;</div>
-                  <div><span class="ln">8</span>  );</div>
-                  <div><span class="ln">9</span>}</div>
-                </div>
-
-                <div class="cw-pane" id="cw-why" style="font-family:var(--font-sans);font-size:13px">
-                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-                    <div class="info-tile">
-                      <strong style="color:var(--fg)">1. Proportions &amp; Light</strong>
-                      <span style="color:var(--fg-secondary);font-size:12px">Replaced the empty black void and chalky 1px boxes with top-lit specular cards, soft ambient glow, and balanced 3-pane geometry.</span>
+                <div class="dag-list">
+                  <div class="dag-node">
+                    <div class="dag-left">
+                      <span style="color:var(--green)">✓</span>
+                      <div>
+                        <div class="dag-title">1. Open todo_list plan</div>
+                        <div class="dag-meta">eager tool · 0.1s</div>
+                      </div>
                     </div>
-                    <div class="info-tile">
-                      <strong style="color:var(--fg)">2. Apple Pill Controls</strong>
-                      <span style="color:var(--fg-secondary);font-size:12px">Adopted Apple Blue (#0071e3) 980px pill buttons, optical negative tracking, and a 1-click Apple Daylight mode toggle.</span>
+                  </div>
+                  <div class="dag-node">
+                    <div class="dag-left">
+                      <span style="color:var(--green)">✓</span>
+                      <div>
+                        <div class="dag-title">2. Batch skill_view (3)</div>
+                        <div class="dag-meta">apple.md + linear.app.md · 0.4s</div>
+                      </div>
                     </div>
-                    <div class="info-tile">
-                      <strong style="color:var(--fg)">3. Custom SVG Art</strong>
-                      <span style="color:var(--fg-secondary);font-size:12px">Eliminated raw Windows system emojis in favor of 1.65px vector icons and an illustrated winged robot companion.</span>
+                  </div>
+                  <div class="dag-node running">
+                    <div class="dag-left">
+                      <span class="status-dot" style="margin-top:4px"></span>
+                      <div>
+                        <div class="dag-title">3. Patch AppLayout.tsx</div>
+                        <div class="dag-meta">patch · +142 -18 · running</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dag-node">
+                    <div class="dag-left">
+                      <span style="color:var(--fg-muted)">○</span>
+                      <div>
+                        <div class="dag-title">4. Pre-flight unslop audit</div>
+                        <div class="dag-meta">audit_frontend_unslop.py</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dag-node">
+                    <div class="dag-left">
+                      <span style="color:var(--fg-muted)">○</span>
+                      <div>
+                        <div class="dag-title">5. Screenshot &amp; verify</div>
+                        <div class="dag-meta">verify_widget.py · 1440px</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div class="cw-pane" id="cw-logs">
-                  <div style="color:var(--green)">[PASS] Layout grid proportions verified at 1920x1080 and 2560x1440</div>
-                  <div style="color:var(--green)">[PASS] design-taste-frontend pre-flight: 0 em-dashes, 0 raw system emojis</div>
-                  <div style="color:var(--apple-blue-text)">[READY] Steer Buddy sidecar active (&lt; 220 tokens per check)</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- BOTTOM DOCK: Side-by-Side Editable Live Plan + Illustrated Winged Bot Mascot -->
-          <div class="bottom-dock">
-            <div class="plan-and-buddy">
-              <!-- Left: Editable Live Plan Card -->
-              <div class="plan-card">
-                <div class="plan-top">
-                  <div class="plan-title">
-                    <svg class="ic" style="color:var(--apple-blue-text)" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
-                    <span>Live Plan</span>
-                    <span class="mono" style="font-size:11px;color:var(--fg-muted)" id="planCounter">2/3</span>
-                  </div>
-                  <button class="apple-pill secondary sm" id="addTaskToggleBtn">+ Add task</button>
-                </div>
-                <div class="plan-items" id="planItems"></div>
               </div>
 
-              <!-- Right: Custom Illustrated Winged Bot Mascot + Warm Speech Bubble -->
-              <div class="buddy-zone" id="buddyZone">
-                <div class="mascot-wrap" id="mascotClick" title="Click mascot to cycle Steer Co-Pilot modes">
-                  <!-- Custom SVG Illustrated Winged Cyber-Messenger Bot (matches Image 1!) -->
-                  <svg viewBox="0 0 100 110" width="78" height="88">
-                    <defs>
-                      <linearGradient id="botBody" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#2c3347"/>
-                        <stop offset="100%" stop-color="#141824"/>
-                      </linearGradient>
-                      <linearGradient id="wingGlow" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#e0f2fe"/>
-                        <stop offset="100%" stop-color="#38bdf8"/>
-                      </linearGradient>
-                    </defs>
-                    <!-- Shadow -->
-                    <ellipse cx="52" cy="102" rx="22" ry="4.5" fill="rgba(0,0,0,0.45)"/>
-                    <!-- Articulated Glowing Wings -->
-                    <path d="M28 52 L6 38 L14 55 L4 60 L26 65 Z" fill="url(#wingGlow)" opacity="0.9"/>
-                    <!-- Legs -->
-                    <rect x="39" y="80" width="8" height="16" rx="4" fill="#1e2434" stroke="#3b455e" stroke-width="1.5"/>
-                    <rect x="55" y="78" width="8" height="16" rx="4" fill="#1e2434" stroke="#3b455e" stroke-width="1.5" transform="rotate(-12 59 86)"/>
-                    <!-- Torso -->
-                    <rect x="34" y="54" width="34" height="29" rx="10" fill="url(#botBody)" stroke="#434f6b" stroke-width="1.5"/>
-                    <!-- Glowing Core Triangle -->
-                    <polygon points="46,64 56,64 51,72" fill="#38bdf8"/>
-                    <!-- Head Helmet -->
-                    <rect x="26" y="18" width="50" height="39" rx="18" fill="url(#botBody)" stroke="#526080" stroke-width="1.6"/>
-                    <!-- Ear Winglets -->
-                    <path d="M26 32 L16 23 L21 39 Z" fill="#93c5fd"/>
-                    <path d="M76 32 L85 24 L80 39 Z" fill="#60a5fa"/>
-                    <!-- Visor Face -->
-                    <rect x="33" y="26" width="36" height="23" rx="10" fill="#090c12" stroke="#252f42" stroke-width="1.2"/>
-                    <!-- Glowing Cyan Eyes -->
-                    <ellipse cx="43" cy="37" rx="3.4" ry="4.8" fill="#38bdf8"/>
-                    <ellipse cx="59" cy="37" rx="3.4" ry="4.8" fill="#38bdf8"/>
-                    <circle cx="44" cy="35.5" r="1.1" fill="#ffffff"/>
-                    <circle cx="60" cy="35.5" r="1.1" fill="#ffffff"/>
-                  </svg>
+              <!-- Subagent & Tool Swarm Activity -->
+              <div class="wing-card">
+                <div class="wing-head">
+                  <span>Active Subagents</span>
+                  <span class="mono" style="font-size:11px;color:var(--green)">1 running</span>
                 </div>
+                <div class="subagent-row">
+                  <span>css-grid-verifier</span>
+                  <span class="mono" style="font-size:10.5px;color:var(--green)">done · 2.1s</span>
+                </div>
+                <div class="subagent-row">
+                  <span>agy-escalate (Gemini 4)</span>
+                  <span class="mono" style="font-size:10.5px;color:var(--fg-muted)">standby</span>
+                </div>
+              </div>
 
-                <div class="speech-bubble">
-                  <div class="speech-text" id="speechText">Fixing the sidebar width - tripped on a grid rule earlier, patching it now, quick fix haha</div>
-                  <div class="speech-toolbar">
-                    <div class="mode-chips">
-                      <button class="mode-chip active" data-bmode="tip">Context Tip</button>
-                      <button class="mode-chip" data-bmode="unblock">Human Unblock</button>
-                      <button class="mode-chip" data-bmode="conflict">Conflict Guard</button>
-                    </div>
-                    <div id="speechCtaWrap">
-                      <button class="apple-pill sm" id="speechActionBtn">Steer Agent</button>
-                    </div>
-                  </div>
+              <!-- Dedicated "Pet Place" Home Perch Pad -->
+              <div class="pet-place-card" id="petPlaceCard">
+                <div class="wing-head">
+                  <span>Pet Place (Home Perch)</span>
+                  <button class="apple-pill secondary sm" id="callHomeBtn" style="height:22px;font-size:11px;padding:0 9px">Call Home</button>
+                </div>
+                <div class="perch-pad" id="perchPad">
+                  <div class="perch-ring"></div>
+                  <span class="perch-hint" id="perchHintText">Drag &amp; drop buddy anywhere, or click "Pet Place" to dock him here</span>
                 </div>
               </div>
             </div>
 
-            <!-- Composer Bar -->
-            <div class="composer-bar">
-              <input id="chatInput" placeholder="Message composer (steer mid-run, ask about a task, or press Enter to send)..." />
-              <button class="apple-pill" id="sendMsgBtn">Send</button>
+            <!-- CENTER COLUMN (Chat + Code Showcase + Editable Live Plan + Composer) -->
+            <div class="center-col">
+              <div class="chat-stack" id="chatContainer">
+                <div class="chat-turn">
+                  <div class="turn-icon">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <div class="turn-body">
+                    <div class="turn-author">User</div>
+                    <div class="turn-text">Let me grab and drag the flying avatar with my mouse and release him anywhere, add a <code>Pet Place</code> button so he flies to his perch, and use the empty left and right margins for live workflow state.</div>
+                  </div>
+                </div>
+
+                <div class="assistant-card">
+                  <div class="chat-turn">
+                    <div class="turn-icon" style="background:var(--apple-blue-tint);border-color:rgba(0,113,227,0.35);color:var(--apple-blue-text)">
+                      <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                    </div>
+                    <div class="turn-body">
+                      <div class="turn-author">
+                        <span>Hermes Assistant</span>
+                        <span class="pr-badge" id="turnMetaBadge">Laptop Hermes / wt/feat-webui-v2</span>
+                      </div>
+                      <div class="turn-text">Try grabbing the winged bot with your mouse right now and dropping him anywhere on the screen, or click <code>Pet Place</code> in the top or bottom bar to fly him into his magnetic perch on the bottom-left.</div>
+                    </div>
+                  </div>
+
+                  <div class="code-widget">
+                    <div class="cw-header">
+                      <div class="cw-tabs">
+                        <button class="cw-tab active" data-cw="code">Preview</button>
+                        <button class="cw-tab" data-cw="workflow">Skill Tool Order</button>
+                        <button class="cw-tab" data-cw="logs">Pre-Flight Audit</button>
+                      </div>
+                      <span class="mono" style="font-size:11px;color:var(--fg-muted)">web/src/AppLayout.tsx</span>
+                    </div>
+                    <div class="cw-pane active" id="cw-code">
+                      <div><span class="ln">1</span><span class="kw">export function</span> <span class="fn">StudioCockpit</span>() {</div>
+                      <div><span class="ln">2</span>  <span class="kw">return</span> (</div>
+                      <div><span class="ln">3</span>    &lt;<span class="str">div</span> className=<span class="str">"grid grid-cols-[276px_minmax(480px,1fr)_276px] gap-3.5"</span>&gt;</div>
+                      <div><span class="ln">4</span>      &lt;<span class="fn">WorkflowWing</span> pipeline=<span class="str">"live-dag"</span> petPlacePerch /&gt;</div>
+                      <div><span class="ln">5</span>      &lt;<span class="fn">ConversationStage</span> editablePlan draggableBuddy /&gt;</div>
+                      <div><span class="ln">6</span>      &lt;<span class="fn">TelemetryWing</span> cacheRadar touchedFiles /&gt;</div>
+                      <div><span class="ln">7</span>    &lt;/<span class="str">div</span>&gt;</div>
+                      <div><span class="ln">8</span>  );</div>
+                      <div><span class="ln">9</span>}</div>
+                    </div>
+                    <div class="cw-pane" id="cw-workflow">
+                      <div>1. todo_list (open 4-step live checklist)</div>
+                      <div>2. skill_view("design-taste-frontend") + skill_view("popular-web-designs", "templates/apple.md")</div>
+                      <div>3. write_file / patch (or tool_search("artifacts") -&gt; ha_guide -&gt; ha_publish)</div>
+                      <div>4. terminal: audit_frontend_unslop.py -&gt; verify_widget.py --width 1440 -&gt; vision_analyze</div>
+                    </div>
+                    <div class="cw-pane" id="cw-logs">
+                      <div style="color:var(--green)">[PASS] audit_frontend_unslop.py: 0 em-dashes, 0 OS emojis, specular=true</div>
+                      <div style="color:var(--green)">[PASS] Wide-screen 3-zone canvas: 0 dead margin gutters</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Editable Live Plan + Composer -->
+              <div class="center-dock">
+                <div class="plan-card">
+                  <div class="plan-top">
+                    <div class="plan-title">
+                      <svg class="ic" style="color:var(--apple-blue-text)" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+                      <span>Live Plan</span>
+                      <span class="mono" style="font-size:11px;color:var(--fg-muted)" id="planCounter">3/4</span>
+                    </div>
+                    <button class="apple-pill secondary sm" id="addTaskToggleBtn">+ Add task</button>
+                  </div>
+                  <div class="plan-items" id="planItems"></div>
+                </div>
+
+                <div class="composer-bar">
+                  <input id="chatInput" placeholder="Message composer (steer mid-run, comment on a plan step, or drag the flying buddy)..." />
+                  <button class="apple-pill" id="sendMsgBtn">Send</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT WING (Replaces Right Red-Circled Empty Area!) -->
+            <div class="wing-col right-wing">
+              <!-- Live Context & Cache Radar -->
+              <div class="wing-card">
+                <div class="wing-head">
+                  <span>Context &amp; Cache Radar</span>
+                  <span class="mono" style="font-size:11px;color:var(--green)">94.2% hit</span>
+                </div>
+                <div class="meter-bar">
+                  <div class="m-sys" title="System & SOUL (6.5K)"></div>
+                  <div class="m-sk" title="Skills Index + auto_load (3.8K)"></div>
+                  <div class="m-hist" title="Turn History (4.1K)"></div>
+                </div>
+                <div class="kv-row"><span>System + SOUL.md</span><span class="mono">6,503 tok</span></div>
+                <div class="kv-row"><span>Skills (122 indexed)</span><span class="mono">3,853 tok</span></div>
+                <div class="kv-row"><span>Eager Tools (21/61)</span><span class="mono">9,589 tok</span></div>
+                <div class="kv-row"><span>Prefix Stability</span><span class="mono" style="color:var(--green)">0 breaks</span></div>
+              </div>
+
+              <!-- Workfolder Ledger & Session Touched Files -->
+              <div class="wing-card">
+                <div class="wing-head">
+                  <span>Touched in Worktree</span>
+                  <span class="mono" style="font-size:11px;color:var(--fg-muted)">4 files</span>
+                </div>
+                <div class="file-pill">
+                  <span class="mono">AppLayout.tsx</span>
+                  <span class="mono" style="color:var(--green)">+108 -14</span>
+                </div>
+                <div class="file-pill">
+                  <span class="mono">WorkflowWing.tsx</span>
+                  <span class="mono" style="color:var(--green)">+34 -4</span>
+                </div>
+                <div class="file-pill">
+                  <span class="mono">frontend-craft-unslop</span>
+                  <span class="mono" style="color:var(--apple-blue-text)">v1.1.0</span>
+                </div>
+                <div class="file-pill">
+                  <span class="mono">audit_frontend_unslop.py</span>
+                  <span class="mono" style="color:var(--green)">PASS</span>
+                </div>
+              </div>
+
+              <!-- Quick Steer Guard Summary -->
+              <div class="wing-card" style="margin-top:auto">
+                <div class="wing-head">
+                  <span>Session Guardrails</span>
+                  <span class="pr-badge">active</span>
+                </div>
+                <div class="kv-row"><span>Max Debug Retries</span><span class="mono">2 attempts</span></div>
+                <div class="kv-row"><span>Child Timeout</span><span class="mono">300s</span></div>
+                <div class="kv-row"><span>AGY Escalation</span><span class="mono" style="color:var(--green)">ready</span></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- SECONDARY VIEWS (Plugins, Worktrees, Skills, Concept Art Gallery) -->
+        <!-- SECONDARY VIEWS -->
         <div class="view" id="view-plugins">
-          <div class="assistant-card">
-            <h3 style="font-size:16px">Active Gateway Plugins</h3>
-            <div class="modal-grid" style="padding:4px 0 0">
-              <div class="info-tile"><strong>hermes-artifacts</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Live editable docs, sheets, slides, boards, and dashboards.</span></div>
-              <div class="info-tile"><strong>whiteboard</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Spatial canvas and architecture boards synced with chat.</span></div>
-              <div class="info-tile"><strong>memory-wiki</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Cross-linked knowledge graph and persistent notes.</span></div>
-              <div class="info-tile"><strong>hermes-security</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Diff auditing, threat modeling, and fix verification.</span></div>
-            </div>
-          </div>
+          <div class="assistant-card"><h3 style="font-size:15px">Active Gateway Plugins (5)</h3><p style="color:var(--fg-secondary)">hermes-artifacts, whiteboard, memory-wiki, hermes-security, hermes-memory-ui.</p></div>
         </div>
-
         <div class="view" id="view-worktrees">
-          <div class="assistant-card">
-            <h3 style="font-size:16px">Isolated Git Worktrees</h3>
-            <div class="modal-grid" style="padding:4px 0 0">
-              <div class="info-tile"><strong>wt/feat-webui-v2 (PR #48)</strong><span class="mono" style="font-size:12px;color:var(--green)">+142 / -18 · all checks green</span></div>
-              <div class="info-tile"><strong>wt/fix-cache-meta</strong><span class="mono" style="font-size:12px;color:var(--amber)">+47 / -12 · 3 modified files</span></div>
-            </div>
-          </div>
+          <div class="assistant-card"><h3 style="font-size:15px">Isolated Git Worktrees (3)</h3><p style="color:var(--fg-secondary)">wt/feat-webui-v2 (PR #48), wt/fix-cache-meta (3 mod), main (clean).</p></div>
         </div>
-
         <div class="view" id="view-skills">
-          <div class="assistant-card">
-            <h3 style="font-size:16px">121 Indexed Skills (Progressive Disclosure)</h3>
-            <div class="modal-grid" style="padding:4px 0 0">
-              <div class="info-tile"><strong>interactive-options (auto_load)</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Always-on tabbed preview widget and clarify rules.</span></div>
-              <div class="info-tile"><strong>design-taste-frontend</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Anti-slop dials, Apple/Linear surface rules, pre-flight audit.</span></div>
-              <div class="info-tile"><strong>antigravity-cli</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Headless JSON escalation to agy and Gemini 4 / Claude 5.5.</span></div>
-              <div class="info-tile"><strong>hermes-planner-handoff</strong><span style="font-size:12.5px;color:var(--fg-secondary)">Global toggleable Antigravity architect-to-Hermes handoff skill.</span></div>
-            </div>
-          </div>
+          <div class="assistant-card"><h3 style="font-size:15px">122 Indexed Skills</h3><p style="color:var(--fg-secondary)">Includes frontend-craft-unslop v1.1.0 with ordered 6-step tool workflow and audit_frontend_unslop.py verifier.</p></div>
         </div>
-
         <div class="view" id="view-gallery">
           <div class="assistant-card">
-            <h3 style="font-size:16px">Nano Banana Reference Concepts</h3>
-            <div class="modal-grid" style="padding:4px 0 0">
-              <div class="info-tile"><img src="assets/concept-v3-desktop-scaff.jpg" alt="Nano Banana Draft 3" style="width:100%;border-radius:8px" /><span>Draft 3 Target Render</span></div>
-              <div class="info-tile"><img src="assets/avatar-sheet-v3.jpg" alt="Avatar Sheet" style="width:100%;border-radius:8px" /><span>Companion Mascot Character Sheet</span></div>
+            <h3 style="font-size:15px">Nano Banana Concepts</h3>
+            <div class="modal-grid" style="padding:6px 0 0">
+              <div class="info-tile"><img src="assets/concept-v3-desktop-scaff.jpg" alt="Draft 3" style="width:100%;border-radius:8px" /></div>
+              <div class="info-tile"><img src="assets/avatar-sheet-v3.jpg" alt="Avatars" style="width:100%;border-radius:8px" /></div>
             </div>
           </div>
         </div>
       </main>
 
-      <!-- RIGHT INSPECTOR (Matches Image 1: Syntax-Highlighted Git Diff + Visual Artifact Preview) -->
+      <!-- RIGHT INSPECTOR -->
       <aside class="inspector">
         <div class="ins-header">
           <span>Inspector</span>
-          <button class="glass-btn icon-only" style="width:24px;height:24px;border-radius:6px" id="closeInspectorX" title="Close Inspector">✕</button>
+          <button class="glass-btn icon-only" style="width:24px;height:24px" id="closeInspectorX">×</button>
         </div>
 
-        <!-- Git Worktree Diff Card -->
         <div class="ins-card">
           <div class="ins-card-head">
             <div>
-              <div class="ins-card-title">Git Worktree diff</div>
-              <div class="ins-card-sub" id="insWtSub">PR #48 · wt/feat-webui-v2</div>
+              <div style="font-size:12.5px;font-weight:600">Git Worktree diff</div>
+              <div style="font-size:11px;color:var(--fg-muted)" id="insWtSub">PR #48 · wt/feat-webui-v2</div>
             </div>
-            <span class="mono" style="font-size:11.5px"><span style="color:var(--green)" id="insAdd">+142</span> / <span style="color:var(--red)" id="insDel">-18</span></span>
+            <span class="mono" style="font-size:11px"><span style="color:var(--green)" id="insAdd">+142</span> / <span style="color:var(--red)" id="insDel">-18</span></span>
           </div>
           <div class="diff-box">
             <div class="diff-line" style="color:var(--fg-muted)"><span>@@</span><span>-14,4 +14,6 @@ AppLayout.tsx</span></div>
             <div class="diff-line"><span>16</span><span>const shell = useWorkspace();</span></div>
-            <div class="diff-line add"><span>17 +</span><span>const width = 268;</span></div>
-            <div class="diff-line add"><span>18 +</span><span>const buddy = useSteerCopilot();</span></div>
-            <div class="diff-line del"><span>19 -</span><span>const legacy = true;</span></div>
-            <div class="diff-line"><span>20</span><span>return &lt;StudioShell /&gt;;</span></div>
+            <div class="diff-line add"><span>17 +</span><span>const wings = useWorkflowWings();</span></div>
+            <div class="diff-line add"><span>18 +</span><span>const buddy = useDraggablePet();</span></div>
+            <div class="diff-line del"><span>19 -</span><span>const emptyMargins = true;</span></div>
+            <div class="diff-line"><span>20</span><span>return &lt;StudioCockpit /&gt;;</span></div>
           </div>
         </div>
 
-        <!-- Visual Artifact Preview Card -->
         <div class="ins-card">
           <div class="ins-card-head">
             <div>
-              <div class="ins-card-title">Artifact Preview</div>
-              <div class="ins-card-sub">Live UI component · ha_publish</div>
+              <div style="font-size:12.5px;font-weight:600">Artifact Preview</div>
+              <div style="font-size:11px;color:var(--fg-muted)">Live UI component · ha_publish</div>
             </div>
-            <span class="pr-badge">v5</span>
+            <span class="pr-badge">v6</span>
           </div>
           <div class="artifact-mini">
-            <div class="am-top">
-              <span>hermes-studio-preview.html</span>
-              <span class="mono" style="color:var(--green)">live</span>
-            </div>
+            <div class="am-top"><span>hermes-studio-v6.html</span><span class="mono" style="color:var(--green)">live</span></div>
             <div class="am-body">
-              <div class="am-rail">
-                <div class="am-bar blue"></div>
-                <div class="am-bar"></div>
-                <div class="am-bar"></div>
-                <div class="am-bar" style="width:60%"></div>
-              </div>
+              <div class="am-rail"><div class="am-bar blue"></div><div class="am-bar"></div><div class="am-bar"></div></div>
               <div class="am-stage">
-                <div class="am-bar blue" style="height:7px;width:55%"></div>
+                <div class="am-bar blue" style="height:6px;width:55%"></div>
                 <div class="am-bar" style="width:85%"></div>
                 <div class="am-bar" style="width:70%"></div>
-                <div style="display:flex;gap:6px;margin-top:4px">
-                  <div style="height:14px;width:44px;border-radius:980px;background:var(--apple-blue)"></div>
-                  <div style="height:14px;width:44px;border-radius:980px;border:1px solid var(--border-strong)"></div>
-                </div>
               </div>
             </div>
           </div>
@@ -948,13 +940,65 @@
       </aside>
     </div>
 
-    <!-- HERMES DESKTOP BOTTOM STATUS BAR (Matches Image 1 & Screenshot) -->
+    <!-- DRAGGABLE / FREE-FLYING STEER BUDDY + SPEECH BUBBLE -->
+    <div class="floating-buddy" id="floatingBuddy">
+      <div class="mascot-handle" id="mascotHandle" title="Hold mouse button to grab & drag me anywhere!">
+        <svg viewBox="0 0 100 110" width="74" height="84">
+          <defs>
+            <linearGradient id="botBody" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2c3347"/>
+              <stop offset="100%" stop-color="#141824"/>
+            </linearGradient>
+            <linearGradient id="wingGlow" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#e0f2fe"/>
+              <stop offset="100%" stop-color="#38bdf8"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="52" cy="102" rx="22" ry="4.5" fill="rgba(0,0,0,0.45)"/>
+          <path d="M28 52 L6 38 L14 55 L4 60 L26 65 Z" fill="url(#wingGlow)" opacity="0.92"/>
+          <rect x="39" y="80" width="8" height="16" rx="4" fill="#1e2434" stroke="#3b455e" stroke-width="1.5"/>
+          <rect x="55" y="78" width="8" height="16" rx="4" fill="#1e2434" stroke="#3b455e" stroke-width="1.5" transform="rotate(-12 59 86)"/>
+          <rect x="34" y="54" width="34" height="29" rx="10" fill="url(#botBody)" stroke="#434f6b" stroke-width="1.5"/>
+          <polygon points="46,64 56,64 51,72" fill="#38bdf8"/>
+          <rect x="26" y="18" width="50" height="39" rx="18" fill="url(#botBody)" stroke="#526080" stroke-width="1.6"/>
+          <path d="M26 32 L16 23 L21 39 Z" fill="#93c5fd"/>
+          <path d="M76 32 L85 24 L80 39 Z" fill="#60a5fa"/>
+          <rect x="33" y="26" width="36" height="23" rx="10" fill="#090c12" stroke="#252f42" stroke-width="1.2"/>
+          <ellipse cx="43" cy="37" rx="3.4" ry="4.8" fill="#38bdf8"/>
+          <ellipse cx="59" cy="37" rx="3.4" ry="4.8" fill="#38bdf8"/>
+          <circle cx="44" cy="35.5" r="1.1" fill="#ffffff"/>
+          <circle cx="60" cy="35.5" r="1.1" fill="#ffffff"/>
+        </svg>
+      </div>
+
+      <div class="speech-bubble" id="speechBubble">
+        <div class="speech-top">
+          <span class="mono" id="buddyStateLabel">free-roaming · drag me anywhere</span>
+          <button class="mode-chip" id="quickDockBtn" title="Send to Pet Place perch">Dock ↵</button>
+        </div>
+        <div class="speech-text" id="speechText">Fixing the sidebar width - grab me with your mouse to place me anywhere, or click Pet Place to send me to my perch!</div>
+        <div class="speech-toolbar">
+          <div class="mode-chips">
+            <button class="mode-chip active" data-bmode="tip">Tip</button>
+            <button class="mode-chip" data-bmode="unblock">Unblock</button>
+            <button class="mode-chip" data-bmode="conflict">Conflict</button>
+          </div>
+          <button class="apple-pill sm" id="speechActionBtn">Steer Agent</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM STATUS BAR -->
     <footer class="statusbar">
       <div class="sb-left">
         <span class="sb-chip mono" id="sbPath">~/worktrees/hermes-webui-v2</span>
         <button class="sb-chip" id="openCronBtn">
           <svg class="ic" style="width:13px;height:13px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
           Cron (3)
+        </button>
+        <button class="sb-chip" id="petPlaceBottomBtn" title="Fly buddy to his Pet Place perch">
+          <svg class="ic" style="width:13px;height:13px;color:var(--apple-blue-text)" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Pet Place
         </button>
       </div>
 
@@ -973,32 +1017,18 @@
     <div class="modal-card">
       <div class="modal-head">
         <span>Hermes Studio Settings (Windows)</span>
-        <button class="glass-btn icon-only" style="width:26px;height:26px" id="closeSettingsBtn">✕</button>
+        <button class="glass-btn icon-only" style="width:26px;height:26px" id="closeSettingsBtn">×</button>
       </div>
       <div class="modal-grid">
         <div class="info-tile">
-          <strong>Appearance &amp; Surface</strong>
-          <div class="kv-row"><span>Active Theme</span><span class="mono" id="setThemeVal">Obsidian Glass</span></div>
-          <div class="kv-row"><span>Accent</span><span class="mono">Apple Blue (#0071e3)</span></div>
-          <div class="kv-row"><span>Anti-Slop Audit</span><span class="mono" style="color:var(--green)">design-taste-frontend</span></div>
+          <strong>Appearance &amp; Canvas</strong>
+          <div class="kv-row"><span>Layout</span><span class="mono">3-Zone Full Canvas</span></div>
+          <div class="kv-row"><span>Skill Workflow</span><span class="mono" style="color:var(--green)">frontend-craft-unslop v1.1</span></div>
         </div>
         <div class="info-tile">
-          <strong>Gateways &amp; Routing</strong>
-          <div class="kv-row"><span>Laptop Hermes</span><span class="mono" style="color:var(--green)">127.0.0.1:9119 (2ms)</span></div>
-          <div class="kv-row"><span>VPS Hermes</span><span class="mono" style="color:var(--purple)">wss://vps.hermes (28ms)</span></div>
-          <div class="kv-row"><span>Busy Input Mode</span><span class="mono">steer</span></div>
-        </div>
-        <div class="info-tile">
-          <strong>Steer Buddy Sidecar</strong>
-          <div class="kv-row"><span>Unblock + Conflict Guard</span><span class="mono" style="color:var(--green)">Enabled</span></div>
-          <div class="kv-row"><span>Token Cap</span><span class="mono">&lt; 250 tok / check</span></div>
-          <div class="kv-row"><span>AGY Handoff Skill</span><span class="mono">Toggleable</span></div>
-        </div>
-        <div class="info-tile">
-          <strong>Scheduled Cron Jobs (3)</strong>
-          <div class="kv-row"><span>hermes-upgrade-doctor</span><span class="mono" style="color:var(--green)">every 6h · ok</span></div>
-          <div class="kv-row"><span>skills-index-health</span><span class="mono" style="color:var(--green)">121 indexed</span></div>
-          <div class="kv-row"><span>github-backup-sync</span><span class="mono">0 secrets</span></div>
+          <strong>Steer Buddy &amp; Pet Place</strong>
+          <div class="kv-row"><span>Drag &amp; Drop</span><span class="mono" style="color:var(--green)">Pointer Physics Active</span></div>
+          <div class="kv-row"><span>Home Perch</span><span class="mono">Left Workflow Wing</span></div>
         </div>
       </div>
     </div>
@@ -1008,17 +1038,14 @@
     const root = document.documentElement;
     const ws = document.getElementById('workspace');
 
-    // Apple Daylight / Obsidian Glass Theme Toggle
-    const themeBtn = document.getElementById('themeToggleBtn');
-    const themeLabel = document.getElementById('themeLabel');
-    themeBtn.addEventListener('click', () => {
+    // Theme Toggle
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
       const next = root.getAttribute('data-theme') === 'dark' ? 'apple' : 'dark';
       root.setAttribute('data-theme', next);
-      themeLabel.textContent = next === 'dark' ? 'Apple Daylight' : 'Obsidian Dark';
-      document.getElementById('setThemeVal').textContent = next === 'dark' ? 'Obsidian Glass' : 'Apple Daylight';
+      document.getElementById('themeLabel').textContent = next === 'dark' ? 'Apple Daylight' : 'Obsidian Dark';
     });
 
-    // Sidebar & Inspector Toggles
+    // Sidebar & Inspector
     const toggleSidebar = () => ws.classList.toggle('sidebar-hidden');
     const toggleInspector = () => {
       ws.classList.toggle('inspector-hidden');
@@ -1028,19 +1055,108 @@
     document.getElementById('toggleInspectorBtn').addEventListener('click', toggleInspector);
     document.getElementById('closeInspectorX').addEventListener('click', toggleInspector);
 
-    // Navigation Views
+    // Views & Code Tabs
     document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b === btn));
       document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + btn.dataset.view));
     }));
-
-    // Code Widget Tabs
     document.querySelectorAll('.cw-tab').forEach(tab => tab.addEventListener('click', () => {
       document.querySelectorAll('.cw-tab').forEach(t => t.classList.toggle('active', t === tab));
       document.querySelectorAll('.cw-pane').forEach(p => p.classList.toggle('active', p.id === 'cw-' + tab.dataset.cw));
     }));
 
-    // Gateway Switcher
+    // DRAGGABLE FLYING AVATAR + "PET PLACE" HOME PERCH PHYSICS
+    const buddy = document.getElementById('floatingBuddy');
+    const handle = document.getElementById('mascotHandle');
+    const perchPad = document.getElementById('perchPad');
+    const petPlaceCard = document.getElementById('petPlaceCard');
+    const stateLabel = document.getElementById('buddyStateLabel');
+    const speechText = document.getElementById('speechText');
+
+    let isDragging = false;
+    let isPerched = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function updateFlip(x) {
+      buddy.classList.toggle('flip-left', x > window.innerWidth * 0.56);
+    }
+
+    function placeBuddyAt(x, y, perched = false) {
+      const maxX = Math.max(20, window.innerWidth - 110);
+      const maxY = Math.max(54, window.innerHeight - 125);
+      const clampedX = Math.min(Math.max(12, x), maxX);
+      const clampedY = Math.min(Math.max(54, y), maxY);
+      buddy.style.left = clampedX + 'px';
+      buddy.style.top = clampedY + 'px';
+      isPerched = perched;
+      buddy.classList.toggle('perched', perched);
+      document.getElementById('petPlaceBottomBtn').classList.toggle('active-place', perched);
+      document.getElementById('perchHintText').textContent = perched
+        ? 'Docked at Pet Place - drag him out anytime!'
+        : 'Drag & drop buddy anywhere, or click "Pet Place" to dock him here';
+      stateLabel.textContent = perched ? 'docked at Pet Place' : 'free-roaming · drag me';
+      updateFlip(clampedX);
+    }
+
+    function flyToPetPlace() {
+      if (ws.classList.contains('sidebar-hidden')) {
+        // Perch pad is still visible in Left Workflow Wing!
+      }
+      const rect = perchPad.getBoundingClientRect();
+      if (rect.width > 0) {
+        const targetX = rect.left + 10;
+        const targetY = rect.top - 6;
+        placeBuddyAt(targetX, targetY, true);
+        speechText.textContent = 'Chilling in my Pet Place perch - watching the workflow pipeline for you!';
+      }
+    }
+
+    handle.addEventListener('pointerdown', e => {
+      isDragging = true;
+      buddy.classList.add('dragging');
+      petPlaceCard.classList.add('highlight');
+      const rect = buddy.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+      handle.setPointerCapture(e.pointerId);
+      stateLabel.textContent = 'flying · release to drop';
+    });
+
+    handle.addEventListener('pointermove', e => {
+      if (!isDragging) return;
+      const nx = e.clientX - dragOffsetX;
+      const ny = e.clientY - dragOffsetY;
+      buddy.style.left = nx + 'px';
+      buddy.style.top = ny + 'px';
+      updateFlip(nx);
+    });
+
+    handle.addEventListener('pointerup', e => {
+      if (!isDragging) return;
+      isDragging = false;
+      buddy.classList.remove('dragging');
+      petPlaceCard.classList.remove('highlight');
+      handle.releasePointerCapture(e.pointerId);
+
+      // Check if dropped near the Pet Place perch pad (magnetic snap!)
+      const pRect = perchPad.getBoundingClientRect();
+      const bRect = handle.getBoundingClientRect();
+      const dist = Math.hypot((bRect.left + 35) - (pRect.left + pRect.width / 2), (bRect.top + 40) - (pRect.top + pRect.height / 2));
+      if (dist < 115) {
+        flyToPetPlace();
+      } else {
+        placeBuddyAt(bRect.left, bRect.top, false);
+        speechText.textContent = 'Dropped right where you wanted me - I will keep an eye on Step 3 from here!';
+      }
+    });
+
+    document.getElementById('sendToPerchTopBtn').addEventListener('click', flyToPetPlace);
+    document.getElementById('petPlaceBottomBtn').addEventListener('click', flyToPetPlace);
+    document.getElementById('callHomeBtn').addEventListener('click', flyToPetPlace);
+    document.getElementById('quickDockBtn').addEventListener('click', flyToPetPlace);
+
+    // Gateway & Worktree Switchers
     const gateways = {
       laptop: { name: 'Laptop Hermes', ping: '2ms', vps: false },
       vps:    { name: 'VPS Hermes',    ping: '28ms', vps: true }
@@ -1057,10 +1173,9 @@
       document.getElementById('gwDot').classList.toggle('vps', g.vps);
       gwPop.querySelectorAll('.pop-item').forEach(i => i.classList.toggle('selected', i === item));
       gwPop.classList.remove('open');
-      updateTurnBadge();
+      document.getElementById('turnMetaBadge').textContent = `${g.name} / ${worktrees[curWt].branch}`;
     }));
 
-    // Worktree Switcher
     const worktrees = {
       feat: { branch: 'wt/feat-webui-v2', add: '+142', del: '-18', pr: 'PR #48', path: '~/worktrees/hermes-webui-v2' },
       fix:  { branch: 'wt/fix-cache-meta', add: '+47', del: '-12', pr: '3 mod', path: '~/worktrees/hermes-fix-cache' },
@@ -1080,10 +1195,7 @@
       document.getElementById('sbPath').textContent = w.path;
       wtPop.querySelectorAll('.pop-item').forEach(i => i.classList.toggle('selected', i.dataset.wt === k));
       wtPop.classList.remove('open');
-      updateTurnBadge();
-    }
-    function updateTurnBadge() {
-      document.getElementById('turnMetaBadge').textContent = `${gateways[curGw].name} / ${worktrees[curWt].branch}`;
+      document.getElementById('turnMetaBadge').textContent = `${gateways[curGw].name} / ${w.branch}`;
     }
     document.getElementById('wtBtn').addEventListener('click', e => { e.stopPropagation(); gwPop.classList.remove('open'); wtPop.classList.toggle('open'); });
     wtPop.querySelectorAll('[data-wt]').forEach(item => item.addEventListener('click', () => selectWorktree(item.dataset.wt)));
@@ -1094,7 +1206,7 @@
     window.addEventListener('click', () => { gwPop.classList.remove('open'); wtPop.classList.remove('open'); });
 
     // Profile Switcher
-    let chill = false;
+    let chill = true;
     document.getElementById('profileCard').addEventListener('click', () => {
       chill = !chill;
       document.getElementById('profAvatar').textContent = chill ? 'C' : 'D';
@@ -1102,11 +1214,12 @@
       document.getElementById('profSub').textContent = chill ? 'No ledger · Low effort' : 'Ledger active';
     });
 
-    // Editable Live Plan with Per-Step Comments & Additions
+    // Editable Live Plan
     let tasks = [
       { id: 1, text: 'Audit sidebar grid columns', done: true, note: '' },
-      { id: 2, text: 'Patch AppLayout.tsx width', done: true, note: '' },
-      { id: 3, text: 'Verify PR #48 checks', done: false, active: true, note: '' }
+      { id: 2, text: 'Add Workflow & Telemetry wings', done: true, note: '' },
+      { id: 3, text: 'Wire draggable buddy + Pet Place', done: true, note: '' },
+      { id: 4, text: 'Verify PR #48 checks', done: false, active: true, note: '' }
     ];
     let editingNoteId = null;
     let showAddTask = false;
@@ -1126,19 +1239,19 @@
               <span class="chk">${t.done ? '✓' : ''}</span>
               <span class="plan-label">${t.text}</span>
             </div>
-            <button class="comment-btn" data-note="${t.id}" title="Add comment or ask agent to research">+ note</button>
+            <button class="comment-btn" data-note="${t.id}">+ note</button>
           </div>
         `;
         if (t.note) {
           const n = document.createElement('div');
           n.className = 'plan-note';
-          n.innerHTML = `<span>Note: ${t.note}</span><span style="cursor:pointer" data-clear="${t.id}">✕</span>`;
+          n.innerHTML = `<span>${t.note}</span><span style="cursor:pointer" data-clear="${t.id}">×</span>`;
           el.appendChild(n);
         }
         if (editingNoteId === t.id) {
           const row = document.createElement('div');
           row.className = 'inline-input-row';
-          row.innerHTML = `<input id="noteInp" placeholder="Ask question or request deeper search on this step..." value="${t.note}" /><button class="apple-pill sm" id="saveNoteBtn">Save</button>`;
+          row.innerHTML = `<input id="noteInp" placeholder="Comment or ask agent to research..." value="${t.note}" /><button class="apple-pill sm" id="saveNoteBtn">Save</button>`;
           el.appendChild(row);
           setTimeout(() => {
             const inp = row.querySelector('#noteInp'); inp.focus();
@@ -1153,7 +1266,7 @@
       if (showAddTask) {
         const row = document.createElement('div');
         row.className = 'inline-input-row';
-        row.innerHTML = `<input id="addInp" placeholder="Add new step to live plan..." /><button class="apple-pill sm" id="saveAddBtn">Add</button>`;
+        row.innerHTML = `<input id="addInp" placeholder="Add new task to live plan..." /><button class="apple-pill sm" id="saveAddBtn">Add</button>`;
         box.appendChild(row);
         setTimeout(() => {
           const inp = row.querySelector('#addInp'); inp.focus();
@@ -1187,42 +1300,37 @@
     // Steer Buddy Modes
     const buddyStates = {
       tip: {
-        text: 'Fixing the sidebar width - tripped on a grid rule earlier, patching it now, quick fix haha',
-        cta: 'Nudge Agent',
-        reply: 'Steer received: keeping the 268px sidebar grid and finishing PR #48 verification.'
+        text: 'Fixing the sidebar width - grab me with your mouse to place me anywhere, or click Pet Place to send me to my perch!',
+        cta: 'Steer Agent',
+        reply: 'Steer received: keeping the 3-zone full-canvas layout and finishing PR #48.'
       },
       unblock: {
-        text: 'Main agent is waiting on a 5-second GitHub OAuth click in your browser. Want to click it so we skip the workaround?',
-        cta: 'Approve OAuth & Resume',
-        reply: 'OAuth approved by user - resuming GitHub PR #48 checks immediately.'
+        text: 'Main agent is waiting on a 5-second GitHub OAuth click in your browser. Click it so we skip the workaround!',
+        cta: 'Approve & Resume',
+        reply: 'OAuth approved by user - resuming PR #48 checks immediately.'
       },
       conflict: {
-        text: 'Heads up: earlier you set chill-guy to skip ledger files, but your new message asks for BRAIN.md. Which rule wins?',
+        text: 'Earlier you set chill-guy to skip ledger files, but your new message asks for BRAIN.md. Which rule wins?',
         cta: 'Keep Earlier Rule',
-        reply: 'Conflict resolved: keeping ledger disabled for chill-guy as set earlier in this session.'
+        reply: 'Conflict resolved: keeping ledger disabled for chill-guy as set earlier.'
       }
     };
     let curBMode = 'tip';
-    function setBMode(m) {
-      curBMode = m;
-      document.querySelectorAll('.mode-chip').forEach(c => c.classList.toggle('active', c.dataset.bmode === m));
-      document.getElementById('speechText').textContent = buddyStates[m].text;
-      document.getElementById('speechActionBtn').textContent = buddyStates[m].cta;
-    }
-    document.querySelectorAll('.mode-chip').forEach(c => c.addEventListener('click', () => setBMode(c.dataset.bmode)));
-    document.getElementById('mascotClick').addEventListener('click', () => {
-      const order = ['tip', 'unblock', 'conflict'];
-      setBMode(order[(order.indexOf(curBMode) + 1) % order.length]);
-    });
+    document.querySelectorAll('[data-bmode]').forEach(c => c.addEventListener('click', () => {
+      curBMode = c.dataset.bmode;
+      document.querySelectorAll('[data-bmode]').forEach(x => x.classList.toggle('active', x === c));
+      speechText.textContent = buddyStates[curBMode].text;
+      document.getElementById('speechActionBtn').textContent = buddyStates[curBMode].cta;
+    }));
     document.getElementById('speechActionBtn').addEventListener('click', () => {
       appendTurn('Steer Buddy', buddyStates[curBMode].reply);
     });
 
-    // Buddy ON/OFF toggle
+    // Buddy ON/OFF
     let buddyVisible = true;
     document.getElementById('buddyToggleBtn').addEventListener('click', () => {
       buddyVisible = !buddyVisible;
-      document.getElementById('buddyZone').classList.toggle('hidden', !buddyVisible);
+      buddy.classList.toggle('hidden', !buddyVisible);
       document.getElementById('buddyToggleBtn').textContent = buddyVisible ? 'Buddy: ON' : 'Buddy: OFF';
     });
 
@@ -1233,12 +1341,10 @@
       div.className = 'chat-turn';
       div.innerHTML = `
         <div class="turn-icon"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div>
-        <div class="turn-body">
-          <div class="turn-author">${author}</div>
-          <div class="turn-text">${text}</div>
-        </div>
+        <div class="turn-body"><div class="turn-author">${author}</div><div class="turn-text">${text}</div></div>
       `;
       container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
     }
     function sendChat() {
       const inp = document.getElementById('chatInput');
@@ -1250,19 +1356,15 @@
     document.getElementById('sendMsgBtn').addEventListener('click', sendChat);
     document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
 
-    // Settings Modal & Shortcuts
+    // Modal & Shortcuts
     const modal = document.getElementById('settingsModal');
-    const openModal = () => modal.classList.add('open');
-    const closeModal = () => modal.classList.remove('open');
-    document.getElementById('openSettingsBtn').addEventListener('click', openModal);
-    document.getElementById('openCronBtn').addEventListener('click', openModal);
-    document.getElementById('openCmdBtn').addEventListener('click', openModal);
-    document.getElementById('closeSettingsBtn').addEventListener('click', closeModal);
-    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.getElementById('openSettingsBtn').addEventListener('click', () => modal.classList.add('open'));
+    document.getElementById('openCronBtn').addEventListener('click', () => modal.classList.add('open'));
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
     window.addEventListener('keydown', e => {
       if (e.ctrlKey && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleSidebar(); }
-      if (e.ctrlKey && (e.key.toLowerCase() === 'k' || e.key === ',')) { e.preventDefault(); modal.classList.toggle('open'); }
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') modal.classList.remove('open');
     });
   </script>
 </body>
