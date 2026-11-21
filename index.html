@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en" data-theme="obsidian">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hermes Studio — WebUI Redesign Concept</title>
+  <style>
+    :root {
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --transition: 160ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    /* Theme 1: Obsidian Precision (Dark) */
+    [data-theme="obsidian"] {
+      --bg: #0b0d11;
+      --bg-sidebar: #0e1117;
+      --bg-elevated: #12161f;
+      --bg-hover: #191f2b;
+      --bg-active: #1d2535;
+      --border: #1e2533;
+      --border-strong: #2d374b;
+      --fg: #eef2f8;
+      --fg-muted: #8b95a7;
+      --fg-faint: #5b6577;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.14);
+      --accent-fg: #ffffff;
+      --ok: #22c55e;
+      --ok-soft: rgba(34, 197, 94, 0.14);
+      --warn: #f59e0b;
+      --warn-soft: rgba(245, 158, 11, 0.14);
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      --heading-font: var(--font-sans);
+    }
+
+    /* Theme 2: Warm Atelier (Light Editorial) */
+    [data-theme="atelier"] {
+      --bg: #f8f7f4;
+      --bg-sidebar: #f1efea;
+      --bg-elevated: #ffffff;
+      --bg-hover: #eae6de;
+      --bg-active: #e4dfd5;
+      --border: #e3dfd6;
+      --border-strong: #cec8bc;
+      --fg: #18181b;
+      --fg-muted: #5c5850;
+      --fg-faint: #8c867a;
+      --accent: #c2631a;
+      --accent-soft: rgba(194, 99, 26, 0.12);
+      --accent-fg: #ffffff;
+      --ok: #15803d;
+      --ok-soft: rgba(21, 128, 61, 0.12);
+      --warn: #b45309;
+      --warn-soft: rgba(180, 83, 9, 0.12);
+      --shadow: 0 10px 28px rgba(24, 24, 27, 0.08);
+      --heading-font: var(--font-serif);
+    }
+
+    /* Theme 3: Midnight Emerald (Terminal Studio) */
+    [data-theme="emerald"] {
+      --bg: #070b0a;
+      --bg-sidebar: #0a100e;
+      --bg-elevated: #0f1714;
+      --bg-hover: #15211d;
+      --bg-active: #182923;
+      --border: #1c2e28;
+      --border-strong: #29443b;
+      --fg: #e8f5ef;
+      --fg-muted: #82a397;
+      --fg-faint: #506e64;
+      --accent: #10b981;
+      --accent-soft: rgba(16, 185, 129, 0.16);
+      --accent-fg: #03150e;
+      --ok: #34d399;
+      --ok-soft: rgba(52, 211, 153, 0.15);
+      --warn: #fbbf24;
+      --warn-soft: rgba(251, 191, 36, 0.15);
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      --heading-font: var(--font-sans);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+    /* App Shell */
+    .shell {
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr) 340px;
+      height: 100vh;
+      overflow: hidden;
+      transition: grid-template-columns var(--transition);
+    }
+    .shell.inspector-closed { grid-template-columns: 236px minmax(0, 1fr) 0px; }
+
+    /* Left Sidebar */
+    .sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 10px;
+    }
+    .brand-left { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 14px; letter-spacing: -0.01em; }
+    .brand-mark {
+      width: 24px; height: 24px; border-radius: 7px;
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--ok)));
+      display: grid; place-items: center; color: var(--accent-fg); font-weight: 800; font-size: 12px;
+    }
+    .badge-ver {
+      font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted);
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      padding: 2px 6px; border-radius: 99px;
+    }
+
+    /* Profile Switcher */
+    .profile-box { padding: 0 12px 12px; }
+    .profile-switch {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 8px 10px; color: var(--fg);
+      cursor: pointer; transition: border-color var(--transition), background var(--transition);
+    }
+    .profile-switch:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+    .profile-meta { display: flex; align-items: center; gap: 8px; text-align: left; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); flex-shrink: 0; }
+    .profile-name { font-weight: 600; font-size: 12.5px; line-height: 1.2; }
+    .profile-sub { font-size: 11px; color: var(--fg-muted); }
+
+    /* Nav */
+    .nav-scroll { flex: 1; overflow-y: auto; padding: 0 10px 12px; }
+    .nav-label {
+      font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--fg-faint); padding: 12px 8px 5px;
+    }
+    .nav-btn {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      gap: 9px; padding: 7px 9px; border-radius: var(--radius-sm);
+      background: transparent; border: none; color: var(--fg-muted);
+      font-size: 13px; font-weight: 500; cursor: pointer; text-align: left;
+      transition: background var(--transition), color var(--transition);
+    }
+    .nav-btn:hover { background: var(--bg-hover); color: var(--fg); }
+    .nav-btn.active { background: var(--bg-active); color: var(--fg); font-weight: 600; }
+    .nav-btn-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .nav-pill {
+      font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted);
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      padding: 1px 6px; border-radius: 99px;
+    }
+    .nav-btn.active .nav-pill { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+    .thread-item {
+      display: block; width: 100%; text-align: left; background: none; border: none;
+      padding: 6px 9px; border-radius: var(--radius-sm); color: var(--fg-muted);
+      font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+    }
+    .thread-item:hover { background: var(--bg-hover); color: var(--fg); }
+    .thread-item.current { color: var(--fg); background: var(--bg-elevated); }
+
+    .sidebar-foot {
+      border-top: 1px solid var(--border); padding: 10px 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .theme-pills { display: flex; gap: 4px; background: var(--bg-elevated); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+    .theme-pill {
+      border: none; background: transparent; color: var(--fg-muted); font-size: 11px;
+      padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 550;
+    }
+    .theme-pill.active { background: var(--accent); color: var(--accent-fg); }
+
+    /* Main Column */
+    .main { display: flex; flex-direction: column; min-width: 0; height: 100vh; background: var(--bg); }
+    .topbar {
+      height: 52px; flex-shrink: 0; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 20px; gap: 12px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .page-title { font-family: var(--heading-font); font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .chip-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-elevated); border: 1px solid var(--border); color: var(--fg);
+      border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 550; cursor: pointer;
+      transition: all var(--transition);
+    }
+    .chip-btn:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+    .chip-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+    .kbd { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+
+    /* Views */
+    .view { display: none; flex: 1; min-height: 0; overflow-y: auto; }
+    .view.active { display: flex; flex-direction: column; }
+
+    /* Chat View */
+    .chat-scroll { flex: 1; overflow-y: auto; padding: 24px 28px 18px; }
+    .chat-inner { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .msg-user {
+      align-self: flex-end; max-width: 78%;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      padding: 11px 15px; border-radius: 14px 14px 4px 14px; font-size: 13.5px;
+    }
+    .msg-ai { display: flex; flex-direction: column; gap: 12px; }
+    .msg-ai-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-muted); }
+    .msg-ai-head strong { color: var(--fg); font-weight: 600; }
+    .tool-trace {
+      display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px;
+      color: var(--fg-muted); background: var(--bg-elevated); border: 1px solid var(--border);
+      padding: 3px 8px; border-radius: 99px; width: fit-content;
+    }
+
+    /* Inline Tabbed Widget (matching Omar's signature style) */
+    .inline-widget {
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background: var(--bg-elevated); padding: 14px 16px;
+    }
+    .iw-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+    }
+    .iw-title { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 13.5px; }
+    .iw-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .iw-tab {
+      border: 1px solid var(--border); background: transparent; color: var(--fg-muted);
+      font-size: 12px; font-weight: 550; padding: 4px 10px; border-radius: 7px; cursor: pointer;
+    }
+    .iw-tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+    .iw-panel { display: none; }
+    .iw-panel.active { display: block; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .kpi {
+      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px;
+    }
+    .kpi-label { font-size: 11px; color: var(--fg-muted); }
+    .kpi-val { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
+    .kpi-sub { font-size: 11px; color: var(--ok); font-family: var(--font-mono); margin-top: 2px; }
+
+    .bar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .bar-row { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+    .bar-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .bar-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+
+    /* Docked Live Plan Checklist + Composer */
+    .composer-dock {
+      flex-shrink: 0; padding: 0 24px 18px;
+      background: linear-gradient(to top, var(--bg) 82%, transparent);
+    }
+    .composer-wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+    .plan-bar {
+      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md);
+      padding: 8px 12px; font-size: 12.5px;
+    }
+    .plan-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .plan-head-left { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .plan-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .plan-step { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--fg-muted); }
+    .plan-step.done { color: var(--fg); }
+    .plan-step.now { color: var(--accent); font-weight: 600; }
+
+    .composer {
+      background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
+      padding: 10px 12px; box-shadow: var(--shadow);
+    }
+    .composer textarea {
+      width: 100%; resize: none; border: none; outline: none; background: transparent;
+      color: var(--fg); font-family: inherit; font-size: 13.5px; min-height: 40px;
+    }
+    .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .composer-pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .mini-pill {
+      font-size: 11.5px; color: var(--fg-muted); background: var(--bg); border: 1px solid var(--border);
+      padding: 3px 8px; border-radius: 7px; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .mini-pill.steer { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); background: var(--ok-soft); font-weight: 600; }
+    .send-btn {
+      background: var(--accent); color: var(--accent-fg); border: none; border-radius: 8px;
+      padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    }
+
+    /* Right Inspector Drawer */
+    .inspector {
+      border-left: 1px solid var(--border); background: var(--bg-sidebar);
+      display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+    }
+    .ins-tabs {
+      height: 52px; display: flex; align-items: center; gap: 4px; padding: 0 12px;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .ins-tab {
+      flex: 1; border: none; background: transparent; color: var(--fg-muted);
+      font-size: 12px; font-weight: 600; padding: 7px 8px; border-radius: 7px; cursor: pointer;
+    }
+    .ins-tab.active { background: var(--bg-active); color: var(--fg); }
+    .ins-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .ins-pane { display: none; flex-direction: column; gap: 12px; }
+    .ins-pane.active { display: flex; }
+    .card {
+      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px;
+    }
+    .card h4 { font-size: 12.5px; font-weight: 650; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+    .kv { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
+    .kv:last-child { border-bottom: none; }
+    .kv span:first-child { color: var(--fg-muted); }
+    .mono { font-family: var(--font-mono); }
+
+    /* Secondary Views (Skills, Automation, Concepts, Operations) */
+    .page-pad { padding: 22px 28px; max-width: 1080px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .concept-card {
+      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .concept-card img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; background: var(--bg); }
+    .concept-meta { padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+    /* Command Palette Modal */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+      display: none; place-items: start center; padding-top: 12vh; z-index: 50;
+    }
+    .modal-bg.open { display: grid; }
+    .cmd-box {
+      width: min(560px, 92vw); background: var(--bg-elevated); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .cmd-input {
+      width: 100%; border: none; border-bottom: 1px solid var(--border); background: transparent;
+      color: var(--fg); padding: 14px 16px; font-size: 14px; outline: none;
+    }
+    .cmd-list { padding: 8px; display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; }
+    .cmd-item {
+      display: flex; justify-content: space-between; align-items: center; padding: 9px 10px;
+      border-radius: 7px; border: none; background: transparent; color: var(--fg); cursor: pointer; font-size: 13px; text-align: left;
+    }
+    .cmd-item:hover { background: var(--bg-hover); }
+
+    @media (max-width: 1024px) {
+      .shell { grid-template-columns: 210px minmax(0, 1fr) 0px; }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-2, .grid-3, .bar-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell" id="shell">
+    <!-- LEFT RAIL -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-left">
+          <div class="brand-mark">H</div>
+          <span>Hermes Studio</span>
+        </div>
+        <span class="badge-ver">concept v1</span>
+      </div>
+
+      <div class="profile-box">
+        <button class="profile-switch" id="profileBtn" title="Click to toggle profile">
+          <div class="profile-meta">
+            <span class="dot"></span>
+            <div>
+              <div class="profile-name" id="profileName">default</div>
+              <div class="profile-sub" id="profileSub">Ledger ON · Medium · Steer</div>
+            </div>
+          </div>
+          <span class="mono" style="font-size:11px;color:var(--fg-muted)">⇄</span>
+        </button>
+      </div>
+
+      <div class="nav-scroll">
+        <div class="nav-label">Workspace</div>
+        <button class="nav-btn active" data-view="chat"><span class="nav-btn-left">💬 Chat</span><span class="nav-pill">live</span></button>
+        <button class="nav-btn" data-view="concepts"><span class="nav-btn-left">🎨 Nano Banana Concepts</span><span class="nav-pill">2</span></button>
+        <button class="nav-btn" data-view="skills"><span class="nav-btn-left">⚡ Skills &amp; Plugins</span><span class="nav-pill">121</span></button>
+        <button class="nav-btn" data-view="ops"><span class="nav-btn-left">📊 Operations &amp; Cron</span><span class="nav-pill">ok</span></button>
+
+        <div class="nav-label">Recent Sessions</div>
+        <button class="thread-item current">Hermes WebUI Redesign Studio</button>
+        <button class="thread-item">COMSOL Mesh Convergence Audit</button>
+        <button class="thread-item">Antigravity CLI Headless Bridge</button>
+        <button class="thread-item">DTU Physics Lecture Handout</button>
+      </div>
+
+      <div class="sidebar-foot">
+        <div class="theme-pills" role="group" aria-label="Theme switcher">
+          <button class="theme-pill active" data-set-theme="obsidian">Obsidian</button>
+          <button class="theme-pill" data-set-theme="atelier">Atelier</button>
+          <button class="theme-pill" data-set-theme="emerald">Emerald</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="page-title" id="topTitle">Hermes WebUI Redesign Studio</span>
+          <span class="badge-ver">MiniMax M3.1 Flash</span>
+          <span class="badge-ver" style="color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--border))">agy ready</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="chip-btn" id="cmdBtn">Command <span class="kbd">⌘K</span></button>
+          <button class="chip-btn" id="toggleInspector">Inspector ◫</button>
+        </div>
+      </header>
+
+      <!-- CHAT VIEW -->
+      <section class="view active" id="view-chat">
+        <div class="chat-scroll">
+          <div class="chat-inner" id="chatLog">
+            <div class="msg-user">Show me a cleaner Hermes WebUI where chat, live plans, inline widgets, artifacts, and system telemetry actually feel cohesive.</div>
+            <div class="msg-ai">
+              <div class="msg-ai-head"><strong>Hermes</strong> · <span class="mono">94% cache hit · 21 eager tools · interactive-options</span></div>
+              <div class="tool-trace">✓ todo_list (3/4) · ✓ ::preview widget · ✓ ha_publish artifact</div>
+              <p>Here is the unified 3-pane concept: the 20+ legacy admin pages collapse into 4 focused hubs, the live plan stays docked above the composer, and structured answers render inline without leaving chat.</p>
+
+              <div class="inline-widget">
+                <div class="iw-head">
+                  <div class="iw-title"><span class="dot"></span>Hermes Studio Architecture</div>
+                  <div class="iw-tabs">
+                    <button class="iw-tab active" data-iw="overview">Overview</button>
+                    <button class="iw-tab" data-iw="gains">Context Gains</button>
+                    <button class="iw-tab" data-iw="design">What Changed</button>
+                  </div>
+                </div>
+                <div class="iw-panel active" id="iw-overview">
+                  <div class="kpi-grid">
+                    <div class="kpi"><div class="kpi-label">Nav Surfaces</div><div class="kpi-val">4 Hubs</div><div class="kpi-sub">was 21 flat pages</div></div>
+                    <div class="kpi"><div class="kpi-label">Skills Indexed</div><div class="kpi-val">121</div><div class="kpi-sub">0 errors / warnings</div></div>
+                    <div class="kpi"><div class="kpi-label">Eager Tools</div><div class="kpi-val">21 / 61</div><div class="kpi-sub">todo + clarify eager</div></div>
+                    <div class="kpi"><div class="kpi-label">Escalation</div><div class="kpi-val">agy CLI</div><div class="kpi-sub">Gemini 4 / Claude 5.5</div></div>
+                  </div>
+                </div>
+                <div class="iw-panel" id="iw-gains">
+                  <div class="bar-grid">
+                    <div class="bar-row">
+                      <div class="bar-top"><span>Top 24 Heavy Skills (L1)</span><span class="mono" style="color:var(--ok)">-89.5%</span></div>
+                      <div class="bar-track"><div class="bar-fill" style="width:11%"></div></div>
+                    </div>
+                    <div class="bar-row">
+                      <div class="bar-top"><span>Turn-1 Static Skills Prompt</span><span class="mono" style="color:var(--ok)">-73.4%</span></div>
+                      <div class="bar-track"><div class="bar-fill" style="width:27%"></div></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="iw-panel" id="iw-design">
+                  <p style="font-size:13px;color:var(--fg-muted)">1) <strong>Command Palette (⌘K)</strong> replaces deep sidebar hunting. 2) <strong>Docked Live Plan</strong> keeps <code>todo_list</code> visible while steering mid-run. 3) <strong>Split Inspector</strong> pairs Artifacts with live cache/token telemetry. 4) <strong>3 Switchable Themes</strong> (Obsidian, Warm Atelier, Midnight Emerald) right in the bottom-left footer.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer-dock">
+          <div class="composer-wrap">
+            <div class="plan-bar">
+              <div class="plan-head" id="planToggle">
+                <div class="plan-head-left"><span class="dot"></span>Live Plan · 3 of 4 complete</div>
+                <span class="mono" style="font-size:11px;color:var(--fg-muted)">click to collapse</span>
+              </div>
+              <div class="plan-steps" id="planSteps">
+                <div class="plan-step done">✓ Audit 21 legacy WebUI routes</div>
+                <div class="plan-step done">✓ Generate Nano Banana visual concepts</div>
+                <div class="plan-step done">✓ Ship interactive GitHub Pages prototype</div>
+                <div class="plan-step now">● Iterate layout &amp; palette with Omar</div>
+              </div>
+            </div>
+
+            <div class="composer">
+              <textarea id="msgInput" placeholder="Steer Hermes mid-run, ask for a tabbed widget, or type a message to test the prototype..."></textarea>
+              <div class="composer-foot">
+                <div class="composer-pills">
+                  <span class="mini-pill steer">● steer mode</span>
+                  <span class="mini-pill">auto_load: interactive-options</span>
+                  <span class="mini-pill">⚡ agy escalate</span>
+                </div>
+                <button class="send-btn" id="sendBtn">Send ↵</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NANO BANANA VISUAL CONCEPTS VIEW -->
+      <section class="view" id="view-concepts">
+        <div class="page-pad">
+          <div>
+            <h2 style="font-family:var(--heading-font);font-size:20px;margin-bottom:4px">Nano Banana Visual Direction Concepts</h2>
+            <p style="color:var(--fg-muted);font-size:13px">Generated as starting art directions — click "Apply Theme" on either card to preview its live palette across this interactive prototype.</p>
+          </div>
+          <div class="grid-2">
+            <div class="concept-card">
+              <img src="assets/concept-a-obsidian.jpg" alt="Concept A: Obsidian Precision" />
+              <div class="concept-meta">
+                <div>
+                  <div style="font-weight:650">Concept A — Obsidian Precision</div>
+                  <div style="font-size:12px;color:var(--fg-muted)">Linear/Raycast dark charcoal, 1px hairlines, electric cobalt &amp; emerald signals.</div>
+                </div>
+                <button class="chip-btn primary" data-set-theme="obsidian">Apply</button>
+              </div>
+            </div>
+            <div class="concept-card">
+              <img src="assets/concept-b-atelier.jpg" alt="Concept B: Warm Atelier" />
+              <div class="concept-meta">
+                <div>
+                  <div style="font-weight:650">Concept B — Warm Atelier</div>
+                  <div style="font-size:12px;color:var(--fg-muted)">Warm alabaster paper, editorial serif headings, terracotta &amp; forest accents.</div>
+                </div>
+                <button class="chip-btn primary" data-set-theme="atelier">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SKILLS & PLUGINS VIEW -->
+      <section class="view" id="view-skills">
+        <div class="page-pad">
+          <h2 style="font-family:var(--heading-font);font-size:20px">Skills &amp; Plugins Hub</h2>
+          <div class="grid-3">
+            <div class="card"><h4>interactive-options <span class="badge-ver">auto_load</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Always-on tabbed ::preview widget &amp; clarify playbook (3.9 KB).</p></div>
+            <div class="card"><h4>antigravity-cli <span class="badge-ver">shared</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Headless JSON bridge to agy (Gemini 4 / Claude 5.5) &amp; MCPs.</p></div>
+            <div class="card"><h4>hermes-artifacts <span class="badge-ver">plugin</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Live editable docs, sheets, slides, boards, and dashboards.</p></div>
+            <div class="card"><h4>tool-sweep <span class="badge-ver">shared</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Single-process fan-out &amp; contact-sheet vision audits.</p></div>
+            <div class="card"><h4>comsol-java-api <span class="badge-ver">L1 6.7 KB</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Split losslessly from 93.3 KB into 5 on-demand chapter refs.</p></div>
+            <div class="card"><h4>research-paper-writing <span class="badge-ver">L1 7.3 KB</span></h4><p style="font-size:12.5px;color:var(--fg-muted)">Split losslessly from 103.7 KB into 6 on-demand chapter refs.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OPERATIONS VIEW -->
+      <section class="view" id="view-ops">
+        <div class="page-pad">
+          <h2 style="font-family:var(--heading-font);font-size:20px">Operations, Cron &amp; Telemetry</h2>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Active Scheduled Jobs</h4>
+              <div class="kv"><span>hermes-upgrade-doctor</span><span class="mono" style="color:var(--ok)">every 6h · ok</span></div>
+              <div class="kv"><span>skills-index-health</span><span class="mono" style="color:var(--ok)">121 indexed</span></div>
+              <div class="kv"><span>github-backup-snapshot</span><span class="mono">0 secrets</span></div>
+            </div>
+            <div class="card">
+              <h4>Unified Legacy Routes Folded Here</h4>
+              <p style="font-size:12.5px;color:var(--fg-muted)">Analytics, Logs, System, Config, Env, MCP, Channels, and Webhooks live as clean sub-tabs here instead of cluttering the primary chat sidebar.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT INSPECTOR -->
+    <aside class="inspector">
+      <div class="ins-tabs">
+        <button class="ins-tab active" data-ins="artifact">Artifact</button>
+        <button class="ins-tab" data-ins="telemetry">Telemetry</button>
+      </div>
+      <div class="ins-body">
+        <div class="ins-pane active" id="ins-artifact">
+          <div class="card">
+            <h4>WebUI Redesign Spec <span class="badge-ver">v1.0</span></h4>
+            <p style="font-size:12.5px;color:var(--fg-muted);margin-bottom:10px">Live artifact preview panel — docs, charts, decks, or HTML prototypes open side-by-side with chat.</p>
+            <div class="kv"><span>Layout</span><span class="mono">3-pane collapsible</span></div>
+            <div class="kv"><span>Command Palette</span><span class="mono">⌘K / Ctrl+K</span></div>
+            <div class="kv"><span>Themes</span><span class="mono">3 live presets</span></div>
+            <div class="kv"><span>Widgets</span><span class="mono">flush ::preview</span></div>
+          </div>
+          <div class="card">
+            <h4>Design Feedback Checklist</h4>
+            <p style="font-size:12px;color:var(--fg-muted)">Tell me what you want to change next: density, fonts, colors, sidebar structure, mobile layout, or custom dashboard cards.</p>
+          </div>
+        </div>
+        <div class="ins-pane" id="ins-telemetry">
+          <div class="card">
+            <h4>Turn-1 Budget</h4>
+            <div class="kv"><span>Level-0 Skills Index</span><span class="mono">2,867 tok</span></div>
+            <div class="kv"><span>Auto-loaded Skills</span><span class="mono">986 tok</span></div>
+            <div class="kv"><span>Eager Tools</span><span class="mono">21 (9.5K tok)</span></div>
+            <div class="kv"><span>Prompt Cache Hit</span><span class="mono" style="color:var(--ok)">94.2%</span></div>
+          </div>
+          <div class="card">
+            <h4>Runtime Status</h4>
+            <div class="kv"><span>Profile</span><span class="mono" id="insProfile">default</span></div>
+            <div class="kv"><span>Input Mode</span><span class="mono" style="color:var(--ok)">steer</span></div>
+            <div class="kv"><span>Antigravity CLI</span><span class="mono" style="color:var(--ok)">agy v1.5.14</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- COMMAND PALETTE -->
+  <div class="modal-bg" id="cmdModal">
+    <div class="cmd-box">
+      <input class="cmd-input" id="cmdInput" placeholder="Jump to view, switch theme, or toggle profile..." />
+      <div class="cmd-list">
+        <button class="cmd-item" data-cmd="view:chat"><span>Open Chat Workspace</span><span class="kbd">Chat</span></button>
+        <button class="cmd-item" data-cmd="view:concepts"><span>View Nano Banana Visual Concepts</span><span class="kbd">Art</span></button>
+        <button class="cmd-item" data-cmd="view:skills"><span>Open Skills &amp; Plugins Hub</span><span class="kbd">121</span></button>
+        <button class="cmd-item" data-cmd="view:ops"><span>Open Operations &amp; Cron</span><span class="kbd">Ops</span></button>
+        <button class="cmd-item" data-cmd="theme:obsidian"><span>Theme: Obsidian Precision (Dark)</span><span class="kbd">Dark</span></button>
+        <button class="cmd-item" data-cmd="theme:atelier"><span>Theme: Warm Atelier (Light)</span><span class="kbd">Light</span></button>
+        <button class="cmd-item" data-cmd="theme:emerald"><span>Theme: Midnight Emerald</span><span class="kbd">Green</span></button>
+        <button class="cmd-item" data-cmd="profile:toggle"><span>Switch Profile (default ⇄ chill-guy)</span><span class="kbd">Profile</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const shell = document.getElementById('shell');
+    const topTitle = document.getElementById('topTitle');
+    const titles = {
+      chat: 'Hermes WebUI Redesign Studio',
+      concepts: 'Nano Banana Visual Concepts',
+      skills: 'Skills & Plugins Hub',
+      ops: 'Operations, Cron & Telemetry'
+    };
+
+    function setTheme(t) {
+      root.setAttribute('data-theme', t);
+      document.querySelectorAll('.theme-pill').forEach(b => b.classList.toggle('active', b.dataset.setTheme === t));
+    }
+    function setView(v) {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+      document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
+      topTitle.textContent = titles[v] || 'Hermes Studio';
+    }
+
+    document.querySelectorAll('[data-set-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.setTheme)));
+    document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+    document.querySelectorAll('.iw-tab').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.iw-tab').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.iw-panel').forEach(p => p.classList.toggle('active', p.id === 'iw-' + b.dataset.iw));
+    }));
+
+    document.querySelectorAll('.ins-tab').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.ins-tab').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.ins-pane').forEach(p => p.classList.toggle('active', p.id === 'ins-' + b.dataset.ins));
+    }));
+
+    document.getElementById('toggleInspector').addEventListener('click', () => shell.classList.toggle('inspector-closed'));
+    document.getElementById('planToggle').addEventListener('click', () => {
+      const s = document.getElementById('planSteps');
+      s.style.display = s.style.display === 'none' ? 'grid' : 'none';
+    });
+
+    let isChill = false;
+    function toggleProfile() {
+      isChill = !isChill;
+      document.getElementById('profileName').textContent = isChill ? 'chill-guy' : 'default';
+      document.getElementById('profileSub').textContent = isChill ? 'No Ledger · Low · Steer' : 'Ledger ON · Medium · Steer';
+      document.getElementById('insProfile').textContent = isChill ? 'chill-guy' : 'default';
+    }
+    document.getElementById('profileBtn').addEventListener('click', toggleProfile);
+
+    // Interactive demo send
+    function sendDemo() {
+      const inp = document.getElementById('msgInput');
+      const txt = inp.value.trim();
+      if (!txt) return;
+      const log = document.getElementById('chatLog');
+      const u = document.createElement('div');
+      u.className = 'msg-user';
+      u.textContent = txt;
+      log.appendChild(u);
+      const a = document.createElement('div');
+      a.className = 'msg-ai';
+      a.innerHTML = `<div class="msg-ai-head"><strong>Hermes (${isChill ? 'chill-guy' : 'default'})</strong> · <span class="mono">prototype preview</span></div><p>Got it — this is a static UI concept on GitHub Pages. Tell Antigravity in chat what you want tweaked (layout, density, colors, tabs, or widgets) and I'll update this live link in seconds.</p>`;
+      log.appendChild(a);
+      inp.value = '';
+      log.parentElement.scrollTop = log.parentElement.scrollHeight;
+    }
+    document.getElementById('sendBtn').addEventListener('click', sendDemo);
+    document.getElementById('msgInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDemo(); }
+    });
+
+    // Command Palette
+    const cmdModal = document.getElementById('cmdModal');
+    const cmdInput = document.getElementById('cmdInput');
+    function openCmd() { cmdModal.classList.add('open'); cmdInput.value = ''; cmdInput.focus(); }
+    function closeCmd() { cmdModal.classList.remove('open'); }
+    document.getElementById('cmdBtn').addEventListener('click', openCmd);
+    cmdModal.addEventListener('click', e => { if (e.target === cmdModal) closeCmd(); });
+    window.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openCmd(); }
+      if (e.key === 'Escape') closeCmd();
+    });
+    document.querySelectorAll('.cmd-item').forEach(btn => btn.addEventListener('click', () => {
+      const [kind, val] = btn.dataset.cmd.split(':');
+      if (kind === 'view') setView(val);
+      if (kind === 'theme') setTheme(val);
+      if (kind === 'profile') toggleProfile();
+      closeCmd();
+    }));
+  </script>
+</body>
+</html>
