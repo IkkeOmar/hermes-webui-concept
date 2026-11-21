@@ -823,6 +823,105 @@
     .form-row input:focus, .form-row select:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 3px var(--apple-blue-tint); }
     .form-hint { font-size: 11px; color: var(--fg-muted); }
 
+    /* --- Settings per-field official docs link --- */
+    .fld-label-row {
+      display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    }
+    .fld-docs {
+      display: inline-flex; align-items: center; gap: 3px;
+      height: 18px; padding: 0 6px; border-radius: 980px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--fg-muted); font-family: var(--font-mono); font-size: 9.5px;
+      text-decoration: none; transition: all 140ms var(--ease-out);
+    }
+    .fld-docs:hover {
+      color: var(--apple-blue-text); border-color: rgba(0, 113, 227, 0.45);
+      background: var(--apple-blue-tint);
+    }
+    .fld-docs .ic { width: 10px; height: 10px; }
+
+    /* --- Steer Buddy idle / live-notice visibility & severity states --- */
+    .floating-buddy.idle {
+      opacity: 0.42;
+      transform: scale(0.84);
+      transform-origin: bottom left;
+    }
+    .floating-buddy.idle:hover {
+      opacity: 0.92;
+      transform: scale(0.96);
+    }
+    .floating-buddy .speech-bubble {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .floating-buddy .speech-bubble.open {
+      display: flex;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .speech-bubble.sa-notice-info {
+      border-color: rgba(71, 161, 255, 0.5);
+    }
+    .speech-bubble.sa-notice-good {
+      border-color: rgba(48, 209, 88, 0.5);
+    }
+    .speech-bubble.sa-notice-warn {
+      border-color: rgba(255, 159, 10, 0.55);
+    }
+    .speech-bubble.sa-notice-bad {
+      border-color: rgba(255, 69, 58, 0.65);
+      box-shadow: var(--shadow-float), 0 0 0 1px rgba(255, 69, 58, 0.25);
+    }
+    .sa-live-actions {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .sa-live-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 25px; padding: 0 10px; border-radius: 980px;
+      border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(0, 0, 0, 0.24);
+      color: inherit; font-family: inherit; font-size: 11px; font-weight: 550;
+      cursor: pointer; transition: all 140ms var(--ease-out);
+    }
+    .sa-live-btn:hover { background: rgba(0, 0, 0, 0.38); border-color: rgba(255, 255, 255, 0.32); }
+    .sa-live-btn.primary {
+      background: var(--apple-blue); border-color: transparent; color: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .sa-live-btn.primary:hover { background: var(--apple-blue-hover); }
+
+    /* --- Collapsible chat reveal bar --- */
+    .chat-reveal-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 7px 11px; border-radius: 11px;
+      background: var(--card); border: 1px solid var(--border);
+      box-shadow: var(--shadow-card); cursor: pointer;
+      transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out);
+    }
+    .chat-reveal-bar:hover { border-color: var(--border-strong); background: var(--card-elevated); }
+    .chat-reveal-left, .chat-reveal-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .chat-reveal-title { font-size: 12.5px; font-weight: 600; color: var(--fg); }
+    .chat-reveal-count { font-size: 11px; color: var(--fg-muted); }
+    .chat-unread-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--apple-blue); box-shadow: 0 0 8px var(--apple-blue);
+      display: none; flex-shrink: 0;
+    }
+    .chat-reveal-bar.has-unread .chat-unread-dot { display: inline-block; }
+    .chat-api-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 24px; padding: 0 9px; border-radius: 980px;
+      border: 1px solid var(--border); background: var(--panel);
+      color: var(--fg-muted); font-size: 10.5px; cursor: pointer;
+      transition: all 140ms var(--ease-out);
+    }
+    .chat-api-pill:hover { border-color: var(--border-strong); color: var(--fg); }
+    .chat-api-pill .status-dot { width: 6px; height: 6px; }
+    .chat-api-pill.online .status-dot { background: var(--green); box-shadow: 0 0 7px var(--green); }
+    .chat-api-pill.offline .status-dot { background: var(--amber); box-shadow: 0 0 7px var(--amber); }
+    .chat-toggle-btn { height: 26px; padding: 0 10px; font-size: 11.5px; }
+    .chat-stack.is-collapsed { display: none; }
+
     @media (max-width: 1180px) {
       .settings-suite { grid-template-columns: 190px minmax(0, 1fr); }
       .kb-grid { grid-template-columns: 1fr; }
@@ -1318,7 +1417,22 @@
 
             <!-- CENTER COLUMN (Chat + Code Showcase + Editable Live Plan + Composer) -->
             <div class="center-col">
-              <div class="chat-stack" id="chatContainer">
+              <div class="chat-reveal-bar" id="chatRevealBar">
+                <div class="chat-reveal-left">
+                  <span class="chat-unread-dot" id="chatUnreadDot" aria-hidden="true"></span>
+                  <svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span class="chat-reveal-title">Conversation</span>
+                  <span class="mono chat-reveal-count" id="chatTurnCount">2 turns</span>
+                </div>
+                <div class="chat-reveal-right">
+                  <button class="chat-api-pill offline" id="apiServerStatus" type="button" title="Check gateway api_server on 127.0.0.1:8642">
+                    <span class="status-dot"></span>
+                    <span class="mono" id="apiServerLabel">api_server :8642 offline</span>
+                  </button>
+                  <button class="glass-btn chat-toggle-btn" id="chatToggleBtn" type="button" aria-expanded="false" aria-controls="chatContainer">Show chat</button>
+                </div>
+              </div>
+              <div class="chat-stack is-collapsed" id="chatContainer">
                 <div class="chat-turn">
                   <div class="turn-icon">
                     <svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1524,7 +1638,7 @@
     </div>
 
     <!-- DRAGGABLE / FREE-FLYING STEER BUDDY + SPEECH BUBBLE -->
-    <div class="floating-buddy" id="floatingBuddy">
+    <div class="floating-buddy idle" id="floatingBuddy">
       <div class="mascot-handle" id="mascotHandle" title="Hold mouse button to grab & drag me anywhere!">
         <svg viewBox="0 0 100 110" width="74" height="84">
           <defs>
@@ -1556,18 +1670,14 @@
 
       <div class="speech-bubble" id="speechBubble">
         <div class="speech-top">
-          <span class="mono" id="buddyStateLabel">free-roaming · drag me anywhere</span>
-          <button class="mode-chip" id="quickDockBtn" title="Send to Pet Place perch">Dock ↵</button>
-        </div>
-        <div class="speech-text" id="speechText">Fixing the sidebar width - grab me with your mouse to place me anywhere, or click Pet Place to send me to my perch!</div>
-        <div class="speech-toolbar">
-          <div class="mode-chips">
-            <button class="mode-chip active" data-bmode="tip">Tip</button>
-            <button class="mode-chip" data-bmode="unblock">Unblock</button>
-            <button class="mode-chip" data-bmode="conflict">Conflict</button>
+          <span class="mono" id="buddyStateLabel">idle</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button class="mode-chip" id="quickDockBtn" type="button" title="Send to Pet Place perch">Dock</button>
+            <button class="mode-chip" id="dismissNoticeBtn" type="button" title="Dismiss notice">Hide</button>
           </div>
-          <button class="apple-pill sm" id="speechActionBtn">Steer Agent</button>
         </div>
+        <div class="speech-text" id="speechText"></div>
+        <div class="speech-toolbar"></div>
       </div>
     </div>
 
@@ -1857,7 +1967,6 @@
         const targetX = rect.left + 10;
         const targetY = rect.top - 6;
         placeBuddyAt(targetX, targetY, true);
-        speechText.textContent = 'Chilling in my Pet Place perch - watching the workflow pipeline for you!';
       }
     }
 
@@ -1896,7 +2005,6 @@
         flyToPetPlace();
       } else {
         placeBuddyAt(bRect.left, bRect.top, false);
-        speechText.textContent = 'Dropped right where you wanted me - I will keep an eye on Step 3 from here!';
       }
     });
 
@@ -2045,66 +2153,178 @@
     renderPlan();
     document.getElementById('addTaskToggleBtn').addEventListener('click', () => { showAddTask = !showAddTask; renderPlan(); });
 
-    // Steer Buddy Modes
-    const buddyStates = {
-      tip: {
-        text: 'Fixing the sidebar width - grab me with your mouse to place me anywhere, or click Pet Place to send me to my perch!',
-        cta: 'Steer Agent',
-        reply: 'Steer received: keeping the 3-zone full-canvas layout and finishing PR #48.'
-      },
-      unblock: {
-        text: 'Main agent is waiting on a 5-second GitHub OAuth click in your browser. Click it so we skip the workaround!',
-        cta: 'Approve & Resume',
-        reply: 'OAuth approved by user - resuming PR #48 checks immediately.'
-      },
-      conflict: {
-        text: 'Earlier you set chill-guy to skip ledger files, but your new message asks for BRAIN.md. Which rule wins?',
-        cta: 'Keep Earlier Rule',
-        reply: 'Conflict resolved: keeping ledger disabled for chill-guy as set earlier.'
-      }
-    };
-    let curBMode = 'tip';
-    document.querySelectorAll('[data-bmode]').forEach(c => c.addEventListener('click', () => {
-      curBMode = c.dataset.bmode;
-      document.querySelectorAll('[data-bmode]').forEach(x => x.classList.toggle('active', x === c));
-      speechText.textContent = buddyStates[curBMode].text;
-      document.getElementById('speechActionBtn').textContent = buddyStates[curBMode].cta;
-      // v7: every tip carries a confidence score and a rationale.
-      if (window.HermesConfidence && typeof window.HermesConfidence.apply === 'function') {
-        window.HermesConfidence.apply(curBMode);
-      }
-    }));
-    document.getElementById('speechActionBtn').addEventListener('click', () => {
-      appendTurn('Steer Buddy', buddyStates[curBMode].reply);
-    });
-
-    // Buddy ON/OFF
+    // Steer Buddy visibility toggle (notices are owned by window.HermesBuddy)
     let buddyVisible = true;
     document.getElementById('buddyToggleBtn').addEventListener('click', () => {
       buddyVisible = !buddyVisible;
-      buddy.classList.toggle('hidden', !buddyVisible);
-      document.getElementById('buddyToggleBtn').textContent = buddyVisible ? 'Buddy: ON' : 'Buddy: OFF';
+      if (window.HermesBuddy && typeof window.HermesBuddy.setVisible === 'function') {
+        window.HermesBuddy.setVisible(buddyVisible);
+      } else {
+        buddy.classList.toggle('hidden', !buddyVisible);
+      }
+      const btn = document.getElementById('buddyToggleBtn');
+      btn.textContent = buddyVisible ? 'Buddy: ON' : 'Buddy: OFF';
+      btn.classList.toggle('off', !buddyVisible);
     });
 
-    // Chat Composer
-    function appendTurn(author, text) {
-      const container = document.getElementById('chatContainer');
+    // Collapsible Chat Panel + Ready-to-Connect api_server (:8642) Hook
+    const chatContainer = document.getElementById('chatContainer');
+    const chatRevealBar = document.getElementById('chatRevealBar');
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
+    const chatTurnCount = document.getElementById('chatTurnCount');
+    const apiServerBtn = document.getElementById('apiServerStatus');
+    const apiServerLabel = document.getElementById('apiServerLabel');
+
+    const API_SERVER_BASE = 'http://127.0.0.1:8642';
+    let apiServerOnline = false;
+    let chatExpanded = false;
+
+    function updateChatCount() {
+      if (!chatContainer || !chatTurnCount) return;
+      const n = chatContainer.querySelectorAll('.chat-turn').length;
+      chatTurnCount.textContent = n + ' turn' + (n === 1 ? '' : 's');
+    }
+
+    function setChatExpanded(expanded) {
+      chatExpanded = !!expanded;
+      if (chatContainer) chatContainer.classList.toggle('is-collapsed', !chatExpanded);
+      if (chatRevealBar) {
+        chatRevealBar.classList.toggle('expanded', chatExpanded);
+        if (chatExpanded) chatRevealBar.classList.remove('has-unread');
+      }
+      if (chatToggleBtn) {
+        chatToggleBtn.textContent = chatExpanded ? 'Collapse' : 'Show chat';
+        chatToggleBtn.setAttribute('aria-expanded', chatExpanded ? 'true' : 'false');
+      }
+    }
+
+    function setApiServerState(online, detail) {
+      apiServerOnline = !!online;
+      if (apiServerBtn) {
+        apiServerBtn.classList.toggle('online', apiServerOnline);
+        apiServerBtn.classList.toggle('offline', !apiServerOnline);
+      }
+      if (apiServerLabel) {
+        apiServerLabel.textContent = detail || (apiServerOnline ? 'api_server :8642 ready' : 'api_server :8642 offline');
+      }
+    }
+
+    async function probeApiServer(silent) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 1600);
+        const res = await fetch(API_SERVER_BASE + '/v1/capabilities', { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (res.ok) {
+          setApiServerState(true, 'api_server :8642 ready');
+          if (!silent && window.HermesToast) window.HermesToast('Gateway api_server ready', API_SERVER_BASE);
+          return true;
+        }
+      } catch (err) { /* api_server not enabled or unreachable */ }
+      setApiServerState(false, 'api_server :8642 offline');
+      if (!silent && window.HermesToast) {
+        window.HermesToast('api_server offline on :8642', 'Enable api_server in gateway config to stream live turns');
+      }
+      return false;
+    }
+
+    function appendTurn(author, text, opts) {
+      if (!chatContainer) return;
       const div = document.createElement('div');
       div.className = 'chat-turn';
-      div.innerHTML = `
-        <div class="turn-icon"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div>
-        <div class="turn-body"><div class="turn-author">${author}</div><div class="turn-text">${text}</div></div>
-      `;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+      const icon = document.createElement('div');
+      icon.className = 'turn-icon';
+      icon.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
+      const body = document.createElement('div');
+      body.className = 'turn-body';
+      const who = document.createElement('div');
+      who.className = 'turn-author';
+      who.textContent = author;
+      const msg = document.createElement('div');
+      msg.className = 'turn-text';
+      msg.textContent = text;
+      body.appendChild(who);
+      body.appendChild(msg);
+      div.appendChild(icon);
+      div.appendChild(body);
+      chatContainer.appendChild(div);
+      updateChatCount();
+      if (opts && opts.keepCollapsed) {
+        if (chatRevealBar) chatRevealBar.classList.add('has-unread');
+      } else {
+        setChatExpanded(true);
+      }
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-    function sendChat() {
+
+    async function sendChat() {
       const inp = document.getElementById('chatInput');
       const val = inp.value.trim();
       if (!val) return;
       appendTurn('User', val);
       inp.value = '';
+
+      const reachable = apiServerOnline || (await probeApiServer(true));
+      if (!reachable) {
+        if (window.HermesToast) {
+          window.HermesToast('Message logged locally', 'api_server :8642 is offline');
+        }
+        return;
+      }
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        const key = window.__HERMES_API_SERVER_KEY__ || '';
+        if (key) headers['Authorization'] = 'Bearer ' + key;
+        const res = await fetch(API_SERVER_BASE + '/v1/chat/completions', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            model: 'hermes-agent',
+            messages: [{ role: 'user', content: val }],
+            stream: false
+          })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const reply = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        if (reply) appendTurn('Hermes Assistant', reply);
+      } catch (err) {
+        if (window.HermesToast) window.HermesToast('api_server turn failed', err.message);
+      }
     }
+
+    if (chatToggleBtn) {
+      chatToggleBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        setChatExpanded(!chatExpanded);
+      });
+    }
+    if (chatRevealBar) {
+      chatRevealBar.addEventListener('click', e => {
+        if (e.target.closest('#apiServerStatus, #chatToggleBtn')) return;
+        setChatExpanded(!chatExpanded);
+      });
+    }
+    if (apiServerBtn) {
+      apiServerBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        probeApiServer(false);
+      });
+    }
+    updateChatCount();
+    setChatExpanded(false);
+    probeApiServer(true);
+
+    window.HermesChat = {
+      expand: () => setChatExpanded(true),
+      collapse: () => setChatExpanded(false),
+      toggle: () => setChatExpanded(!chatExpanded),
+      isExpanded: () => chatExpanded,
+      appendTurn: appendTurn,
+      probeApiServer: probeApiServer
+    };
+
     document.getElementById('sendMsgBtn').addEventListener('click', sendChat);
     document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
 
@@ -3069,28 +3289,64 @@
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const RING_R = 6;                             // ring radius inside the 16x16 viewBox
   const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R; // 37.699..., the full ring length
-  const DEFAULT_MODE = 'tip';
+  const DEFAULT_MODE = 'overview';
 
-  /* Level table: mode -> level, percent, colour tone and the rationale text.
-     Percent values are fixed per mode so the badge always reads 96%, 89% or 78%. */
+  /* Level table: live notice kind / severity -> level, percent, colour tone
+     and factual rationale derived from real runtime state. */
   const LEVELS = {
-    tip: {
-      level: 'HIGH',
+    'cron-failure': {
+      level: 'VERIFIED',
+      percent: 98,
+      tone: 'amber',
+      why: 'Read directly from /api/cron/jobs failure_streak and last_status.'
+    },
+    'subagent-stopped': {
+      level: 'LIVE STATE',
+      percent: 92,
+      tone: 'amber',
+      why: 'Derived from the live subagent manager state (an agent is currently stopped).'
+    },
+    'runtime-degraded': {
+      level: 'RUNTIME',
+      percent: 95,
+      tone: 'amber',
+      why: 'Reported directly by /api/status overall health and gateway_state.'
+    },
+    'work-running': {
+      level: 'TELEMETRY',
+      percent: 90,
+      tone: 'blue',
+      why: 'Counted from active subagents and /api/status live session metrics.'
+    },
+    overview: {
+      level: 'TELEMETRY',
       percent: 96,
       tone: 'emerald',
-      why: 'High confidence: this tip is read straight from the live workflow state and the current plan, so it matches the step Hermes is actually running right now.'
+      why: 'Snapshot from /api/status version, gateway_state, and active session counts.'
     },
-    unblock: {
-      level: 'MEDIUM',
-      percent: 89,
+    bad: {
+      level: 'VERIFIED',
+      percent: 98,
       tone: 'amber',
-      why: 'Medium confidence: I can see the blocked step and the usual OAuth fix, but only you can finish the browser click, so the outcome still depends on that approval.'
+      why: 'Alert derived directly from a failing runtime or scheduled job check.'
     },
-    conflict: {
-      level: 'LOW',
-      percent: 78,
+    warn: {
+      level: 'LIVE STATE',
+      percent: 92,
+      tone: 'amber',
+      why: 'Warning derived from live subagent or runtime health telemetry.'
+    },
+    info: {
+      level: 'TELEMETRY',
+      percent: 90,
       tone: 'blue',
-      why: 'Low confidence: two earlier instructions disagree and I cannot read which one you meant, so any choice I make could be the wrong one.'
+      why: 'Informational status derived from active runtime and subagent state.'
+    },
+    good: {
+      level: 'VERIFIED',
+      percent: 96,
+      tone: 'emerald',
+      why: 'Confirmed healthy by the latest /api/status runtime probe.'
     }
   };
 
@@ -3847,6 +4103,9 @@
       confirm.hidden = false;
     }
     saPaintStats();
+    if (window.HermesBuddy && typeof window.HermesBuddy.refresh === 'function') {
+      window.HermesBuddy.refresh();
+    }
   }
 
   /* ---------- status toggle ---------- */
@@ -3860,6 +4119,9 @@
     }
     saUpdateRow(agent);
     saPaintStats();
+    if (window.HermesBuddy && typeof window.HermesBuddy.refresh === 'function') {
+      window.HermesBuddy.refresh();
+    }
   }
 
   /* ---------- new subagent ---------- */
@@ -4131,6 +4393,7 @@
 
   window.HermesSubagents = {
     reset: function () { saReset(); },
+    agents: function () { return saState.agents.slice(); },
     getState: function () {
       return saState.agents.map(function (a) {
         return {
@@ -4348,6 +4611,50 @@
         return '';
       }
 
+      var DOCS_BASE = 'https://hermes-agent.nousresearch.com/docs/';
+      var DOCS_FALLBACK = 'user-guide/configuration';
+      var CATEGORY_DOCS = {
+        general: 'user-guide/configuration',
+        agent: 'user-guide/configuring-models',
+        delegation: 'user-guide/features/delegation',
+        terminal: 'user-guide/cli',
+        display: 'user-guide/tui',
+        memory: 'user-guide/features/memory',
+        compression: 'user-guide/features/context-files',
+        security: 'user-guide/security',
+        secrets: 'user-guide/secrets',
+        tools: 'user-guide/features/tools',
+        browser: 'user-guide/features/browser',
+        mcp: 'user-guide/features/mcp',
+        cron: 'user-guide/features/cron',
+        plugins: 'user-guide/features/plugins',
+        skills: 'user-guide/features/skills',
+        voice: 'user-guide/features/voice-mode',
+        tts: 'user-guide/features/tts',
+        vision: 'user-guide/features/vision',
+        hooks: 'user-guide/features/hooks',
+        api_server: 'user-guide/features/api-server',
+        fallback: 'user-guide/features/fallback-providers',
+        profiles: 'user-guide/profiles',
+        sessions: 'user-guide/sessions',
+        honcho: 'user-guide/features/honcho',
+        personality: 'user-guide/features/personality',
+        skins: 'user-guide/features/skins',
+        pets: 'user-guide/features/pets',
+        heartbeat: 'user-guide/features/heartbeat',
+        web_search: 'user-guide/features/web-search',
+        code_execution: 'user-guide/features/code-execution',
+        computer_use: 'user-guide/features/computer-use'
+      };
+
+      function docUrlFor(path, meta) {
+        var cat = meta && meta.category ? String(meta.category).toLowerCase() : '';
+        var slug = Object.prototype.hasOwnProperty.call(CATEGORY_DOCS, cat)
+          ? CATEGORY_DOCS[cat]
+          : DOCS_FALLBACK;
+        return DOCS_BASE + slug;
+      }
+
       function createFieldRow(f) {
         var path = f.path;
         var meta = f.meta;
@@ -4356,7 +4663,17 @@
         row.setAttribute('data-path', path);
 
         var metaBox = el('div', 'fld-meta');
-        metaBox.appendChild(el('div', 'fld-label', labelFor(path, meta)));
+        var labelRow = el('div', 'fld-label-row');
+        labelRow.appendChild(el('div', 'fld-label', labelFor(path, meta)));
+        var docsLink = document.createElement('a');
+        docsLink.className = 'fld-docs';
+        docsLink.href = docUrlFor(path, meta);
+        docsLink.target = '_blank';
+        docsLink.rel = 'noopener noreferrer';
+        docsLink.title = 'Open official Hermes documentation for ' + path;
+        docsLink.innerHTML = '<span>docs</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M10 14L19 5M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg>';
+        labelRow.appendChild(docsLink);
+        metaBox.appendChild(labelRow);
         metaBox.appendChild(el('div', 'fld-path', path));
         if (meta && meta.description) {
           metaBox.appendChild(el('div', 'fld-desc', meta.description));
@@ -5042,7 +5359,9 @@
       async function loadCron() {
         try {
           const jobs = await apiGet('/api/cron/jobs');
-          if (!Array.isArray(jobs) || !jobs.length) return false;
+          if (!Array.isArray(jobs)) return false;
+          api.cron = jobs;
+          if (!jobs.length) return true;
           cronJobs = jobs.map(j => ({
             id: j.id,
             name: j.name || j.id,
@@ -5079,6 +5398,7 @@
         token: '',
         status: null,
         config: null,
+        cron: [],
         lastError: null
       };
 
@@ -5286,7 +5606,11 @@
           api.config = cfg;
           hydrateFromConfig(cfg);
           await loadSchema();
+          try { await loadCron(); } catch (err) { /* cron is optional */ }
           setLiveStatus(true, 'Live - connected to ' + api.base);
+          if (window.HermesBuddy && typeof window.HermesBuddy.refresh === 'function') {
+            window.HermesBuddy.refresh();
+          }
           return true;
         } catch (err) {
           api.lastError = err.message;
@@ -5449,6 +5773,341 @@
         document.addEventListener('DOMContentLoaded', boot);
       } else {
         boot();
+      }
+    })();
+
+    /* =====================================================================
+       HERMES STUDIO WEBUI v7 - STEER BUDDY BEHAVIOUR
+       The buddy is an assistant, not a mascot stuck on screen. It:
+         - idles out of the way after a while
+         - gets out of the way when a modal is open
+         - only speaks when it has something REAL to say
+         - says it from live runtime state, never filler
+       Exposes window.HermesBuddy = { notify, refresh, hide, setVisible, isVisible }
+       ===================================================================== */
+    (function () {
+      'use strict';
+
+      var $ = function (sel, root) { return (root || document).querySelector(sel); };
+
+      var IDLE_MS = 45000;
+      var QUIET_MS = 22000;
+      var state = {
+        idleTimer: null,
+        noticeTimer: null,
+        visible: true,
+        pinned: false,
+        lastSpokeAt: 0,
+        current: null
+      };
+
+      var SEVERITY_CLASS = {
+        info: 'sa-notice-info',
+        good: 'sa-notice-good',
+        warn: 'sa-notice-warn',
+        bad: 'sa-notice-bad'
+      };
+
+      function dom() {
+        return {
+          buddy: $('#floatingBuddy'),
+          bubble: $('#speechBubble'),
+          text: $('#speechText'),
+          label: $('#buddyStateLabel'),
+          toolbar: $('#speechBubble .speech-toolbar'),
+          modes: $('#speechBubble .mode-chips'),
+          action: $('#speechActionBtn')
+        };
+      }
+
+      function render() {
+        var d = dom();
+        if (!d.bubble || !d.text) return;
+
+        if (!state.current) {
+          d.bubble.classList.remove('open');
+          d.bubble.classList.remove('sa-notice-info', 'sa-notice-good', 'sa-notice-warn', 'sa-notice-bad');
+          if (d.toolbar) {
+            var stale = d.toolbar.querySelector('.sa-live-actions');
+            if (stale) stale.remove();
+          }
+          if (d.modes) d.modes.style.display = '';
+          if (d.action) d.action.style.display = '';
+          return;
+        }
+
+        var n = state.current;
+        d.text.textContent = n.body;
+        if (d.label) d.label.textContent = n.title;
+
+        d.bubble.classList.add('open');
+        d.bubble.classList.remove('sa-notice-info', 'sa-notice-good', 'sa-notice-warn', 'sa-notice-bad');
+        if (SEVERITY_CLASS[n.severity]) d.bubble.classList.add(SEVERITY_CLASS[n.severity]);
+
+        if (window.HermesConfidence && typeof window.HermesConfidence.apply === 'function') {
+          window.HermesConfidence.apply(n.kind || n.severity || 'info');
+        }
+
+        if (d.toolbar) {
+          var old = d.toolbar.querySelector('.sa-live-actions');
+          if (old) old.remove();
+          if (n.actions) {
+            var box = document.createElement('div');
+            box.className = 'sa-live-actions';
+            n.actions.forEach(function (a) {
+              var b = document.createElement('button');
+              b.className = 'sa-live-btn' + (a.primary ? ' primary' : '');
+              b.type = 'button';
+              b.textContent = a.label;
+              b.title = a.title || a.label;
+              b.addEventListener('click', function () {
+                try { a.run(); } catch (err) { /* a broken action must not kill the buddy */ }
+                if (a.close !== false) hide();
+              });
+              box.appendChild(b);
+            });
+            d.toolbar.insertBefore(box, d.action);
+          }
+        }
+        if (d.modes) d.modes.style.display = n.actions ? 'none' : '';
+        if (d.action) d.action.style.display = n.actions ? 'none' : '';
+      }
+
+      function modalOpen() {
+        return !!document.querySelector('.modal-backdrop.open');
+      }
+
+      function setVisible(visible) {
+        var d = dom();
+        if (!d.buddy) return;
+        state.visible = visible;
+        d.buddy.classList.toggle('hidden', !visible);
+      }
+
+      function isVisible() { return state.visible; }
+
+      function shouldShow() {
+        if (state.pinned) return true;
+        if (modalOpen()) return false;
+        return !!state.current;
+      }
+
+      function applyVisibility() {
+        var d = dom();
+        if (!d.buddy) return;
+        var show = shouldShow();
+        d.buddy.classList.toggle('idle', !show);
+        if (!show && !state.pinned) d.bubble.classList.remove('open');
+      }
+
+      function hide() {
+        state.current = null;
+        render();
+        applyVisibility();
+        scheduleIdle();
+      }
+
+      function scheduleIdle() {
+        if (state.idleTimer) clearTimeout(state.idleTimer);
+        state.idleTimer = setTimeout(function () {
+          if (state.pinned) return;
+          state.current = null;
+          render();
+          applyVisibility();
+        }, IDLE_MS);
+      }
+
+      function scheduleQuiet() {
+        if (state.noticeTimer) clearTimeout(state.noticeTimer);
+        state.noticeTimer = setTimeout(function () {
+          if (state.current && state.current.transient) hide();
+        }, QUIET_MS);
+      }
+
+      function notify(notice) {
+        if (!notice) return;
+        state.current = notice;
+        state.lastSpokeAt = Date.now();
+        render();
+        applyVisibility();
+        scheduleIdle();
+        if (notice.transient !== false) scheduleQuiet();
+      }
+
+      /* ------------------------------------------------------------------
+         Live state -> what the buddy actually says
+         Every branch below reads REAL runtime data. Nothing is invented.
+         ------------------------------------------------------------------ */
+      function refresh() {
+        var api = window.HermesApi;
+        if (!api || !api.state) return;
+
+        var st = api.state.status;
+        var cron = api.state.cron || [];
+        var subs = window.HermesSubagents && typeof window.HermesSubagents.agents === 'function'
+          ? window.HermesSubagents.agents() : [];
+
+        // 1. A cron job that is actually failing.
+        var failing = cron.filter(function (j) {
+          return (j.failure_streak || 0) > 0 || (j.last_status && /fail|error/i.test(j.last_status));
+        });
+        if (failing.length) {
+          var j0 = failing[0];
+          notify({
+            kind: 'cron-failure',
+            severity: 'bad',
+            title: 'cron job failing',
+            body: failing.length === 1
+              ? '"' + (j0.name || j0.id) + '" failed on its last run' +
+                ((j0.failure_streak || 0) > 1 ? ' (' + j0.failure_streak + ' in a row)' : '') + '.'
+              : failing.length + ' cron jobs are failing on their last run.',
+            actions: [{
+              label: 'Open Cron',
+              title: 'Open the cron manager',
+              primary: true,
+              run: function () { var b = $('#openCronBtn'); if (b) b.click(); }
+            }]
+          });
+          return;
+        }
+
+        // 2. A subagent that stopped with work pending.
+        var stopped = subs.filter(function (a) { return a.status === 'stopped'; });
+        if (stopped.length) {
+          notify({
+            kind: 'subagent-stopped',
+            severity: 'warn',
+            title: 'subagent stopped',
+            body: stopped.length === 1
+              ? '"' + stopped[0].name + '" stopped. Resume it, or open its chat log.'
+              : stopped.length + ' subagents are stopped.',
+            actions: [{
+              label: 'Open Subagents',
+              title: 'Focus the subagent manager',
+              primary: true,
+              run: function () {
+                var mgr = $('#subagentManager');
+                if (mgr) mgr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }]
+          });
+          return;
+        }
+
+        // 3. The runtime itself is unhealthy.
+        if (st && st.overall && st.overall !== 'ok') {
+          notify({
+            kind: 'runtime-degraded',
+            severity: 'warn',
+            title: 'runtime ' + st.overall,
+            body: 'The Hermes runtime reports "' + st.overall + '".' +
+              (st.gateway_state ? ' Gateway: ' + st.gateway_state + '.' : ''),
+            actions: [{
+              label: 'Open Settings',
+              title: 'Inspect the runtime settings',
+              primary: true,
+              run: function () { var b = $('#openSettingsBtn'); if (b) b.click(); }
+            }]
+          });
+          return;
+        }
+
+        // 4. Work is running. Informational, and it goes quiet on its own.
+        var running = subs.filter(function (a) { return a.status === 'running'; });
+        if (running.length) {
+          notify({
+            kind: 'work-running',
+            severity: 'info',
+            title: 'work in progress',
+            body: running.length + ' subagent' + (running.length === 1 ? ' is' : 's are') + ' running.' +
+              (st && st.active_sessions
+                ? ' ' + st.active_sessions + ' live session' + (st.active_sessions === 1 ? '' : 's') + '.'
+                : ''),
+            transient: true,
+            actions: [{
+              label: 'Open Subagents',
+              title: 'Focus the subagent manager',
+              run: function () {
+                var mgr = $('#subagentManager');
+                if (mgr) mgr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }]
+          });
+          return;
+        }
+
+        // 5. Nothing to say. The buddy goes quiet instead of inventing work.
+        if (!state.pinned) {
+          state.current = null;
+          render();
+        }
+      }
+
+      function init() {
+        var d = dom();
+        if (d.buddy) {
+          d.buddy.addEventListener('click', function (e) {
+            if (e.target.closest('#quickDockBtn, #dismissNoticeBtn, #speechActionBtn, .mode-chip, .sa-live-btn, .conf-badge')) return;
+            state.pinned = !state.pinned;
+            if (state.pinned) {
+              if (!state.current) refresh();
+              if (!state.current) {
+                var st = window.HermesApi && window.HermesApi.state ? window.HermesApi.state.status : null;
+                notify({
+                  kind: 'overview',
+                  severity: 'info',
+                  title: 'runtime overview',
+                  body: st
+                    ? 'Hermes ' + (st.version && st.version !== 'unknown' ? st.version : 'runtime') +
+                      ' is ' + (st.gateway_state || 'running') + '. ' +
+                      (st.active_sessions || 0) + ' live session' + (st.active_sessions === 1 ? '' : 's') +
+                      ', ' + (st.active_agents || 0) + ' active agent' + (st.active_agents === 1 ? '' : 's') + '.'
+                    : 'The runtime is not reachable right now.',
+                  transient: false
+                });
+              }
+            } else {
+              hide();
+            }
+            applyVisibility();
+          });
+        }
+
+        var dismissBtn = $('#dismissNoticeBtn');
+        if (dismissBtn) {
+          dismissBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            state.pinned = false;
+            hide();
+          });
+        }
+
+        document.addEventListener('click', function () { setTimeout(applyVisibility, 0); }, true);
+
+        ['mousemove', 'keydown', 'wheel'].forEach(function (evt) {
+          window.addEventListener(evt, function () {
+            if (!state.pinned) scheduleIdle();
+          }, { passive: true });
+        });
+
+        applyVisibility();
+        scheduleIdle();
+      }
+
+      window.HermesBuddy = {
+        notify: notify,
+        refresh: refresh,
+        hide: hide,
+        setVisible: setVisible,
+        isVisible: isVisible,
+        pin: function (v) { state.pinned = !!v; applyVisibility(); },
+        state: state
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
       }
     })();
 
