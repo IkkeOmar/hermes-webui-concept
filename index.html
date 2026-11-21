@@ -5232,9 +5232,14 @@
         const el = $('#settingsLiveStatus');
         if (el) {
           el.className = 'settings-live ' + (live ? 'live' : 'offline');
-          el.innerHTML = '<span class="status-dot"></span><span class="mono"></span>';
-          el.querySelector('.mono').textContent = detail ||
-            (live ? 'Live - connected to ' + api.base : 'Offline - mock values');
+          // The settings module owns the label element and writes its own
+          // text into it, so only the dot is rebuilt here.
+          let dot = el.querySelector('.status-dot');
+          if (!dot) {
+            dot = document.createElement('span');
+            dot.className = 'status-dot';
+            el.insertBefore(dot, el.firstChild);
+          }
         }
         const cronEl = $('#cronLiveStatus');
         if (cronEl) {
